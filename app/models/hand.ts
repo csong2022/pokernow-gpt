@@ -3,8 +3,14 @@ import {Card} from "./card";
 export class Hand {
     private cards: Array<Card>;
 
-    constructor() {
+    constructor(card1?: Card, card2?: Card) {
         this.cards = [];
+        if (card1) {
+            this.cards.push(card1);
+        }
+        if (card2) {
+            this.cards.push(card2);
+        }
     }
 
     public getFirstCard(): Card {
