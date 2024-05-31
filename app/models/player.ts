@@ -14,6 +14,18 @@ export class Player {
     public getStackSize(): number {
         return this.stack_size;
     }
+
+    public setStackSize(stack_size): void {
+        this.stack_size = stack_size;
+    }
+
+    public getPosition(): string {
+        return this.position;
+    }
+
+    public setPosition(position): void {
+        this.position = position;
+    }
 }
 
 export class Hero extends Player {
