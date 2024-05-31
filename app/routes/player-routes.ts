@@ -1,6 +1,6 @@
-const router = express.Router();
-import player_controller from '../controllers/player-controller.ts';
+import * as express from 'express';
+import * as player_controller from '../controllers/player-controller.ts';
 
-router.get('', player_controller.get);
+export const router = express.Router();
 
-module.exports = router;
+router.get('/', player_controller.get);

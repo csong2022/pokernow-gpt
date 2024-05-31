@@ -27,13 +27,13 @@ async function createTables(db: any): Promise<void> {
 async function createPlayerDataTable(db: any): Promise<void> {
     db.exec(`
         CREATE TABLE Player (
-            player_id INT PRIMARY KEY NOT NULL,
+            id INT PRIMARY KEY NOT NULL,
             total_hands INT NOT NULL,
         ) 
     `);
 }
 
-async function query(sql: string, params: Array<string>): Promise<Array<string>> {
+export async function query(sql: string, params: Array<string>): Promise<Array<string>> {
     var rows : string[] = [];
     db.each(sql, params, function (err: any, row: string) {
         if (err) {
