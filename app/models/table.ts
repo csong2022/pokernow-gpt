@@ -1,5 +1,9 @@
 export class Table {
-    constructor() {
-        
+    private button: number;
+    private seats: Array<boolean>;
+
+    constructor(button: number, seats: Array<boolean>) {
+        this.button = button;
+        this.seats = new Array<boolean>(10);
     }
 }
