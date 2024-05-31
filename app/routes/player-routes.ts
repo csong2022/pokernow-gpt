@@ -1,4 +1,6 @@
 const router = express.Router();
-const playerController = require('../controllers/player-controller.ts');
+import player_controller from '../controllers/player-controller.ts';
+
+router.get('', player_controller.get);
 
 module.exports = router;

@@ -1,1 +1,1 @@
-const db = require('./db-service');
+import db from './db-service';
