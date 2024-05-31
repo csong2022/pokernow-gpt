@@ -1,39 +1,47 @@
-import {Hand} from "./hand"
+import { Hand } from "./hand"
 import { PlayerData } from "./player-data";
 
 export class Player {
     private name: string;
     private stack_size: number;
-    private position: string;
+    private seat: number;
 
-    constructor(name: string, initial_stack_size: number, position: string) {
+    constructor(name: string, initial_stack_size: number, seat: number) {
         this.name = name;
         this.stack_size = initial_stack_size;
-        this.position = position;
+        this.seat = seat;
+    }
+
+    public getName(): string {
+        return this.name;
     }
 
     public getStackSize(): number {
         return this.stack_size;
     }
 
-    public setStackSize(stack_size): void {
+    public setStackSize(stack_size: number): void {
         this.stack_size = stack_size;
     }
 
-    public getPosition(): string {
-        return this.position;
-    }
-
-    public setPosition(position): void {
-        this.position = position;
+    public getSeat(): number {
+        return this.seat;
     }
 }
 
 export class Hero extends Player {
     private hand: Hand;
 
-    constructor(name: string, initial_stack_size: number, position: string) {
-        super(name, initial_stack_size, position);
+    constructor(name: string, initial_stack_size: number, seat: number) {
+        super(name, initial_stack_size, seat);
         this.hand = new Hand();
+    }
+
+    public getHand(): Hand {
+        return this.hand;
+    }
+
+    public setHand(hand: Hand): void{
+        this.hand = hand;
     }
 }
