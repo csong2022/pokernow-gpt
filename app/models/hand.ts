@@ -1,23 +1,27 @@
-class Hand {
+import {Card} from "./card";
+
+export class Hand {
+    private cards: Array<Card>;
+
     constructor() {
         this.cards = [];
     }
 
-    getFirstCard() {
+    public getFirstCard(): Card {
         if (this.cards.length == 0) {
             throw new Error('Hand is currently empty!');
         }
         return this.cards[0];
     }
 
-    getSecondCard() {
+    public getSecondCard(): Card {
         if (this.cards.length == 0) {
             throw new Error('Hand is currently empty!');
         }
         return this.cards[1];
     }
     
-    toString() {
-        return this.getFirstCard().toString() + " " + this.getSecondCard().toString();
+    public toString(): string {
+        return `${this.getFirstCard().toString()} ${this.getSecondCard().toString()}`;
     }
 }
