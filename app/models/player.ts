@@ -1,4 +1,5 @@
 import {Hand} from "./hand"
+import { PlayerData } from "./player-data";
 
 export class Player {
     private name: string;
