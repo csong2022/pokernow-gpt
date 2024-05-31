@@ -1,5 +1,5 @@
-import * as express from 'express';
-import * as player_router from './app/routes/player-routes';
+import express from 'express';
+import player_router from './app/routes/player-routes';
 
 const app = express();
 const port = 8080;
