@@ -1,5 +1,5 @@
 import sqlite3 from 'sqlite3';
-import { open } from 'sqlite'
+import { open } from 'sqlite';
 
 const db = await open({
         filename: './pokernow-gpt.db',
@@ -26,7 +26,7 @@ async function createPlayerTable(db: any): Promise<void> {
     }
 }
 
-export async function query(sql: string, params: Array<string>): Promise<Array<string>> {
+export async function query(sql: string, params: Array<any>): Promise<Array<string>> {
     var rows : string[] = [];
     const result = await db.each(sql, params, (err: any, row: string) => {
         if (err) {
