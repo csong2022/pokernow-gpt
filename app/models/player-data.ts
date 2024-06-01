@@ -11,4 +11,15 @@ export class PlayerData {
         this.total_hands = 0
     }
 
+    public getId(): string {
+        return this.id;
+    }
+    
+    public getTotalHands(): number {
+        return this.total_hands;
+    }
+
+    public setTotalHands(total_hands: number): void {
+        this.total_hands = total_hands;
+    }
 }
