@@ -1,8 +1,6 @@
-export function emptyOrSingleRow(rows) {
-    console.log("QUERY OUTPUT: ");
-    console.log(rows);
+export function emptyOrSingleRow(rows: Array<string>): string {
     if (!rows) {
-        return [];
+        return "";
     }
     return rows[0];
 }
