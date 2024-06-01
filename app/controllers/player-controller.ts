@@ -8,3 +8,11 @@ export async function get(req, res, next) {
         next(err);
     }
 }
+
+export async function create(req, res, next) {
+    try {
+        res.json(await player_service.create(req.body));
+    } catch (err) {
+        console.error('Error while ')
+    }
+}
