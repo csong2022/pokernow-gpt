@@ -94,7 +94,9 @@ export class Table {
     public getPot(): number {
         let bets = 0
         for (const b of this.playerBets) {
-            bets += b;
+            if (typeof b == "number") {
+                bets += b; 
+            }
         }
         return this.pot + bets
     }
