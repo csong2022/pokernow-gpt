@@ -16,6 +16,7 @@ async function enterTable(name: string, stack_size: number): Promise<string>{
         await page.$eval(".table-player-seat-button", (button: any) => button.click());
     } catch (err) {
         console.log("Could not find open seat", err.message);
+        return "ingress unsuccessful";
     }
     await page.focus(".selected > div > form > div:nth-child(1) > input");
     await page.keyboard.type(name);
