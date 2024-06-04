@@ -29,7 +29,7 @@ async function enterTable(name: string, stack_size: number): Promise<string>{
         if (await page.$(".selected > div > form > div:nth-child(1) > .error-message")) {
             console.log("Player name must be unique to game");
         }
-        return "ingress unsucessful";
+        return "ingress unsuccessful";
     }
     return "ingress successful";
 }
