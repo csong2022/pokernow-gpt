@@ -1,5 +1,5 @@
-import { Card } from "./card"
-import { Player } from "./player"
+import { Card } from "./card.ts"
+import { Player } from "./player.ts"
 
 export class Table {
     private button: number; //position of button as an int

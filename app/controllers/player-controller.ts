@@ -1,6 +1,6 @@
-import * as player_service from '../services/player-service';
+import * as player_service from '../services/player-service.ts';
 
-export async function get(req, res, next) {
+export async function get(req: any, res: any, next: any) {
     try {
         res.json(await player_service.get(req.query.id));
     } catch (err) {
@@ -9,7 +9,7 @@ export async function get(req, res, next) {
     }
 }
 
-export async function create(req, res, next) {
+export async function create(req: any, res: any, next: any) {
     try {
         res.json(await player_service.create(req.body));
     } catch (err) {
@@ -18,7 +18,7 @@ export async function create(req, res, next) {
     }
 }
 
-export async function update(req, res, next) {
+export async function update(req: any, res: any, next: any) {
     try {
         res.json(await player_service.update(req.params.id, req.body));
     } catch (err) {
@@ -27,7 +27,7 @@ export async function update(req, res, next) {
     }
 }
 
-export async function remove(req, res, next) {
+export async function remove(req: any, res: any, next: any) {
     try {
         res.json(await player_service.remove(req.params.id));
     }  catch (err) {
