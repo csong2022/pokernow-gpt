@@ -1,5 +1,5 @@
-import { Hand } from "./hand"
-import { PlayerData } from "./player-data";
+import { Hand } from "./hand.ts"
+import { PlayerData } from "./player-data.ts";
 
 export class Player {
     private name: string;
@@ -7,13 +7,11 @@ export class Player {
     private seat: number;
     private player_data: PlayerData;
 
-    constructor(name: string, initial_stack_size: number, seat: number, player_data?: PlayerData) {
+    constructor(name: string, initial_stack_size: number, seat: number, player_data: PlayerData) {
         this.name = name;
         this.stack_size = initial_stack_size;
         this.seat = seat;
-        if (player_data) {
-            this.player_data = player_data;
-        }
+        this.player_data = player_data;
     }
 
     public getName(): string {
@@ -46,7 +44,7 @@ export class Player {
 export class Hero extends Player {
     private hand: Hand;
 
-    constructor(name: string, initial_stack_size: number, seat: number, player_data?: PlayerData) {
+    constructor(name: string, initial_stack_size: number, seat: number, player_data: PlayerData) {
         super(name, initial_stack_size, seat, player_data);
         this.hand = new Hand();
     }
