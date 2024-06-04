@@ -22,7 +22,7 @@ async function createPlayerTable(db: any): Promise<void> {
             );
         `);
     } catch (err) {
-        console.log("Failed to create player table " + err);
+        console.log("Failed to create player table", err.message);
     }
 }
 
@@ -30,7 +30,7 @@ export async function query(sql: string, params: Array<any>): Promise<Array<stri
     var rows : string[] = [];
     const result = await db.each(sql, params, (err: any, row: string) => {
         if (err) {
-            console.log("Getting error " + err);
+            console.log("Getting error", err.message);
             return;
         }
         rows.push(row);
