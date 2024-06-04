@@ -1,5 +1,5 @@
 import express from 'express';
-import player_router from './app/routes/player-routes';
+import player_router from './app/routes/player-routes.ts';
 
 const app = express();
 const port = 8080;

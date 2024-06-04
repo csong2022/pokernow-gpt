@@ -1,5 +1,5 @@
-import { Hand } from "./hand"
-import { PlayerData } from "./player-data";
+import { Hand } from "./hand.ts"
+import { PlayerData } from "./player-data.ts";
 
 export class Player {
     private name: string;
