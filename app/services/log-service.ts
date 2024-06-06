@@ -15,10 +15,13 @@ export type ErrorResponse<E = Error> = {
 
 export type BaseFetchResponse<D, E> = Promise<SuccessResponse<D> | ErrorResponse<E>>;
 
-const endpoint = "https://www.pokernow.club/games/pgltNd4w17e6J4JXouHm6dw5l/log?before_at=&after_at=&mm=false&v=2"
+//const endpoint = "/log?before_at=&after_at=171763427711700&mm=false&v=2"
 
 export const fetchData = async <D, E=Error>(
-    method: "GET",
+    method: string = "GET",
+    url: string,
+    before: string = "",
+    after: string = "",
     bodyData?: Record<string, unknown>
 ): BaseFetchResponse<D, E> => {
     let fetchOptions: RequestInit = {
@@ -27,7 +30,11 @@ export const fetchData = async <D, E=Error>(
         },
         method,
     };
-    let apiUrl = endpoint
+    let beforeStr = "/log?before_at=".concat(before)
+    let afterStr = "&after_at=".concat(after)
+    let fullargs = beforeStr.concat(afterStr).concat("&mm=false&v=2")
+    let apiUrl = url.concat(fullargs)
+    console.log(apiUrl)
 
     const urlSearchParams = new URLSearchParams();
     
@@ -36,7 +43,6 @@ export const fetchData = async <D, E=Error>(
         if (response.ok) {
             try {
                 const data = (await response.json()) as D;
-                //console.log(data)
                 return {
                     code: "success",
                     data,
