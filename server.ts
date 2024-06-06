@@ -2,6 +2,7 @@ import express from 'express';
 import player_router from './app/routes/player-routes.ts';
 import prompt from 'prompt-sync';
 import * as puppeteer_service from './app/webdriver/puppeteer-service.ts';
+import { ERROR_RESPONSE, SUCCESS_RESPONSE } from './app/utils/error-handling-utils.ts'
 
 const app = express();
 const port = 8080;
@@ -25,12 +26,20 @@ console.log(`The PokerNow game with id: ${game_id} will now open.`);
 
 await puppeteer_service.init(game_id);
 
-const name = io("What is your desired player name? ");
-console.log(`Your player name will be ${name}.` )
+while (true) {
+    const name = io("What is your desired player name? ");
+    console.log(`Your player name will be ${name}.` )
 
-const stack_size = io("What is your desired stack size? ");
-console.log(`Your initial stack size will be ${stack_size}.`)
+    const stack_size = io("What is your desired stack size? ");
+    console.log(`Your initial stack size will be ${stack_size}.`)
 
-console.log(`Attempting to enter table with name: ${name} and stack size: ${stack_size}.`);
-await puppeteer_service.enterTable(name, Number(stack_size));
+    console.log(`Attempting to enter table with name: ${name} and stack size: ${stack_size}.`);
+    const response = await puppeteer_service.enterTable(name, Number(stack_size));
 
+    if (response.code == SUCCESS_RESPONSE) {
+        console.log(response.data);
+        break;
+    }
+    console.log(response.error);
+    console.log("Please try again.");
+}
