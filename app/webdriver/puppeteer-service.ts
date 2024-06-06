@@ -1,6 +1,7 @@
 import puppeteer from 'puppeteer';
 import type { Response } from '../utils/error-handling-utils.ts';
 
+
 const browser = await puppeteer.launch({
     defaultViewport: null,
     headless: false
@@ -16,10 +17,9 @@ export async function enterTable<D, E=Error>(name: string, stack_size: number): 
     try {
         await page.$eval(".table-player-seat-button", (button: any) => button.click());
     } catch (err) {
-        console.log("Could not find open seat", err.message);
         return {
             code: "error",
-            error: new Error("Table ingress unsuccessful.") as E
+            error: new Error("Could not find open seat.") as E
         }
     }
     await page.focus(".selected > div > form > div:nth-child(1) > input");
@@ -31,12 +31,14 @@ export async function enterTable<D, E=Error>(name: string, stack_size: number): 
         await page.waitForSelector(".alert-1-buttons > button", {timeout: 2000});
         await page.$eval(".alert-1-buttons > button", (button: any) => button.click());
     } catch (err) {
+        var message = "Table ingress unsuccessful."
         if (await page.$(".selected > div > form > div:nth-child(1) > .error-message")) {
-            console.log("Player name must be unique to game");
+            message = "Player name must be unique to game.";
         }
+        await page.$eval(".selected > button", (button: any) => button.click());
         return {
             code: "error",
-            error: new Error("Table ingress unsuccessful.") as E
+            error: new Error(message) as E
         }
     }
     return {
