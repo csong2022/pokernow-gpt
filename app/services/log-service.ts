@@ -1,6 +1,7 @@
 const fetch = require('node-fetch')
 
 import type { Response } from '../utils/error-handling-utils.ts';
+//import { SUCCESS_RESPONSE } from '../utils/error-handling-utils.ts';
 
 export const fetchData = async <D, E=Error>(
     method: string = "GET",
@@ -49,3 +50,35 @@ export const fetchData = async <D, E=Error>(
         error: new Error("Cannot make the service request") as E,
     };
 };
+
+interface Data {
+    logs: Array<Log>
+}
+interface Log {
+    at: string,
+    created_at: string,
+    msg: string
+}
+
+export function getData(log: any): Data {
+    let data = log.data as JSON
+    let str = JSON.stringify(data)
+    const res = JSON.parse(str) as Data
+    return res
+}
+
+export function getMsg(data: Data): Array<string> {
+    let res = new Array<string>
+    data.logs.forEach((element) => {
+        res.push(element.msg)
+    })
+    return res
+}
+
+export function getCreatedAt(data: Data): Array<string> {
+    let res = new Array<string>
+    data.logs.forEach((element) => {
+        res.push(element.created_at)
+    })
+    return res
+}
