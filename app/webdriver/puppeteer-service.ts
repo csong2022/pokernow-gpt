@@ -1,5 +1,6 @@
 import puppeteer from 'puppeteer';
 import type { Response } from '../utils/error-handling-utils.ts';
+import * as bot_utils from '../utils/bot-utils.ts';
 
 
 const browser = await puppeteer.launch({
@@ -7,7 +8,7 @@ const browser = await puppeteer.launch({
     headless: false
 });
 const page = await browser.newPage();
-const default_timeout = 2000;
+const default_timeout = 3000;
 
 export async function init<D, E=Error>(game_id: string) : Response<D, E> {
     if (!game_id) {
@@ -24,8 +25,8 @@ export async function init<D, E=Error>(game_id: string) : Response<D, E> {
     }
 }
 
-// attempt to enter the table as a non-host player
-export async function enterTable<D, E=Error>(name: string, stack_size: number): Response<D, E> {
+// send enter table request as non-host player
+export async function sendEnterTableRequest<D, E=Error>(name: string, stack_size: number): Response<D, E> {
     if (name.length < 2 || name.length > 14) {
         return {
             code: "error",
@@ -61,7 +62,23 @@ export async function enterTable<D, E=Error>(name: string, stack_size: number): 
     }
     return {
         code: "success",
-        data: "Table ingress request successful." as D
+        data: "Table ingress request successfully sent." as D
+    }
+}
+
+// wait until table entry
+export async function waitForTableEntry<D, E=Error>(): Response<D, E> {
+    try {
+        await page.waitForSelector(".you-player");
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error("Table ingress request not accepted by host.") as E
+        }
+    }
+    return {
+        code: "success",
+        data: "Successfully entered table." as D
     }
 }
 
@@ -69,7 +86,7 @@ export async function enterTable<D, E=Error>(name: string, stack_size: number): 
 // joined when hand is currently in progress -> "in next hand"
 // if player is in waiting state, wait for next hand
 // otherwise, return
-export async function waitForNextHand<D, E=Error>(): Response<D, E> {
+export async function waitForNextHand<D, E=Error>(num_players: number, max_turn_length: number): Response<D, E> {
     // check if the player is in a waiting state
     // if not, return
     try {
@@ -82,7 +99,7 @@ export async function waitForNextHand<D, E=Error>(): Response<D, E> {
     }
     // if player is in waiting state, wait for the waiting state to disappear
     try {
-        await page.waitForSelector([".you-player > .waiting", ".you-player > .waiting-next-hand"].join(','), {hidden: true});
+        await page.waitForSelector([".you-player > .waiting", ".you-player > .waiting-next-hand"].join(','), {hidden: true, timeout: bot_utils.computeTimeout(num_players, max_turn_length, 4) + default_timeout});
     } catch (err) {
         return {
             code: "error",
@@ -99,7 +116,7 @@ export async function waitForNextHand<D, E=Error>(): Response<D, E> {
 // wait for player turn
 export async function waitForPlayerTurn<D, E=Error>(num_players: number, max_turn_length: number): Response<D, E> {
     try {
-        await page.waitForSelector(".decision-current.you-player", {timeout: (num_players - 1) * max_turn_length + default_timeout});
+        await page.waitForSelector(".decision-current.you-player", {timeout: bot_utils.computeTimeout(num_players, max_turn_length, 1) + default_timeout});
     } catch (err) {
         return {
             code: "error",
