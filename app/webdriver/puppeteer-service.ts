@@ -7,13 +7,31 @@ const browser = await puppeteer.launch({
     headless: false
 });
 const page = await browser.newPage();
+const default_timeout = 2000;
 
-export async function init(game_id: string) {
+export async function init<D, E=Error>(game_id: string) : Response<D, E> {
+    if (!game_id) {
+        return {
+            code: "error",
+            error: new Error("Game id cannot be empty.") as E
+        }
+    }
     await page.goto(`https://www.pokernow.club/games/${game_id}`);
     await page.setViewport({width: 1920, height: 1080});
+    return {
+        code: "success",
+        data: `Successfully opened PokerNow game with id ${game_id}.` as D
+    }
 }
 
+// attempt to enter the table as a non-host player
 export async function enterTable<D, E=Error>(name: string, stack_size: number): Response<D, E> {
+    if (name.length < 2 || name.length > 14) {
+        return {
+            code: "error",
+            error: new Error("Player name must be betwen 2 and 14 characters long.") as E
+        }
+    }
     try {
         await page.$eval(".table-player-seat-button", (button: any) => button.click());
     } catch (err) {
@@ -28,7 +46,7 @@ export async function enterTable<D, E=Error>(name: string, stack_size: number): 
     await page.keyboard.type(stack_size.toString())
     await page.$eval(".selected > div > form > button", (button: any) => button.click());
     try {
-        await page.waitForSelector(".alert-1-buttons > button", {timeout: 2000});
+        await page.waitForSelector(".alert-1-buttons > button", {timeout: default_timeout});
         await page.$eval(".alert-1-buttons > button", (button: any) => button.click());
     } catch (err) {
         var message = "Table ingress unsuccessful."
@@ -43,6 +61,53 @@ export async function enterTable<D, E=Error>(name: string, stack_size: number): 
     }
     return {
         code: "success",
-        data: "Table ingress successful." as D
+        data: "Table ingress request successful." as D
+    }
+}
+
+// game has not started yet -> "waiting state"
+// joined when hand is currently in progress -> "in next hand"
+// if player is in waiting state, wait for next hand
+// otherwise, return
+export async function waitForNextHand<D, E=Error>(): Response<D, E> {
+    // check if the player is in a waiting state
+    // if not, return
+    try {
+        await page.waitForSelector([".you-player > .waiting", ".you-player > .waiting-next-hand"].join(','), {timeout: default_timeout});
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error("Player is not in waiting state.") as E
+        }
+    }
+    // if player is in waiting state, wait for the waiting state to disappear
+    try {
+        await page.waitForSelector([".you-player > .waiting", ".you-player > .waiting-next-hand"].join(','), {hidden: true});
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error("Player is not in waiting state.") as E
+        }
+    }
+    // finally return
+    return {
+        code: "success",
+        data: "Waited for next hand to start." as D
+    }
+}
+
+// wait for player turn
+export async function waitForPlayerTurn<D, E=Error>(num_players: number, max_turn_length: number): Response<D, E> {
+    try {
+        await page.waitForSelector(".decision-current.you-player", {timeout: (num_players - 1) * max_turn_length + default_timeout});
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error("Player's turn never started.") as E
+        }
+    }
+    return {
+        code: "success",
+        data: "Waited for player turn to start." as D
     }
 }
