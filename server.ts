@@ -17,7 +17,7 @@ app.use('/player', player_router);
 
 app.listen(
     port,
-    () => console.log('App listening on http://localhost:${PORT}')
+    () => console.log(`App listening on http://localhost:${port}`)
 )
 
 const io = prompt();
@@ -34,10 +34,21 @@ while (true) {
     console.log(`Your initial stack size will be ${stack_size}.`)
 
     console.log(`Attempting to enter table with name: ${name} and stack size: ${stack_size}.`);
-    const code = log_response(await puppeteer_service.enterTable(name, Number(stack_size)));
+    const code = log_response(await puppeteer_service.sendEnterTableRequest(name, Number(stack_size)));
 
     if (code === "success") {
         break;
     }
     console.log("Please try again.");
 }
+
+console.log("Waiting for table host to accept ingress request.");
+log_response(await puppeteer_service.waitForTableEntry());
+
+// TODO: update dummy parameters
+console.log("Waiting for next hand to start.")
+log_response(await puppeteer_service.waitForNextHand(10, 30));
+
+console.log("Waiting for player turn to start.")
+// TODO: update dummy parameters
+log_response(await puppeteer_service.waitForPlayerTurn(10, 30));
