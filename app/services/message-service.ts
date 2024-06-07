@@ -1,5 +1,5 @@
 
-export function getPlayer(msg: string): Array<String> {
+export function getPlayer(msg: string): Array<string> {
     let res = new Array<string>
     let split = msg.split(" @ ")
     if (split.length > 1) {
@@ -24,22 +24,51 @@ export function getFirstWord(msg: string): string {
     return res
 }
 
+interface action {
+    playerName: string,
+    playerID: string,
+    playerAction: string,
+    actionMsg: string
+}
+
+interface runout {
+    street: string,
+    cards: string
+}
+
+const streets = ["Flop:", "Turn:", "River:"]
+const actions = ["calls", "folds", "checks", "bets", "raises", "posts"]
+
 export function validateMsg(msg: string): Array<string> {
     let w = getFirstWord(msg)
-    const streets = ["Flop:", "Turn:", "River:"]
-    const actions = ["calls", "folds", "checks", "bets", "raises", "posts"]
     if (streets.includes(w)) {
-        return ["street", w, msg]
+        w = w.substring(0, w.length - 1)
+        let temp = msg.split(": ")
+        msg = temp[1]
+        return [w, msg]
     } else if (actions.includes(w)) {
-        return ["action", w, msg]
+        return [w, msg]
     }
-    return ["not useful msg", w, msg]
+    return []
 }
 
 export function validateAllMsg(msgs: Array<string>): Array<Array<string>> {
     let res = new Array<Array<string>>
     msgs.forEach((element) => {
-        res.push(validateMsg(element))
+        let first = getFirstWord(element)
+        let player = getPlayer(element)
+        if (streets.includes(first)) {
+            res.push(validateMsg(element))
+        }
+        if (player.length > 1) {
+            let playerAction  = getPlayerAction(element, player[1])
+            let validate = validateMsg(playerAction)
+            if (!(validate === undefined || validate.length == 0)) {
+                let value = validate[1].replace(/\D/g, "");
+                let curr = player.concat(validate).concat(value)
+                res.push(curr)
+            }
+        }
     })
     return res
 }

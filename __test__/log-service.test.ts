@@ -42,6 +42,8 @@ test('test chens table 123', async () => {
         console.log(p4)
         let res2 = getCreatedAt(res)
         console.log(res2)
+        let res5 = validateAllMsg(res1)
+        console.log(res5)
     }
     if (log.code === ERROR_RESPONSE) {
         console.log('error', log.error)
