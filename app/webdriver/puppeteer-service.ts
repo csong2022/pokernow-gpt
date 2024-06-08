@@ -129,6 +129,21 @@ export async function waitForPlayerTurn<D, E=Error>(): Response<D, E> {
     }
 }
 
+export async function waitForPlayerAction<D, E=Error>(): Response<D, E> {
+    try {
+        await page.waitForSelector(".table-player.decision-current", {timeout: default_timeout});
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error("Failed to wait for player action.") as E
+        }
+    }
+    return {
+        code: "success",
+        data: "Waited for player action." as D
+    }
+}
+
 // player turn ends -> current player no longer has 'decision-current' class
 // player turn ends AND someone has won the hand -> current player no longer has 'decision-current' class and some player has 'winner' class
 export async function waitForNextPlayerAction<D, E=Error>(max_turn_length: number): Response<D, E> {
