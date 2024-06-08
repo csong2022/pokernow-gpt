@@ -49,6 +49,19 @@ log_response(await puppeteer_service.waitForTableEntry());
 console.log("Waiting for next hand to start.")
 log_response(await puppeteer_service.waitForNextHand(10, 30));
 
-console.log("Waiting for player turn to start.")
-// TODO: update dummy parameters
-log_response(await puppeteer_service.waitForPlayerTurn(10, 30));
+while (true) {
+    console.log("Waiting for player turn to start.")
+    await puppeteer_service.waitForPlayerTurn();
+
+    console.log("Waiting for next player action to start.")
+    log_response(await puppeteer_service.waitForNextPlayerAction(30));
+
+    const response = await puppeteer_service.waitForWinner();
+    if (response.code === "success") {
+        break;
+    }
+}
+console.log("YAY WE HAVE COMPLETED ONE HAND.")
+//console.log("Waiting for player turn to start.")
+// TODO: update dummy parameters/
+//log_response(await puppeteer_service.waitForPlayerTurn(10, 30));
