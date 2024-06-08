@@ -8,7 +8,7 @@ const browser = await puppeteer.launch({
     headless: false
 });
 const page = await browser.newPage();
-const default_timeout = 3000;
+const default_timeout = 500;
 
 export async function init<D, E=Error>(game_id: string) : Response<D, E> {
     if (!game_id) {
@@ -114,17 +114,54 @@ export async function waitForNextHand<D, E=Error>(num_players: number, max_turn_
 }
 
 // wait for player turn
-export async function waitForPlayerTurn<D, E=Error>(num_players: number, max_turn_length: number): Response<D, E> {
+export async function waitForPlayerTurn<D, E=Error>(): Response<D, E> {
     try {
-        await page.waitForSelector(".decision-current.you-player", {timeout: bot_utils.computeTimeout(num_players, max_turn_length, 1) + default_timeout});
+        await page.waitForSelector(".decision-current.you-player", {timeout: default_timeout});
     } catch (err) {
         return {
             code: "error",
-            error: new Error("Player's turn never started.") as E
+            error: new Error("It is not the player's turn.") as E
         }
     }
     return {
         code: "success",
         data: "Waited for player turn to start." as D
+    }
+}
+
+// player turn ends -> current player no longer has 'decision-current' class
+// player turn ends AND someone has won the hand -> current player no longer has 'decision-current' class and some player has 'winner' class
+export async function waitForNextPlayerAction<D, E=Error>(max_turn_length: number): Response<D, E> {
+    try {
+        const el = await page.waitForSelector(".table-player.decision-current", {timeout: default_timeout});
+        await page.waitForFunction(
+            (el: any) => !el.classList.contains("decision-current"), 
+            {polling: "mutation", timeout: max_turn_length * 1000}, 
+            el);
+    } catch (err) {
+        return { 
+            code: "error",
+            error: new Error("Next player action never started.") as E
+        }
+    }
+    return {
+        code: "success",
+        data: "Waited for next player action." as D
+    }
+
+}
+
+export async function waitForWinner<D, E=Error>(): Response<D, E> {
+    try {
+        await page.waitForSelector('.table-player.winner', {timeout: default_timeout});
+    } catch (err) {
+        return { 
+            code: "error",
+            error: new Error("Winner of hand not determined yet.") as E
+        }
+    }
+    return {
+        code: "success",
+        data: "Winner of hand has been determined." as D
     }
 }
