@@ -131,4 +131,4 @@ dist
 .DS_Store
 
 # sqlite3 db file
-.db
+*.db
