@@ -53,36 +53,37 @@ console.log("Waiting for next hand to start.")
 log_response(await puppeteer_service.waitForNextHand(10, 30));
 
 
-await puppeteer_service.waitForPlayerAction();
+//await puppeteer_service.waitForPlayerAction();
 
 t.nextRound()
 var lastCreated;
-const log = await fetchData("GET", game_id, "", "")
+let firstFetch = true;
 
-if (log.code === SUCCESS_RESPONSE) {
-    let res = getData(log)
-    lastCreated = getFirst(getCreatedAt(res))
-}
 
 for (let i = 0; i < 3; i++) {
     console.log("Waiting for player turn to start.")
     //await puppeteer_service.waitForPlayerTurn();
+
     var res;
     const log = await fetchData("GET", game_id, "", lastCreated)
     if (log.code === SUCCESS_RESPONSE) {
         let res = getData(log)
+        if (firstFetch) {
+            //pruneLog(res);
+            firstFetch = false;
+        }
         //console.log("res", res)
         let onlyValid = validateAllMsg(getMsg(res))
 
         t.processLogs(onlyValid)
         console.log("onlyValid", onlyValid)
-        console.log(t.getQueue())
+        //console.log(t.getQueue())
         t.convertDict()
         console.log("updated player positions")
         
         console.log(lastCreated)
         console.log(t.getDict())
-        console.log(t.getQueue())
+        //console.log(t.getQueue())
 
         lastCreated = getFirst(getCreatedAt(res))
         console.log("updated lastCreated")
