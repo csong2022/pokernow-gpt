@@ -34,7 +34,7 @@ export class Player {
         return this.player_data;
     }
 
-    public updatePlayerData(id: string, total_hands?: number) {
+    public updatePlayerData(id: string, total_hands?: number): void {
         if (total_hands) {
             this.player_data.setTotalHands(total_hands);
         }
