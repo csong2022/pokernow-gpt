@@ -5,7 +5,7 @@ import { getPlayer, getPlayerAction, getFirstWord, validateAllMsg, validateMsg }
 import { Table } from "../app/models/table.ts";
 
 test('test chens table', async () => {
-    const log = await fetchData("GET", "https://www.pokernow.club/games/pgltNd4w17e6J4JXouHm6dw5l")
+    const log = await fetchData("GET", "pgltNd4w17e6J4JXouHm6dw5l")
     if (log.code === SUCCESS_RESPONSE) {
         //console.log('success', log.data)
         let res = getData(log)
@@ -27,7 +27,7 @@ test('test chens table', async () => {
 })
 
 test('test chens table 123', async () => {
-    const log = await fetchData("GET", "https://www.pokernow.club/games/pgl2i8eXxJBQDBvxTNN1a9urf", "", "171763427711700")
+    const log = await fetchData("GET", "pgl2i8eXxJBQDBvxTNN1a9urf", "", "171763427711700")
     if (log.code === SUCCESS_RESPONSE) {
         //console.log('success', log.data)
         let res = getData(log)
