@@ -1,7 +1,8 @@
 import { fetchData, getCreatedAt } from "../app/services/log-service.ts"
 import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../app/utils/error-handling-utils.ts';
-import { getData, getMsg } from '../app/services/log-service.ts';
+import { getData, getMsg, getLast, getFirst } from '../app/services/log-service.ts';
 import { getPlayer, getPlayerAction, getFirstWord, validateAllMsg, validateMsg } from "../app/services/message-service.ts";
+import { Table } from "../app/models/table.ts";
 
 test('test chens table', async () => {
     const log = await fetchData("GET", "https://www.pokernow.club/games/pgltNd4w17e6J4JXouHm6dw5l")
@@ -32,18 +33,12 @@ test('test chens table 123', async () => {
         let res = getData(log)
         let res1 = getMsg(res)
         console.log(res1)
-        let p1 = getPlayer(res1[10])
-        console.log(p1)
-        let p2 = getPlayerAction(res1[10], "hjf1Arb46X")
-        console.log(p2)
-        let p3 = getFirstWord(p2)
-        console.log(p3)
-        let p4 = validateMsg(p2)
-        console.log(p4)
-        let res2 = getCreatedAt(res)
-        console.log(res2)
         let res5 = validateAllMsg(res1)
         console.log(res5)
+        let t = new Table(1, "NLH", 1)
+        t.nextRound()
+        t.processLogs(res5)
+        t.convertDict()
     }
     if (log.code === ERROR_RESPONSE) {
         console.log('error', log.error)

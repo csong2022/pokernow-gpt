@@ -5,7 +5,7 @@ export function getPlayer(msg: string): Array<string> {
     if (split.length > 1) {
         let name = split[0].split("\"")[1]
         let tag = split[1].split("\"")[0]
-        res.push(name, tag)
+        res.push(tag, name)
     }
     return res
 }
@@ -24,14 +24,15 @@ export function getFirstWord(msg: string): string {
     return res
 }
 
-interface action {
+interface Action {
     playerName: string,
     playerID: string,
     playerAction: string,
     actionMsg: string
+    actionNum: number,
 }
 
-interface runout {
+interface Runout {
     street: string,
     cards: string
 }
@@ -61,7 +62,7 @@ export function validateAllMsg(msgs: Array<string>): Array<Array<string>> {
             res.push(validateMsg(element))
         }
         if (player.length > 1) {
-            let playerAction  = getPlayerAction(element, player[1])
+            let playerAction  = getPlayerAction(element, player[0])
             let validate = validateMsg(playerAction)
             if (!(validate === undefined || validate.length == 0)) {
                 let value = validate[1].replace(/\D/g, "");

@@ -20,7 +20,7 @@ test('update button tests', () => {
 
 test('update player tests', () => {
     let test1 = new Table(3, "NLH", 1)
-    let player1data = new PlayerData('alwayswins', 1)
+    let player1data = new PlayerData('alwayswins')
     let player1 = new Player("voldlord", 100, 1, player1data)
     test1.addPlayer(1, player1)
     expect(test1.getNumPlayers()).toBe(1)
@@ -30,7 +30,7 @@ test('update player tests', () => {
 
 test('betting tests', () => {
     let test1 = new Table(3, "NLH", 1)
-    let player1data = new PlayerData('alwayswins', 1)
+    let player1data = new PlayerData('alwayswins')
     let player1 = new Player("voldlord", 100, 1, player1data)
     test1.addPlayer(1, player1)
     expect(test1.getNumPlayers()).toBe(1)
