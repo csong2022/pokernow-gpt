@@ -1,6 +1,31 @@
 import { Card } from "./card.ts"
 import { Player } from "./player.ts"
 
+const streets = ["Flop", "Turn", "River"]
+
+class Queue<T> {
+    private q: T[] = [];
+    enqueue(item: T): void {
+      this.q.push(item);
+    }
+    dequeue(): T | undefined {
+      return this.q.shift();
+    }
+    peek(): T | undefined {
+        return this.q[0];
+    }
+    isEmpty(): boolean {
+        return this.q.length === 0;
+    }
+    size(): number {
+      return this.q.length;
+    }
+  }
+
+interface Dictionary<T> {
+    [Key: string]: T;
+}
+
 export class Table {
     private button: number; //position of button as an int
     private seats: Array<boolean>; //index 0-9 for which positions are seated
@@ -11,6 +36,9 @@ export class Table {
     private pot: number //current pot
     private gameType: string; //string for no limit holdem or pot limit omaha
     private stakes: number; //stake in big blinds
+    private queue: Queue<Array<string>>;
+    private dict: Dictionary<any>;
+    private pos: number;
 
     constructor(button: number, gameType: string, stakes: number) {
         this.button = button;
@@ -22,13 +50,66 @@ export class Table {
         this.pot = 0
         this.gameType = gameType;
         this.stakes = stakes;
+        this.queue = new Queue<Array<string>>()
+        this.dict = {}
+        this.pos = 0
+    }
+
+    public processLogs(logs: Array<Array<string>>) {
+        logs = logs.reverse()
+        logs.forEach((element) => {
+            if (!(streets.includes(element[0]))) {
+                if (!(element[0] in this.dict)) {
+                    this.pos += 1
+                    this.dict[element[0]] = this.pos
+                }
+                this.queue.enqueue(element)
+            }
+        })
+        console.log(this.queue)
+        console.log(this.dict)
+    }
+
+    public convertPosition(num: number, total_players: number): string {
+        if (num == total_players) {
+            return "BU"
+        }
+        if ((total_players >= 5) && (num == total_players - 1)) {
+            return "CO"
+        }
+        if (total_players <= 6) {
+            switch (num) {
+                case 1: return "SB"
+                case 2: return "BB"
+                case 3: return "UTG"
+                case 4: return "HJ"
+                default: return ""
+            }
+        } else {
+            switch (num) {
+                case 1: return "SB"
+                case 2: return "BB"
+                case 3: return "UTG"
+                case 4: return "UTG+1"
+                case 5: return "MP"
+                case 6: return "MP"
+                case 7: return "LJ"
+                case 8: return "HJ"
+                default: return ""
+            }
+        }
+    }
+
+    public convertDict() {
+        for (const key in this.dict) {
+            this.dict[key] = this.convertPosition(this.dict[key], this.pos)
+        }
+        console.log(this.dict)
     }
 
     public nextRound(): void {
-        this.runout = <Card[]>[];
-        this.updateButton(this.getNextButton(this.button));
-        this.pot = 0;
-        this.inPot = Object.assign([], this.seats)
+        this.dict = {}
+        this.pos = 0
     }
 
     public nextStreet(nextCard: Card): void {

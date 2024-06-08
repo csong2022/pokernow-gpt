@@ -82,3 +82,11 @@ export function getCreatedAt(data: Data): Array<string> {
     })
     return res
 }
+
+export function getLast(arr: Array<string>): string {
+    return arr[arr.length - 1]
+}
+
+export function getFirst(arr: Array<string>): string {
+    return arr[0]
+}
