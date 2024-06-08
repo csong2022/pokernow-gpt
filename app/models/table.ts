@@ -66,8 +66,16 @@ export class Table {
                 this.queue.enqueue(element)
             }
         })
-        console.log(this.queue)
-        console.log(this.dict)
+        //console.log(this.queue)
+        //console.log(this.dict)
+    }
+
+    public getQueue() {
+        return this.queue
+    }
+
+    public getDict() {
+        return this.dict
     }
 
     public convertPosition(num: number, total_players: number): string {

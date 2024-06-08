@@ -1,4 +1,4 @@
-const fetch = require('node-fetch')
+import fetch from 'node-fetch'
 
 import type { Response } from '../utils/error-handling-utils.ts';
 //import { SUCCESS_RESPONSE } from '../utils/error-handling-utils.ts';
@@ -16,10 +16,11 @@ export const fetchData = async <D, E=Error>(
         },
         method,
     };
+    let baseURL = "https://www.pokernow.club/games/".concat(url)
     let beforeStr = "/log?before_at=".concat(before)
     let afterStr = "&after_at=".concat(after)
     let fullargs = beforeStr.concat(afterStr).concat("&mm=false&v=2")
-    let apiUrl = url.concat(fullargs)
+    let apiUrl = baseURL.concat(fullargs)
     console.log(apiUrl)
 
     const urlSearchParams = new URLSearchParams();
