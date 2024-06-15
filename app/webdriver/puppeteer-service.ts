@@ -180,3 +180,66 @@ export async function waitForWinner<D, E=Error>(): Response<D, E> {
         data: "Winner of hand has been determined." as D
     }
 }
+
+export async function call<D, E=Error>(): Response<D, E> {
+    try {
+        await page.$eval('.game-decisions-ctn > .action-buttons > .call', (button: any) => button.click());
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error("No option to call available.") as E
+        }
+    }
+    return {
+        code: "success",
+        data: "Successfully executed call action." as D
+    }
+}
+
+export async function fold<D, E=Error>(): Response<D, E> {
+    try {
+        await page.$eval('.game-decisions-ctn > .action-buttons > .fold', (button: any) => button.click());
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error("No option to fold available.") as E
+        }
+    }
+    return {
+        code: "success",
+        data: "Successfully executed fold action." as D
+    }
+}
+
+export async function check<D, E=Error>(): Response<D, E> {
+    try {
+        await page.$eval('.game-decisions-ctn > .action-buttons > .check', (button: any) => button.click());
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error("No option to check available.") as E
+        }
+    }
+    return {
+        code: "success",
+        data: "Successfully executed check action." as D
+    }
+}
+
+export async function bet<D, E=Error>(bet_amount: number) {
+    try {
+        await page.$eval('.game-decisions-ctn > .action-buttons > .raise', (button: any) => button.click());
+        await page.focus('.game-decisions-ctn > form > .raise-bet-value > div > input')
+        await page.keyboard.type(bet_amount.toString());
+        await page.$eval('.game-decisions-ctn > form > .action-buttons > .bet', (input: any) => input.click());
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error(`Failed to bet with amount ${bet_amount}.`) as E
+        }
+    }
+    return {
+        code: "success",
+        data: `Successfully executed bet action with amount ${bet_amount}.` as D
+    }
+}
