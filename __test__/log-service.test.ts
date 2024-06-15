@@ -39,10 +39,11 @@ test('test chens table 123', async () => {
         console.log("all msgs", res5)
         let pruneres = validateAllMsg(prune)
         console.log("valid actions until starting", pruneres)
-        let t = new Table(1, "NLH", 1)
-        t.nextRound()
+        let t = new Table()
+        t.nextHand()
         t.processLogs(res5)
         t.convertDict()
+        //console.log(t.getPlayerPositions.)
     }
     if (log.code === ERROR_RESPONSE) {
         console.log('error', log.error)
