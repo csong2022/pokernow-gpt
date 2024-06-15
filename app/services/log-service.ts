@@ -33,6 +33,7 @@ export const fetchData = async <D, E=Error>(
                 return {
                     code: "success",
                     data,
+                    msg: ""
                 };
 
             } catch (error) {
