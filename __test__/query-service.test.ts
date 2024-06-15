@@ -13,10 +13,18 @@ const idDict = {
 }
 
 function generatePrompt(logs: Array<Array<string>>, idDictionary: Record<string, string>): string { 
+    // Move last entry to first
+    if (logs.length > 1) {
+        const lastIndex = logs.length - 1;
+        const temp = logs[0];
+        logs[0] = logs[lastIndex];
+        logs[lastIndex] = temp;
+    }
+
     // Get the logs in a designed format
     const formattedLogs = logs.map(log => {
         const position = idDictionary[log[0]] ? ` in the ${idDictionary[log[0]]}` : '';
-        return `ID ${log[0]} User ${log[1]}${position} ${log[2]} ${log[3]}.`;
+        return `ID ${log[0]} User ${log[1]}${position} ${log[3]}.`;
     });
     const combinedLogs = formattedLogs.join(' ');
 
