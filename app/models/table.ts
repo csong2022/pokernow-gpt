@@ -27,106 +27,83 @@ interface Dictionary<T> {
 }
 
 export class Table {
-    private button: number; //position of button as an int
-    private seats: Array<boolean>; //index 0-9 for which positions are seated
-    private inPot: Array<boolean>; //index 0-9 for whuch positions are in the current pot
-    private playerBets: Array<number>; //array for players bet in current street
-    private players: Array<Player>; //array of players
-    private runout: Array<Card>; //array of Cards for the community cards
-    private pot: number //current pot
-    private gameType: string; //string for no limit holdem or pot limit omaha
-    private stakes: number; //stake in big blinds
-    private queue: Queue<Array<string>>;
-    private dict: Dictionary<any>;
-    private pos: number;
+    private player_positions: Dictionary<any>;
+    private runout: string;
+    private pot: number;
+    private logs_queue: Queue<Array<string>>;
+    private num_players: number;
 
-    constructor(button: number, gameType: string, stakes: number) {
-        this.button = button;
-        this.seats = new Array<boolean>(10);
-        this.inPot = new Array<boolean>(10);
-        this.playerBets = new Array<number>(10);
-        this.players = new Array<Player>(10);
-        this.runout = new Array<Card>(5);
-        this.pot = 0
-        this.gameType = gameType;
-        this.stakes = stakes;
-        this.queue = new Queue<Array<string>>()
-        this.dict = {}
-        this.pos = 0
+    constructor() {
+        this.player_positions = [];
+        this.runout = "";
+        this.pot = 0;
+        this.logs_queue = new Queue();
+        this.num_players = 0;
     }
 
     public processLogs(logs: Array<Array<string>>) {
-        logs = logs.reverse()
+        logs = logs.reverse();
         logs.forEach((element) => {
             if (!(streets.includes(element[0]))) {
-                if (!(element[0] in this.dict)) {
-                    this.pos += 1
-                    this.dict[element[0]] = this.pos
+                if (!(element[0] in this.player_positions)) {
+                    this.num_players += 1;
+                    this.player_positions[element[0]] = this.num_players;
                 }
-                this.queue.enqueue(element)
+                this.logs_queue.enqueue(element);
             }
         })
         //console.log(this.queue)
         //console.log(this.dict)
     }
 
-    public getQueue() {
-        return this.queue
+    public getLogsQueue() {
+        return this.logs_queue;
     }
 
-    public getDict() {
-        return this.dict
+    public getPlayerPositions() {
+        return this.player_positions;
     }
 
     public convertPosition(num: number, total_players: number): string {
         if (num == total_players) {
-            return "BU"
+            return "BU";
         }
         if ((total_players >= 5) && (num == total_players - 1)) {
-            return "CO"
+            return "CO";
         }
         if (total_players <= 6) {
             switch (num) {
-                case 1: return "SB"
-                case 2: return "BB"
-                case 3: return "UTG"
-                case 4: return "HJ"
-                default: return ""
+                case 1: return "SB";
+                case 2: return "BB";
+                case 3: return "UTG";
+                case 4: return "HJ";
+                default: return "";
             }
         } else {
             switch (num) {
-                case 1: return "SB"
-                case 2: return "BB"
-                case 3: return "UTG"
-                case 4: return "UTG+1"
-                case 5: return "MP"
-                case 6: return "MP"
-                case 7: return "LJ"
-                case 8: return "HJ"
-                default: return ""
+                case 1: return "SB";
+                case 2: return "BB";
+                case 3: return "UTG";
+                case 4: return "UTG+1";
+                case 5: return "MP";
+                case 6: return "MP";
+                case 7: return "LJ";
+                case 8: return "HJ";
+                default: return "";
             }
         }
     }
 
     public convertDict() {
-        for (const key in this.dict) {
-            this.dict[key] = this.convertPosition(this.dict[key], this.pos)
+        for (const key in this.player_positions) {
+            this.player_positions[key] = this.convertPosition(this.player_positions[key], this.num_players)
         }
-        console.log(this.dict)
+        console.log(this.player_positions)
     }
 
-    public nextRound(): void {
-        this.dict = {}
-        this.pos = 0
-    }
-
-    public nextStreet(nextCard: Card): void {
-        this.runout.push(nextCard);
-        this.playerBets = new Array<number>(10);
-    }
-
-    public addCard(card: Card): void {
-        this.runout.push(card);
+    public nextHand(): void {
+        this.player_positions = {}
+        this.num_players = 0
     }
 
     public getStreet(): string {
@@ -144,73 +121,15 @@ export class Table {
         }
     }
 
-    public getPosition(position: number) {
-        let distance = 0;
-        
-        this.button
-    }
-
-    public addPlayer(position: number, player: Player): void {
-        this.seats[position] = true;
-        this.players[position] = player;
-    }
-
-    public removePlayer(position: number): void {
-        this.seats[position] = false;
-        delete this.players[position];
-    }
-
-    public foldPlayer(position: number): void {
-        this.inPot[position] = false;
-    }
-
-    public getNumPlayers(): number { //players sitting at table
-        return this.seats.filter(Boolean).length;
-    }
-
-    public getNumPotPlayers(): number { //players currently in the pot
-        return this.inPot.filter(Boolean).length;
-    }
-
-    public getRunout(): Array<Card> {
+    public getRunout(): string {
         return this.runout;
     }
 
-    public updatePot(pot: number): void {
-        this.pot = pot;
+    public updatePot(bet: number): void {
+        this.pot += bet;
     }
 
     public getPot(): number {
-        let bets = 0
-        for (const b of this.playerBets) {
-            if (typeof b == "number") {
-                bets += b; 
-            }
-        }
-        return this.pot + bets
-    }
-
-    public updateButton(position: number): void {
-        this.button = position;
-    }
-
-    public getNextButton(position: number): number {
-        if (position < 10) {
-            return position + 1
-        } else {
-            return 0
-        }
-    }
-
-    public getStakes(): number {
-        return this.stakes;
-    }
-
-    public getGameType(): string {
-        return this.gameType;
-    }
-
-    public getButton(): number {
-        return this.button;
+        return this.pot;
     }
 }
