@@ -10,7 +10,7 @@ const browser = await puppeteer.launch({
 const page = await browser.newPage();
 const default_timeout = 500;
 
-export async function init<D, E=Error>(game_id: string) : Response<D, E> {
+export async function init<D, E=Error>(game_id: string): Response<D, E> {
     if (!game_id) {
         return {
             code: "error",
@@ -21,7 +21,25 @@ export async function init<D, E=Error>(game_id: string) : Response<D, E> {
     await page.setViewport({width: 1920, height: 1080});
     return {
         code: "success",
-        data: `Successfully opened PokerNow game with id ${game_id}.` as D
+        data: null as D,
+        msg: `Successfully opened PokerNow game with id ${game_id}.`
+    }
+}
+
+export async function getGameInfo<D, E=Error>(): Response<D, E> {
+    var game_info;
+    try {
+        game_info = await page.$eval('.game-infos > .blind-value-ctn > .blind-value > span', (span: any) => span.textContent);
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error("Could not get game info.") as E
+        }
+    }
+    return {
+        code: "success",
+        data: game_info as D,
+        msg: "Successfully grabbed the game info."
     }
 }
 
@@ -62,7 +80,8 @@ export async function sendEnterTableRequest<D, E=Error>(name: string, stack_size
     }
     return {
         code: "success",
-        data: "Table ingress request successfully sent." as D
+        data: null as D,
+        msg: "Table ingress request successfully sent."
     }
 }
 
@@ -78,7 +97,8 @@ export async function waitForTableEntry<D, E=Error>(): Response<D, E> {
     }
     return {
         code: "success",
-        data: "Successfully entered table." as D
+        data: null as D,
+        msg: "Successfully entered table."
     }
 }
 
@@ -109,7 +129,8 @@ export async function waitForNextHand<D, E=Error>(num_players: number, max_turn_
     // finally return
     return {
         code: "success",
-        data: "Waited for next hand to start." as D
+        data: null as D,
+        msg: "Waited for next hand to start."
     }
 }
 
@@ -125,7 +146,8 @@ export async function waitForPlayerTurn<D, E=Error>(): Response<D, E> {
     }
     return {
         code: "success",
-        data: "Waited for player turn to start." as D
+        data: null as D,
+        msg: "Waited for player turn to start."
     }
 }
 
@@ -140,7 +162,8 @@ export async function waitForPlayerAction<D, E=Error>(): Response<D, E> {
     }
     return {
         code: "success",
-        data: "Waited for player action." as D
+        data: null as D,
+        msg: "Waited for player action."
     }
 }
 
@@ -161,7 +184,8 @@ export async function waitForNextPlayerAction<D, E=Error>(max_turn_length: numbe
     }
     return {
         code: "success",
-        data: "Waited for next player action." as D
+        data: null as D,
+        msg: "Waited for next player action."
     }
 
 }
@@ -177,7 +201,8 @@ export async function waitForWinner<D, E=Error>(): Response<D, E> {
     }
     return {
         code: "success",
-        data: "Winner of hand has been determined." as D
+        data: null as D,
+        msg: "Winner of hand has been determined."
     }
 }
 
@@ -192,7 +217,8 @@ export async function call<D, E=Error>(): Response<D, E> {
     }
     return {
         code: "success",
-        data: "Successfully executed call action." as D
+        data: null as D,
+        msg: "Successfully executed call action."
     }
 }
 
@@ -207,7 +233,8 @@ export async function fold<D, E=Error>(): Response<D, E> {
     }
     return {
         code: "success",
-        data: "Successfully executed fold action." as D
+        data: null as D,
+        msg: "Successfully executed fold action."
     }
 }
 
@@ -222,7 +249,8 @@ export async function check<D, E=Error>(): Response<D, E> {
     }
     return {
         code: "success",
-        data: "Successfully executed check action." as D
+        data: null as D,
+        msg: "Successfully executed check action."
     }
 }
 
@@ -240,6 +268,7 @@ export async function bet<D, E=Error>(bet_amount: number) {
     }
     return {
         code: "success",
-        data: `Successfully executed bet action with amount ${bet_amount}.` as D
+        data: null as D,
+        msg: `Successfully executed bet action with amount ${bet_amount}.`
     }
 }

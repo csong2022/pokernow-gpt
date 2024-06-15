@@ -41,9 +41,9 @@ test('test chens table 123', async () => {
         console.log("valid actions until starting", pruneres)
         let t = new Table()
         t.nextHand()
-        t.processLogs(res5)
+        t.processLogs(pruneres)
         t.convertDict()
-        t.processLogs(res5)
+        t.processLogs(pruneres)
         t.convertDict()
         //console.log(t.getPlayerPositions.)
     }
