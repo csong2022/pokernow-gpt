@@ -1,40 +1,17 @@
-import { Card } from "./card.ts"
-import { Player } from "./player.ts"
+import { Queue } from "../utils/data-structures.ts"
 
 const streets = ["Flop", "Turn", "River"]
 
-class Queue<T> {
-    private q: T[] = [];
-    enqueue(item: T): void {
-      this.q.push(item);
-    }
-    dequeue(): T | undefined {
-      return this.q.shift();
-    }
-    peek(): T | undefined {
-        return this.q[0];
-    }
-    isEmpty(): boolean {
-        return this.q.length === 0;
-    }
-    size(): number {
-      return this.q.length;
-    }
-  }
-
-interface Dictionary<T> {
-    [Key: string]: T;
-}
 
 export class Table {
-    private player_positions: Dictionary<any>;
+    private player_positions: Map<string, string>;
     private runout: string;
     private pot: number;
     private logs_queue: Queue<Array<string>>;
     private num_players: number;
 
     constructor() {
-        this.player_positions = [];
+        this.player_positions = new Map<string, string>();
         this.runout = "";
         this.pot = 0;
         this.logs_queue = new Queue();
@@ -95,29 +72,29 @@ export class Table {
     }
 
     public convertDict() {
-        for (const key in this.player_positions) {
-            this.player_positions[key] = this.convertPosition(this.player_positions[key], this.num_players)
+        for (let key of this.player_positions.keys()) {
+            this.player_positions.set(key, this.convertPosition(parseInt(this.player_positions.get(key)!), this.num_players));
         }
-        console.log(this.player_positions)
+        //console.log(this.player_positions.keys());
     }
 
     public nextHand(): void {
-        this.player_positions = {}
-        this.num_players = 0
+        this.player_positions = new Map<string, string>();
+        this.num_players = 0;
     }
 
     public getStreet(): string {
         if (this.runout.length == 0) {
-            return "Preflop"
+            return "Preflop";
         } else if (this.runout.length == 3) {
-            return "Flop"
+            return "Flop";
         } else if (this.runout.length == 4) {
-            return "Turn"
+            return "Turn";
         } else if (this.runout.length == 5) {
-            return "River"
+            return "River";
         } else {
             console.error("Could not get runout street");
-            return "Error"
+            return "Error";
         }
     }
 
