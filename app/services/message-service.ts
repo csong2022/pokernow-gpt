@@ -40,6 +40,17 @@ interface Runout {
 const streets = ["Flop:", "Turn:", "River:"]
 const actions = ["calls", "folds", "checks", "bets", "raises", "posts"]
 
+export function pruneStarting(msgs: Array<string>): Array<string> {
+    let res = new Array<string>;
+    let i = 0
+    while ((i < msgs.length) && !(msgs[i].includes("starting hand #"))) {
+        res.push(msgs[i])
+        i += 1
+    }
+    res.push(msgs[i])
+    return res
+}
+
 export function validateMsg(msg: string): Array<string> {
     let w = getFirstWord(msg)
     if (streets.includes(w)) {
