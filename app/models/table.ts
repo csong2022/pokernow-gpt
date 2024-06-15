@@ -45,6 +45,9 @@ export class Table {
         if (!(typeof curr === 'undefined')) {
             let num = parseInt(curr)
             if (num == total_players) {
+                if (total_players == 2) {
+                    return "BB"
+                }
                 return "BU";
             }
             if ((total_players >= 5) && (num == total_players - 1)) {
