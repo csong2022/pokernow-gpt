@@ -43,6 +43,8 @@ test('test chens table 123', async () => {
         t.nextHand()
         t.processLogs(res5)
         t.convertDict()
+        t.processLogs(res5)
+        t.convertDict()
         //console.log(t.getPlayerPositions.)
     }
     if (log.code === ERROR_RESPONSE) {

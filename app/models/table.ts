@@ -22,9 +22,9 @@ export class Table {
         logs = logs.reverse();
         logs.forEach((element) => {
             if (!(streets.includes(element[0]))) {
-                if (!(element[0] in this.player_positions)) {
+                if (!(this.player_positions.has(element[0]))) {
                     this.num_players += 1;
-                    this.player_positions[element[0]] = this.num_players;
+                    this.player_positions.set(element[0], this.num_players.toString())
                 }
                 this.logs_queue.enqueue(element);
             }
@@ -41,41 +41,45 @@ export class Table {
         return this.player_positions;
     }
 
-    public convertPosition(num: number, total_players: number): string {
-        if (num == total_players) {
-            return "BU";
-        }
-        if ((total_players >= 5) && (num == total_players - 1)) {
-            return "CO";
-        }
-        if (total_players <= 6) {
-            switch (num) {
-                case 1: return "SB";
-                case 2: return "BB";
-                case 3: return "UTG";
-                case 4: return "HJ";
-                default: return "";
+    public convertPosition(curr: string | undefined, total_players: number): string {
+        if (!(typeof curr === 'undefined')) {
+            let num = parseInt(curr)
+            if (num == total_players) {
+                return "BU";
             }
-        } else {
-            switch (num) {
-                case 1: return "SB";
-                case 2: return "BB";
-                case 3: return "UTG";
-                case 4: return "UTG+1";
-                case 5: return "MP";
-                case 6: return "MP";
-                case 7: return "LJ";
-                case 8: return "HJ";
-                default: return "";
+            if ((total_players >= 5) && (num == total_players - 1)) {
+                return "CO";
+            }
+            if (total_players <= 6) {
+                switch (num) {
+                    case 1: return "SB";
+                    case 2: return "BB";
+                    case 3: return "UTG";
+                    case 4: return "HJ";
+                    default: return curr;
+                }
+            } else {
+                switch (num) {
+                    case 1: return "SB";
+                    case 2: return "BB";
+                    case 3: return "UTG";
+                    case 4: return "UTG+1";
+                    case 5: return "MP";
+                    case 6: return "MP";
+                    case 7: return "LJ";
+                    case 8: return "HJ";
+                    default: return curr;
+                }
             }
         }
+        return ""
     }
 
     public convertDict() {
         for (let key of this.player_positions.keys()) {
-            this.player_positions.set(key, this.convertPosition(parseInt(this.player_positions.get(key)!), this.num_players));
+            this.player_positions.set(key, this.convertPosition(this.player_positions.get(key), this.num_players));
         }
-        //console.log(this.player_positions.keys());
+        console.log(this.player_positions);
     }
 
     public nextHand(): void {
