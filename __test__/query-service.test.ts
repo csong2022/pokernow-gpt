@@ -18,5 +18,9 @@ function generatePrompt(logs: Array<Array<string>>): string{
     return `${combinedLogs} ${question}`
 }
 
-const prompt = generatePrompt(testArray);
-console.log(prompt)
+test('test chens table 123', async () => {
+    const prompt = generatePrompt(testArray);
+    console.log(prompt)
+})
+/* const prompt = generatePrompt(testArray);
+console.log(prompt) */
