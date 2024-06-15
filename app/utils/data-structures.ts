@@ -15,8 +15,4 @@ export class Queue<T> {
     size(): number {
       return this.q.length;
     }
-  }
-
-export interface Dictionary<T> {
-    [Key: string]: T;
 }

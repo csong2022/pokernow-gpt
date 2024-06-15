@@ -1,4 +1,3 @@
-import { Dictionary } from "../utils/data-structures.ts";
 import { Player } from "./player.ts"
 
 export class Game {
@@ -18,5 +17,9 @@ export class Game {
 
     public getStakes() {
         return this.stakes;
+    }
+
+    public getPlayers() {
+        return this.players;
     }
 }

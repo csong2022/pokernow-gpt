@@ -1,4 +1,4 @@
-import { Queue, Dictionary } from "../utils/data-structures.ts"
+import { Queue } from "../utils/data-structures.ts"
 
 const streets = ["Flop", "Turn", "River"]
 
