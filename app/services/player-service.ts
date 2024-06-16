@@ -1,4 +1,4 @@
-import { query } from '../database/db-service.ts';
+import { query } from './db-service.ts';
 import { emptyOrSingleRow } from '../utils/query-utils.ts'
 
 export async function get(player_id: string): Promise<string> {
