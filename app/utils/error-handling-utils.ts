@@ -1,5 +1,3 @@
-import { ERROR } from "sqlite3";
-
 export const SUCCESS_RESPONSE = "success";
 export const ERROR_RESPONSE = "error";
 
