@@ -6,7 +6,6 @@ import { fetchData, getFirst, getCreatedAt, getData, getMsg } from './app/servic
 import { validateAllMsg } from './app/services/message-service.ts';
 import { logResponse, DebugMode } from './app/utils/error-handling-utils.ts';
 
-
 export class Bot {
     private game: Game;
     private table: Table;

@@ -9,18 +9,18 @@ export const fetchData = async <D, E=Error>(
     after: string = "",
     bodyData?: Record<string, unknown>
 ): Response<D, E> => {
-    let fetchOptions: RequestInit = {
+    const fetchOptions: RequestInit = {
         headers: {
             'Content=type': 'applications/json'
         },
         method,
     };
-    let baseURL = "https://www.pokernow.club/games/".concat(url)
-    let beforeStr = "/log?before_at=".concat(before)
-    let afterStr = "&after_at=".concat(after)
-    let fullargs = beforeStr.concat(afterStr).concat("&mm=false&v=2")
-    let apiUrl = baseURL.concat(fullargs)
-    console.log(apiUrl)
+    const baseURL = "https://www.pokernow.club/games/".concat(url);
+    const beforeStr = "/log?before_at=".concat(before);
+    const afterStr = "&after_at=".concat(after);
+    const fullargs = beforeStr.concat(afterStr).concat("&mm=false&v=2");
+    const apiUrl = baseURL.concat(fullargs);
+    console.log(apiUrl);
 
     const urlSearchParams = new URLSearchParams();
     
@@ -55,6 +55,7 @@ export const fetchData = async <D, E=Error>(
 interface Data {
     logs: Array<Log>
 }
+
 interface Log {
     at: string,
     created_at: string,
@@ -62,32 +63,32 @@ interface Log {
 }
 
 export function getData(log: any): Data {
-    let data = log.data as JSON
-    let str = JSON.stringify(data)
-    const res = JSON.parse(str) as Data
-    return res
+    const data = log.data as JSON;
+    const str = JSON.stringify(data);
+    const res = JSON.parse(str) as Data;
+    return res;
 }
 
 export function getMsg(data: Data): Array<string> {
-    let res = new Array<string>
+    const res = new Array<string>;
     data.logs.forEach((element) => {
         res.push(element.msg)
-    })
-    return res
+    });
+    return res;
 }
 
 export function getCreatedAt(data: Data): Array<string> {
-    let res = new Array<string>
+    const res = new Array<string>;
     data.logs.forEach((element) => {
         res.push(element.created_at)
-    })
-    return res
+    });
+    return res;
 }
 
 export function getLast(arr: Array<string>): string {
-    return arr[arr.length - 1]
+    return arr[arr.length - 1];
 }
 
 export function getFirst(arr: Array<string>): string {
-    return arr[0]
+    return arr[0];
 }

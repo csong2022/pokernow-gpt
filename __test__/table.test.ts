@@ -4,8 +4,8 @@ import { PlayerData } from "../app/models/player-data.ts"
 //const table = require('./table')
 
 test('properly set variables', () => {
-    let table1 = new Table()
-    expect(table1.getPot()).toBe(0)
-    table1.updatePot(1)
-    expect(table1.getPot()).toBe(1)
+    const table1 = new Table();
+    expect(table1.getPot()).toBe(0);
+    table1.updatePot(1);
+    expect(table1.getPot()).toBe(1);
 })
