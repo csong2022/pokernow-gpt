@@ -2,7 +2,6 @@ import express from 'express';
 import bot_factory from './bot-factory.ts'
 import player_router from './app/routes/player-routes.ts';
 
-
 const app = express();
 const port = 8080;
 
