@@ -1,7 +1,7 @@
 import * as express from 'express';
 import * as player_controller from '../controllers/player-controller.ts';
 
-var router = express.Router();
+let router = express.Router();
 
 router.get('/', player_controller.get);
 
