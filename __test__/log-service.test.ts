@@ -30,24 +30,24 @@ test('test chens table 123', async () => {
     const log = await fetchData("GET", "pgl2i8eXxJBQDBvxTNN1a9urf", "", "171763427711700")
     if (log.code === SUCCESS_RESPONSE) {
         //console.log('success', log.data)
-        let res = getData(log)
-        let res1 = getMsg(res)
-        console.log("messages", res1)
-        let prune = pruneStarting(res1)
-        console.log("pruned until starting", prune)
-        let res5 = validateAllMsg(res1)
-        console.log("all msgs", res5)
-        let pruneres = validateAllMsg(prune)
-        console.log("valid actions until starting", pruneres)
-        let t = new Table()
-        t.nextHand()
-        t.processLogs(pruneres)
-        t.convertDict()
-        t.processLogs(pruneres)
-        t.convertDict()
+        const res = getData(log);
+        const res1 = getMsg(res);
+        console.log("messages", res1);
+        const prune = pruneStarting(res1);
+        console.log("pruned until starting", prune);
+        const res5 = validateAllMsg(res1);
+        console.log("all msgs", res5);
+        const pruneres = validateAllMsg(prune);
+        console.log("valid actions until starting", pruneres);
+        const t = new Table();
+        t.nextHand();
+        t.processLogs(pruneres);
+        t.convertDict();
+        t.processLogs(pruneres);
+        t.convertDict();
         //console.log(t.getPlayerPositions.)
     }
     if (log.code === ERROR_RESPONSE) {
-        console.log('error', log.error)
+        console.log('error', log.error);
     }
 })
