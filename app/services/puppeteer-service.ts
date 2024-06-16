@@ -43,6 +43,11 @@ export async function getGameInfo<D, E=Error>(): Response<D, E> {
     }
 }
 
+export function convertGameInfo(game_info: string) {
+    // TODO: implement conversion
+    return {stakes: 10, game_type: "NLH"};
+}
+
 // send enter table request as non-host player
 export async function sendEnterTableRequest<D, E=Error>(name: string, stack_size: number): Response<D, E> {
     if (name.length < 2 || name.length > 14) {

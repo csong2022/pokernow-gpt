@@ -1,7 +1,6 @@
 import fetch from 'node-fetch'
 
 import type { Response } from '../utils/error-handling-utils.ts';
-//import { SUCCESS_RESPONSE } from '../utils/error-handling-utils.ts';
 
 export const fetchData = async <D, E=Error>(
     method: string = "GET",

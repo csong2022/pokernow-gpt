@@ -1,5 +1,5 @@
 // Creating query service
-import { fetchData, getCreatedAt, getData, getMsg, getLast, getFirst } from '../app/services/log-service.ts';
+import { fetchData, getCreatedAt, getData, getMsg, getLast, getFirst } from './log-service.ts';
 
 // const response = await fetchData()
 // if response.code === "success") {}
