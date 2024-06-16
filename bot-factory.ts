@@ -23,7 +23,7 @@ async function init() {
     game = new Game(game_id, game_info_obj.stakes, game_info_obj.game_type)
 }
 
-let bot_factory = async function() {
+const bot_factory = async function() {
     await init();
     const bot = new Bot(debug_mode, game);
     await bot.run();

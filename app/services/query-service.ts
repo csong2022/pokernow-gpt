@@ -5,5 +5,5 @@ import { fetchData, getCreatedAt, getData, getMsg, getLast, getFirst } from './l
 // if response.code === "success") {}
 
 
-let prompt: string = 'testing';
+const prompt: string = 'testing';
 console.log(prompt);
