@@ -23,6 +23,7 @@ export class Bot {
     public async run() {
         await this.enterTableInProgress();
         await this.waitForHand();
+        //TODO: implement loop until STOP SIGNAL (perhaps from UI?)
         while (true) {
             await this.playOneHand();
         }
