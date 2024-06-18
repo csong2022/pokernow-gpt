@@ -15,6 +15,7 @@ async function init(): Promise<Game> {
     logResponse(await puppeteer_service.waitForGameInfo(), debug_mode);
 
     var res, game_info_data;
+    console.log("Getting game info.");
     res = await puppeteer_service.getGameInfo();
     logResponse(res, debug_mode);
     if (res.code == "success") {
