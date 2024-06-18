@@ -12,6 +12,8 @@ async function init(): Promise<Game> {
     console.log(`The PokerNow game with id: ${game_id} will now open.`);
     logResponse(await puppeteer_service.init(game_id), debug_mode);
 
+    logResponse(await puppeteer_service.waitForGameInfo(), debug_mode);
+
     var res, game_info_data;
     res = await puppeteer_service.getGameInfo();
     logResponse(res, debug_mode);
