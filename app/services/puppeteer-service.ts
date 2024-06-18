@@ -59,9 +59,14 @@ export async function getGameInfo<D, E=Error>(): Response<D, E> {
     }
 }
 
-export function convertGameInfo(game_info: string) {
-    // TODO: implement conversion
-    return {stakes: 10, game_type: "NLH"};
+export function convertGameInfo(game_info: string): any {
+    const re = RegExp('([A-Z]+)\\s~\\s([0-9]+)\\s\/\\s[0-9]+');
+    const matches = re.exec(game_info);
+    if (matches && matches.length == 3) {
+        return {stakes: matches[1], game_type: matches[2]};
+    } else {
+        throw new Error("Failed to convert game info.");
+    }
 }
 
 // send enter table request as non-host player
