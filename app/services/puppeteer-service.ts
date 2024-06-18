@@ -26,6 +26,22 @@ export async function init<D, E=Error>(game_id: string): Response<D, E> {
     }
 }
 
+export async function waitForGameInfo<D, E=Error>(): Response<D, E> {
+    try {
+        await page.waitForSelector('.game-infos > .blind-value-ctn > .blind-value > span', {timeout: 60000});
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error("Failed to wait for game information.") as E
+        }
+    }
+    return {
+        code: "success",
+        data: null as D,
+        msg: "Successfully waited for game information."
+    }
+}
+
 export async function getGameInfo<D, E=Error>(): Response<D, E> {
     var game_info;
     try {
@@ -208,6 +224,23 @@ export async function waitForWinner<D, E=Error>(): Response<D, E> {
         code: "success",
         data: null as D,
         msg: "Winner of hand has been determined."
+    }
+}
+
+// wait for the current hand to finish after a winner has been decided (when the "winner" elem is no longer present)
+export async function waitForHandEnd<D, E=Error>(): Response<D, E> {
+    try {
+        await page.waitForSelector('.table-player.winner', {hidden: true, timeout: default_timeout * 10});
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error("Failed to wait for hand to finish.") as E
+        }
+    }
+    return {
+        code: "success",
+        data: null as D,
+        msg: "Waited for hand to finish."
     }
 }
 
