@@ -61,41 +61,44 @@ export class Bot {
             await puppeteer_service.waitForPlayerTurn();
         
             var res;
-            const log = await fetchData("GET", this.game.getGameId(), "", lastCreated)
+            const log = await fetchData("GET", this.game.getGameId(), "", lastCreated);
             if (log.code === "success") {
-                let res = getData(log)
+                let res = getData(log);
                 if (this.first_fetch) {
                     //pruneLog(res);
                     this.first_fetch = false;
                 }
                 //console.log("res", res)
-                let onlyValid = validateAllMsg(getMsg(res))
+                let onlyValid = validateAllMsg(getMsg(res));
         
-                this.table.processLogs(onlyValid)
-                console.log("onlyValid", onlyValid)
+                this.table.processLogs(onlyValid);
+                console.log("onlyValid", onlyValid);
                 //console.log(this.table.getQueue())
-                this.table.convertDict()
+                this.table.convertDict();
                 console.log("updated player positions")
                 
-                console.log(lastCreated)
+                console.log(lastCreated);
                 //console.log(this.table.getDict())
                 //console.log(this.table.getQueue())
         
-                lastCreated = getFirst(getCreatedAt(res))
-                console.log("updated lastCreated")
-                console.log(lastCreated)
+                lastCreated = getFirst(getCreatedAt(res));
+                console.log("updated lastCreated");
+                console.log(lastCreated);
             }
         
             res = await puppeteer_service.waitForPlayerTurn();
         
-            console.log("Waiting for next player action to start.")
+            console.log("Waiting for next player action to start.");
             logResponse(await puppeteer_service.waitForNextPlayerAction(30), this.debug_mode);
         
+            console.log("Checking for winner.");
             res = await puppeteer_service.waitForWinner();
             if (res.code == "success") {
                 break;
             }
         }
-        console.log("Completed a hand.")
+        console.log("Waiting for hand to end.")
+        logResponse(await puppeteer_service.waitForHandEnd(), this.debug_mode);
+        console.log("Completed a hand.");
     }
 }
