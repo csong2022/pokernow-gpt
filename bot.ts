@@ -65,7 +65,6 @@ export class Bot {
             if (log.code === "success") {
                 let res = getData(log);
                 if (this.first_fetch) {
-                    //pruneLog(res);
                     this.first_fetch = false;
                 }
                 //console.log("res", res)
@@ -73,7 +72,6 @@ export class Bot {
         
                 this.table.processLogs(onlyValid);
                 console.log("onlyValid", onlyValid);
-                //console.log(this.table.getQueue())
                 this.table.convertDict();
                 console.log("updated player positions")
                 

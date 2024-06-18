@@ -1,15 +1,15 @@
-export class PlayerData {
+export class PlayerStats {
     private id: string;
     private total_hands: number;
+    private walks: number;
     private vpip_hands: number;
-    private walk: number;
     private vpip_stat: number;
     private pfr_hands: number;
     private pfr_stat: number;
 
     constructor(id: string) {
         this.vpip_hands = 0
-        this.walk = 0
+        this.walks = 0
         this.vpip_stat = 0
         this.pfr_hands = 0
         this.pfr_stat = 0
@@ -30,7 +30,7 @@ export class PlayerData {
     }
 
     public getWalk(): number {
-        return this.walk;
+        return this.walks;
     }
 
     public getVPIPHands(): number {

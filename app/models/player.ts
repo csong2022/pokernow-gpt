@@ -1,10 +1,10 @@
-import { PlayerData } from "./player-data.ts";
+import { PlayerStats} from "./player-stats.ts";
 
 export class Player {
     private name: string;
-    private player_data: PlayerData;
+    private player_data: PlayerStats;
 
-    constructor(name: string, player_data: PlayerData) {
+    constructor(name: string, player_data: PlayerStats) {
         this.name = name;
         this.player_data = player_data;
     }
@@ -13,7 +13,7 @@ export class Player {
         return this.name;
     }
 
-    public getPlayerData(): PlayerData {
+    public getPlayerData(): PlayerStats {
         return this.player_data;
     }
 
@@ -25,7 +25,7 @@ export class Player {
 }
 
 export class Hero extends Player {
-    constructor(name: string, player_data: PlayerData) {
+    constructor(name: string, player_data: PlayerStats) {
         super(name, player_data);
     }
 }

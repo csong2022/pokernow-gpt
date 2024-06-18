@@ -11,22 +11,44 @@ export async function get(player_id: string): Promise<string> {
     return emptyOrSingleRow(rows);
 }
 
-export async function create(player_data: any): Promise<void> {
+export async function create(player_stats: any): Promise<void> {
     await query(
         `INSERT INTO player
-         (id, total_hands)
+         (id, total_hands, walks, vpip_hands, vpip_stat, pfr_hands, pfr_stat)
          VALUES
-         (?, ?)`,
-         [player_data.id, player_data.total_hands]
+         (?, ?, ?, ?, ?, ?, ?)`,
+         [
+            player_stats.id, 
+            player_stats.total_hands, 
+            player_stats.walks, 
+            player_stats.vpip_hands,
+            player_stats.vpip_stat,
+            player_stats.pfr_hands,
+            player_stats.pfr_stat
+        ]
     )
 }
 
-export async function update(player_id: string, player_data: any): Promise<void> {
+export async function update(player_id: string, player_stats: any): Promise<void> {
     await query(
         `UPDATE player
-         SET total_hands = ?
+         SET 
+            total_hands = ?,
+            walks = ?,
+            vpip_hands = ?,
+            vpip_stat = ?,
+            pfr_hands = ?,
+            pfr_stat = ?
          WHERE id = ?`,
-         [player_data.total_hands, player_id]
+         [
+            player_stats.id, 
+            player_stats.total_hands, 
+            player_stats.walks, 
+            player_stats.vpip_hands,
+            player_stats.vpip_stat,
+            player_stats.pfr_hands,
+            player_stats.pfr_stat
+        ]
     )
 }
 

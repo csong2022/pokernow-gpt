@@ -1,6 +1,6 @@
 import { Table } from "../app/models/table.ts"
 import { Player } from "../app/models/player.ts"
-import { PlayerData } from "../app/models/player-data.ts"
+import { PlayerData } from "../app/models/player-stats.ts"
 //const table = require('./table')
 
 test('properly set variables', () => {
