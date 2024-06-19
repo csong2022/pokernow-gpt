@@ -37,7 +37,8 @@ export function pruneStarting(msgs: Array<string>): Array<string> {
 }
 export function validateMsg(msg: string): Array<string> {
     let w = getFirstWord(msg);
-    if (Object.values<string>(Streets).includes(w)) {
+    let temp = msg.split(": ")[0];
+    if (Object.values<string>(Streets).includes(temp)) {
         w = w.substring(0, w.length - 1);
         const temp = msg.split(": ");
         msg = temp[1];
@@ -53,7 +54,8 @@ export function validateAllMsg(msgs: Array<string>): Array<Array<string>> {
     msgs.forEach((element) => {
         const first = getFirstWord(element);
         const player = getPlayer(element);
-        if (Object.values<string>(Streets).includes(first)) {
+        let temp = element.split(": ")[0];
+        if (Object.values<string>(Streets).includes(temp)) {
             res.push(validateMsg(element));
         }
         if (player.length > 1) {
