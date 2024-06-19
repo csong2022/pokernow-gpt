@@ -9,8 +9,8 @@ export enum Actions {
 
 export enum Streets {
     PREFLOP = "Preflop",
-    FLOP = "Flop:",
-    TURN = "Turn:",
-    RIVER = "River:",
+    FLOP = "Flop",
+    TURN = "Turn",
+    RIVER = "River",
 }
 
