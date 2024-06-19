@@ -33,11 +33,11 @@ export class Table {
         //console.log(this.dict)
     }
 
-    public getLogsQueue() {
+    public getLogsQueue(): Queue<Array<string>> {
         return this.logs_queue;
     }
 
-    public getPlayerPositions() {
+    public getPlayerPositions(): Map<string, string> {
         return this.player_positions;
     }
 

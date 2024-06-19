@@ -3,7 +3,7 @@ import * as puppeteer_service from './app/services/puppeteer-service.ts';
 import { Game } from './app/models/game.ts';
 import { Table } from './app/models/table.ts';
 import { fetchData, getFirst, getCreatedAt, getData, getMsg } from './app/services/log-service.ts';
-import { validateAllMsg } from './app/services/message-service.ts';
+import { pruneStarting, validateAllMsg } from './app/services/message-service.ts';
 import { logResponse, DebugMode } from './app/utils/error-handling-utils.ts';
 
 export class Bot {
@@ -64,11 +64,12 @@ export class Bot {
             const log = await fetchData("GET", this.game.getGameId(), "", lastCreated);
             if (log.code === "success") {
                 let res = getData(log);
+                let msg = getMsg(res);
                 if (this.first_fetch) {
+                    msg = pruneStarting(msg);
                     this.first_fetch = false;
                 }
-                //console.log("res", res)
-                let onlyValid = validateAllMsg(getMsg(res));
+                let onlyValid = validateAllMsg(msg);
         
                 this.table.processLogs(onlyValid);
                 console.log("onlyValid", onlyValid);
@@ -76,8 +77,6 @@ export class Bot {
                 console.log("updated player positions")
                 
                 console.log(lastCreated);
-                //console.log(this.table.getDict())
-                //console.log(this.table.getQueue())
         
                 lastCreated = getFirst(getCreatedAt(res));
                 console.log("updated lastCreated");
