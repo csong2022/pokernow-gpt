@@ -1,14 +1,18 @@
+import { Player } from "./player.ts"
 import { Queue } from "../utils/data-structures.ts"
+import * as player_service from "../services/player-service.ts"
+import { PlayerStats } from "./player-stats.ts";
 
 const streets = ["Flop", "Turn", "River"]
 
 
 export class Table {
-    private player_positions: Map<string, string>;
-    private runout: string;
-    private pot: number;
     private logs_queue: Queue<Array<string>>;
     private num_players: number;
+    private player_cache: Map<string, Player>;
+    private player_positions: Map<string, string>;
+    private pot: number;
+    private runout: string;
 
     constructor() {
         this.player_positions = new Map<string, string>();
@@ -16,6 +20,7 @@ export class Table {
         this.pot = 0;
         this.logs_queue = new Queue();
         this.num_players = 0;
+        this.player_cache = new Map<string, Player>();
     }
 
     public processLogs(logs: Array<Array<string>>) {
@@ -45,6 +50,27 @@ export class Table {
     public getLogsQueue(): Queue<Array<string>> {
         return this.logs_queue;
     }
+
+    public cacheAndUpdatePlayer(msg: string): void {
+        const player_id = msg[0];
+        const player_name = msg[1];
+
+
+        if (!this.player_cache.has(player_id)) {
+            const player_str = player_service.get(player_id);
+            // if the player does not currently exist in the database, create a new player in db
+            // otherwise retrieve the existing player from database,
+            // then, add player to player_cache and update player_stats based on the action in msg
+            let player: Player;
+            if (!player_str) {
+                const new_player_stats = new PlayerStats(player_id);
+                player_service.create(new_player_stats);
+                player = new Player(player_name, new_player_stats);
+            } else {
+            }
+        }
+    }
+
 
     public getPlayerPositions(): Map<string, string> {
         return this.player_positions;
@@ -115,10 +141,6 @@ export class Table {
         }
     }
 
-    public getRunout(): string {
-        return this.runout;
-    }
-
     public updatePot(bet: number): void {
         this.pot += bet;
     }
@@ -126,4 +148,9 @@ export class Table {
     public getPot(): number {
         return this.pot;
     }
+
+    public getRunout(): string {
+        return this.runout;
+    }
+
 }

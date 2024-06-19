@@ -2,16 +2,16 @@ export class PlayerStats {
     private id: string;
     private total_hands: number;
     private walks: number;
-    private vpip_count: number;
+    private vpip_hands: number;
     private vpip_stat: number;
-    private pfr_count: number;
+    private pfr_hands: number;
     private pfr_stat: number;
 
     constructor(id: string) {
-        this.vpip_count = 0
+        this.vpip_hands = 0
         this.walks = 0
         this.vpip_stat = 0
-        this.pfr_count = 0
+        this.pfr_hands = 0
         this.pfr_stat = 0
         this.id = id;
         this.total_hands = 0
@@ -34,28 +34,28 @@ export class PlayerStats {
     }
 
     public getVPIPHands(): number {
-        return this.vpip_count;
+        return this.vpip_hands;
     }
 
     public setVPIPHands(vpip: number): void {
-        this.vpip_count = vpip
+        this.vpip_hands = vpip
     }
 
     public setVPIPStat(): void {
-        var vpip:number = this.vpip_count / (this.getTotalHands() - this.getWalk());
+        var vpip:number = this.vpip_hands / (this.getTotalHands() - this.getWalk());
         this.vpip_stat = vpip
     }
 
     public getPFRHands(): number {
-        return this.pfr_count;
+        return this.pfr_hands;
     }
 
     public setPFRHands(pfr: number): void {
-        this.pfr_count = pfr
+        this.pfr_hands = pfr
     }
 
     public setPFRStat(): void {
-        var pfr:number = this.pfr_count / (this.getTotalHands() - this.getWalk());
+        var pfr:number = this.pfr_hands / (this.getTotalHands() - this.getWalk());
         this.pfr_stat = pfr
     }
 }

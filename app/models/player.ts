@@ -1,4 +1,4 @@
-import { PlayerStats} from "./player-stats.ts";
+import { PlayerStats } from "./player-stats.ts";
 
 export class Player {
     private name: string;
