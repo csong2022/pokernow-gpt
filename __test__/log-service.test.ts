@@ -44,7 +44,10 @@ test('test chens table 123', async () => {
         t.processLogs(pruneres);
         t.convertDict();
         console.log(t.getLogsQueue());
+        console.log(t.getLogsQueue().size());
         console.log(t.popLogsQueue());
+        console.log(t.getLogsQueue());
+        console.log(t.getLogsQueue().size());
         //console.log(t.getPlayerPositions.)
     }
     if (log.code === ERROR_RESPONSE) {

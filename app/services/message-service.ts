@@ -1,3 +1,4 @@
+import { Actions, Streets } from "../utils/log-processing-utils.ts";
 
 export function getPlayer(msg: string): Array<string> {
     const res = new Array<string>;
@@ -24,22 +25,6 @@ export function getFirstWord(msg: string): string {
     return res;
 }
 
-interface Action {
-    playerName: string,
-    playerID: string,
-    playerAction: string,
-    actionMsg: string
-    actionNum: number,
-}
-
-interface Runout {
-    street: string,
-    cards: string
-}
-
-const streets = ["Flop:", "Turn:", "River:"];
-const actions = ["calls", "folds", "checks", "bets", "raises", "posts"];
-
 export function pruneStarting(msgs: Array<string>): Array<string> {
     const res = new Array<string>;
     let i = 0;
@@ -50,15 +35,14 @@ export function pruneStarting(msgs: Array<string>): Array<string> {
     res.push(msgs[i]);
     return res;
 }
-
 export function validateMsg(msg: string): Array<string> {
     let w = getFirstWord(msg);
-    if (streets.includes(w)) {
+    if (Object.values<string>(Streets).includes(w)) {
         w = w.substring(0, w.length - 1);
         const temp = msg.split(": ");
         msg = temp[1];
         return [w, msg];
-    } else if (actions.includes(w)) {
+    } else if (Object.values<string>(Actions).includes(w)) {
         return [w, msg];
     }
     return [];
@@ -69,7 +53,7 @@ export function validateAllMsg(msgs: Array<string>): Array<Array<string>> {
     msgs.forEach((element) => {
         const first = getFirstWord(element);
         const player = getPlayer(element);
-        if (streets.includes(first)) {
+        if (Object.values<string>(Streets).includes(first)) {
             res.push(validateMsg(element));
         }
         if (player.length > 1) {
