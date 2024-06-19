@@ -27,7 +27,7 @@ test('test chens table', async () => {
 })
 
 test('test chens table 123', async () => {
-    const log = await fetchData("GET", "pgl2i8eXxJBQDBvxTNN1a9urf", "", "171763427711700")
+    const log = await fetchData("GET", "pglASZj2h6E1zduo4KGuhggyg", "", "")
     if (log.code === SUCCESS_RESPONSE) {
         //console.log('success', log.data)
         const res = getData(log);
@@ -43,8 +43,8 @@ test('test chens table 123', async () => {
         t.nextHand();
         t.processLogs(pruneres);
         t.convertDict();
-        t.processLogs(pruneres);
-        t.convertDict();
+        console.log(t.getLogsQueue());
+        console.log(t.popLogsQueue());
         //console.log(t.getPlayerPositions.)
     }
     if (log.code === ERROR_RESPONSE) {
