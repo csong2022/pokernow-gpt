@@ -34,6 +34,14 @@ export class Table {
         //console.log(this.dict)
     }
 
+    public popLogsQueue(): Array<string> | undefined{
+        if (!(this.logs_queue.isEmpty())) {
+            let res = this.logs_queue.dequeue()!;
+            return res;
+        }
+        return undefined
+    }
+
     public getLogsQueue(): Queue<Array<string>> {
         return this.logs_queue;
     }
@@ -89,6 +97,7 @@ export class Table {
     public nextHand(): void {
         this.player_positions = new Map<string, string>();
         this.num_players = 0;
+        this.logs_queue = new Queue();
     }
 
     public getStreet(): string {
