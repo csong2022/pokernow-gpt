@@ -1,6 +1,7 @@
 import express from 'express';
+import path from 'path';
 import { fileURLToPath } from 'url';
-import { dirname, path } from 'path';
+import { dirname } from 'path';
 
 const app = express();
 

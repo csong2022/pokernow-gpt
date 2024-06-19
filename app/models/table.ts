@@ -19,6 +19,7 @@ export class Table {
     }
 
     public processLogs(logs: Array<Array<string>>) {
+        this.logs_queue = new Queue();
         logs = logs.reverse();
         logs.forEach((element) => {
             if (!(streets.includes(element[0]))) {
