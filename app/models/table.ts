@@ -2,6 +2,7 @@ import { Player } from "./player.ts"
 import { Queue } from "../utils/data-structures.ts"
 import * as player_service from "../services/player-service.ts"
 import { PlayerStats } from "./player-stats.ts";
+import { Actions } from "../utils/log-processing-utils.ts";
 
 const streets = ["Flop", "Turn", "River"]
 
@@ -13,6 +14,7 @@ export class Table {
     private player_positions: Map<string, string>;
     private pot: number;
     private runout: string;
+    private player_action: Map<string, number>;
 
     constructor() {
         this.player_positions = new Map<string, string>();
@@ -21,6 +23,7 @@ export class Table {
         this.logs_queue = new Queue();
         this.num_players = 0;
         this.player_cache = new Map<string, Player>();
+        this.player_action = new Map<string, number>();
     }
 
     public processLogs(logs: Array<Array<string>>) {
@@ -37,6 +40,19 @@ export class Table {
         })
         //console.log(this.queue)
         //console.log(this.dict)
+    }
+
+    public processStats(logs: Array<Array<string>>) {
+        const pfr = [Actions.BET, Actions.RAISE]
+        logs.forEach((element) => {
+            if (element.length > 3) {
+                let id = element[0]
+                let action = element[2]
+                if (!(id in this.player_action)) {
+                    this.player_action.set(id, 0);
+                }
+            }
+        })
     }
 
     public popLogsQueue(): Array<string> | undefined{
