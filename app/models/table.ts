@@ -43,13 +43,22 @@ export class Table {
     }
 
     public processStats(logs: Array<Array<string>>) {
+        // 0 means they didn't put in money, 1 means they put in money but didn't raise (CALL)
+        // 2 means they put in money through a raise. 1 -> vpip, 2 -> vpip & pfr
+        // higher numbers override lower numbers
         const pfr = [Actions.BET, Actions.RAISE]
         logs.forEach((element) => {
             if (element.length > 3) {
                 let id = element[0]
                 let action = element[2]
-                if (!(id in this.player_action)) {
-                    this.player_action.set(id, 0);
+                let actionNum = 0
+                if (action == Actions.CALL) {
+                    actionNum = 1
+                } else if (action in pfr) {
+                    actionNum = 2
+                }
+                if ((!(id in this.player_action)) || this.player_action.get(id)! < actionNum) {
+                    this.player_action.set(id, actionNum);
                 }
             }
         })
