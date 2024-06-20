@@ -14,17 +14,15 @@ export async function get(player_id: string): Promise<string> {
 export async function create(player_stats_JSON: any): Promise<void> {
     await query(
         `INSERT INTO PlayerStats
-         (id, total_hands, walks, vpip_hands, vpip_stat, pfr_hands, pfr_stat)
+         (id, total_hands, walks, vpip_hands, pfr_hands)
          VALUES
-         (?, ?, ?, ?, ?, ?, ?)`,
+         (?, ?, ?, ?, ?)`,
          [
             player_stats_JSON.id, 
             player_stats_JSON.total_hands, 
             player_stats_JSON.walks, 
             player_stats_JSON.vpip_hands,
-            player_stats_JSON.vpip_stat,
-            player_stats_JSON.pfr_hands,
-            player_stats_JSON.pfr_stat
+            player_stats_JSON.pfr_hands
         ]
     )
 }
@@ -36,18 +34,14 @@ export async function update(player_id: string, player_stats_JSON: any): Promise
             total_hands = ?,
             walks = ?,
             vpip_hands = ?,
-            vpip_stat = ?,
-            pfr_hands = ?,
-            pfr_stat = ?
+            pfr_hands = ?
          WHERE id = ?`,
          [
             player_stats_JSON.id, 
             player_stats_JSON.total_hands, 
             player_stats_JSON.walks, 
             player_stats_JSON.vpip_hands,
-            player_stats_JSON.vpip_stat,
-            player_stats_JSON.pfr_hands,
-            player_stats_JSON.pfr_stat
+            player_stats_JSON.pfr_hands
         ]
     )
 }

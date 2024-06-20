@@ -21,9 +21,9 @@ async function createPlayerTable(db: any): Promise<void> {
                 total_hands INT NOT NULL,
                 walks INT NOT NULL,
                 vpip_hands INT NOT NULL,
-                vpip_stat REAL NOT NULL,
+                vpip_stat REAL AS (vpip_hands / CAST((total_hands - walks) AS REAL)),
                 pfr_hands INT NOT NULL,
-                pfr_stat REAL NOT NULL
+                pfr_stat REAL AS (pfr_hands / CAST((total_hands - walks) AS REAL))
             );
         `);
     } catch (err) {
