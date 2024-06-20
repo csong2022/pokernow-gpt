@@ -54,17 +54,19 @@ export class Bot {
         logResponse(await puppeteer_service.waitForNextHand(10, 30), this.debug_mode);
     }
 
+    // pull logs
+    // wait for any player action to start
+    // check if it is the player's turn -> perform actions
+    // check if there is a winner -> perform end of hand actions
     private async playOneHand() {
         var lastCreated;
         while (true) {
-            console.log("Waiting for player turn to start.")
-            await puppeteer_service.waitForPlayerTurn();
-        
             var res;
             const log = await fetchData("GET", this.game.getGameId(), "", lastCreated);
             if (log.code === "success") {
                 let res = getData(log);
                 let msg = getMsg(res);
+                // first action by any player
                 if (this.first_fetch) {
                     msg = pruneStarting(msg);
                     this.first_fetch = false;
@@ -83,13 +85,19 @@ export class Bot {
                 console.log(lastCreated);
             }
         
-            res = await puppeteer_service.waitForPlayerTurn();
-        
             console.log("Waiting for next player action to start.");
             logResponse(await puppeteer_service.waitForNextPlayerAction(30), this.debug_mode);
+
+            console.log("Checking for player's turn.");
+            res = await puppeteer_service.waitForPlayerTurn();
+            // player's turn
+            if (res.code == "success") {
+
+            }
         
             console.log("Checking for winner.");
             res = await puppeteer_service.waitForWinner();
+            // end of hand
             if (res.code == "success") {
                 break;
             }
