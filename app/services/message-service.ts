@@ -26,6 +26,7 @@ export function getFirstWord(msg: string): string {
 }
 
 export function pruneStarting(msgs: Array<string>): Array<string> {
+    //starts from the top of logs
     const res = new Array<string>;
     let i = 0;
     while ((i < msgs.length) && !(msgs[i].includes("starting hand #"))) {
@@ -35,6 +36,19 @@ export function pruneStarting(msgs: Array<string>): Array<string> {
     res.push(msgs[i]);
     return res;
 }
+
+export function pruneFlop(msgs: Array<string>): Array<string> {
+    //starts from the bottom of logs
+    const res = new Array<string>;
+    let i = msgs.length - 1;
+    while ((i >= 0) && !(msgs[i].includes("Flop: "))) {
+        res.push(msgs[i]);
+        i -= 1;
+    }
+    res.push(msgs[i]);
+    return res;
+}
+
 export function validateMsg(msg: string): Array<string> {
     let w = getFirstWord(msg);
     let temp = msg.split(": ")[0];
