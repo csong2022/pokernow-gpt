@@ -1,7 +1,7 @@
-import * as player_service from "../app/services/player-service.ts"
+import * as player_service from "../../app/services/player-service.ts"
 import { assert } from "chai";
-import { PlayerStats } from "../app/models/player-stats.ts"
-import { Table } from "../app/models/table.ts";
+import { PlayerStats } from "../../app/models/player-stats.ts"
+import { Table } from "../../app/models/table.ts";
 
 const player_id = "chan-abcd";
 const player_JSON = {
@@ -15,18 +15,17 @@ const player_JSON = {
 }
 
 describe('cachePlayer tests', async() => {
-    //setup
     it("should properly cache player when player does not exist in db", async() => {
+        debugger;
         const table = new Table();
-        const msg = [player_id, "chan∂"]
-        table.cachePlayer(msg);
+        const msg = [player_id, "chan"]
+        await table.cachePlayer(msg);
         
-        //assert
         assert.equal(table.getPlayerCache().size, 1);
         assert.isNotNull(table.getPlayerCache().get(player_id));
         const player_stats_str = await player_service.get(player_id);
-        assert.isAbove(player_stats_str.length, 0);
-        const player_stats = JSON.parse(player_stats_str);
+        assert.isNotEmpty(player_stats_str);
+        const player_stats = JSON.parse(JSON.stringify(player_stats_str));
         assert.equal(player_stats.id, player_id);
         
         //cleanup
@@ -37,7 +36,7 @@ describe('cachePlayer tests', async() => {
         const table = new Table();
         const msg = [player_id, "chan"]
         await player_service.create(player_JSON);
-        table.cachePlayer(msg);
+        await table.cachePlayer(msg);
     
         //assert
         assert.equal(table.getPlayerCache().size, 1);
