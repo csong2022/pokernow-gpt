@@ -4,34 +4,34 @@ import { emptyOrSingleRow } from '../utils/db-query-utils.ts'
 export async function get(player_id: string): Promise<string> {
     const rows = await query(
         `SELECT *
-         FROM Player
+         FROM PlayerStats
          WHERE id = ?`,
          [player_id]
     )
     return emptyOrSingleRow(rows);
 }
 
-export async function create(player_stats: any): Promise<void> {
+export async function create(player_stats_JSON: any): Promise<void> {
     await query(
-        `INSERT INTO player
+        `INSERT INTO PlayerStats
          (id, total_hands, walks, vpip_hands, vpip_stat, pfr_hands, pfr_stat)
          VALUES
          (?, ?, ?, ?, ?, ?, ?)`,
          [
-            player_stats.id, 
-            player_stats.total_hands, 
-            player_stats.walks, 
-            player_stats.vpip_hands,
-            player_stats.vpip_stat,
-            player_stats.pfr_hands,
-            player_stats.pfr_stat
+            player_stats_JSON.id, 
+            player_stats_JSON.total_hands, 
+            player_stats_JSON.walks, 
+            player_stats_JSON.vpip_hands,
+            player_stats_JSON.vpip_stat,
+            player_stats_JSON.pfr_hands,
+            player_stats_JSON.pfr_stat
         ]
     )
 }
 
-export async function update(player_id: string, player_stats: any): Promise<void> {
+export async function update(player_id: string, player_stats_JSON: any): Promise<void> {
     await query(
-        `UPDATE player
+        `UPDATE PlayerStats
          SET 
             total_hands = ?,
             walks = ?,
@@ -41,20 +41,20 @@ export async function update(player_id: string, player_stats: any): Promise<void
             pfr_stat = ?
          WHERE id = ?`,
          [
-            player_stats.id, 
-            player_stats.total_hands, 
-            player_stats.walks, 
-            player_stats.vpip_hands,
-            player_stats.vpip_stat,
-            player_stats.pfr_hands,
-            player_stats.pfr_stat
+            player_stats_JSON.id, 
+            player_stats_JSON.total_hands, 
+            player_stats_JSON.walks, 
+            player_stats_JSON.vpip_hands,
+            player_stats_JSON.vpip_stat,
+            player_stats_JSON.pfr_hands,
+            player_stats_JSON.pfr_stat
         ]
     )
 }
 
 export async function remove(player_id: string): Promise<void>{
     await query(
-        `DELETE FROM player
+        `DELETE FROM PlayerStats
          WHERE id = ?`,
          [player_id]
     )
