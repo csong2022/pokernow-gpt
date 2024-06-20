@@ -15,12 +15,12 @@ export class Table {
     private runout: string;
 
     constructor() {
-        this.player_positions = new Map<string, string>();
-        this.runout = "";
-        this.pot = 0;
         this.logs_queue = new Queue();
         this.num_players = 0;
         this.player_cache = new Map<string, Player>();
+        this.player_positions = new Map<string, string>();
+        this.pot = 0;
+        this.runout = "";
     }
 
     public processLogs(logs: Array<Array<string>>) {
@@ -61,20 +61,18 @@ export class Table {
 
         if (!this.player_cache.has(player_id)) {
             const player_stats_str = await player_service.get(player_id);
-            console.log(player_stats_str);
             // if the player does not currently exist in the database, create a new player in db
             // otherwise retrieve the existing player from database,
             // then, add player to player_cache
-            let player: Player;
             if (!player_stats_str) {
                 const new_player_stats = new PlayerStats(player_id);
                 await player_service.create(new_player_stats.toJSON());
-                player = new Player(player_name, new_player_stats);
+                this.player_cache.set(player_id, new Player(player_name, new_player_stats));
             } else {
-                const player_stats_JSON = JSON.parse(player_stats_str);
-                player = new Player(player_name, new PlayerStats(player_id, player_stats_JSON));
+                const player_stats_JSON = JSON.parse(JSON.stringify(player_stats_str));
+                this.player_cache.set(player_id, new Player(player_name, new PlayerStats(player_id, player_stats_JSON)));
             }
-            this.player_cache.set(player_id, player);
+
         }
     }
 
