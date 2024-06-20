@@ -82,9 +82,12 @@ export class Table {
     }
 
     public async cacheFromLogs(logs: Array<Array<string>>): Promise<void> {
-        logs.forEach((msg) => {
-            this.cachePlayer(msg)
-        })
+        for (let i = 0; i < logs.length; i++) {
+            let msg = logs[i];
+            if (msg.length > 3) {
+                await this.cachePlayer(msg);
+            }
+        }
     }
 
     public popLogsQueue(): Array<string> | undefined{
