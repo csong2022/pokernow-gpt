@@ -1,4 +1,4 @@
-import sqlite3 from 'sqlite3';
+import sqlite3, { Database } from 'sqlite3';
 import { open } from 'sqlite';
 
 const db = await open({
@@ -16,9 +16,14 @@ async function createTables(db: any): Promise<void> {
 async function createPlayerTable(db: any): Promise<void> {
     try {
         await db.exec(`
-            CREATE TABLE IF NOT EXISTS Player (
+            CREATE TABLE IF NOT EXISTS PlayerStats (
                 id TEXT PRIMARY KEY NOT NULL,
-                total_hands INT NOT NULL
+                total_hands INT NOT NULL,
+                walks INT NOT NULL,
+                vpip_hands INT NOT NULL,
+                vpip_stat REAL NOT NULL,
+                pfr_hands INT NOT NULL,
+                pfr_stat REAL NOT NULL
             );
         `);
     } catch (err) {
