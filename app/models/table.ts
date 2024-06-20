@@ -110,6 +110,7 @@ export class Table {
         return this.player_cache;
     }
 
+    // take in a list of players and cache all the players into player_cache if not exists already
     public async cachePlayer(msg: string[]): Promise<void> {
         const player_id = msg[0];
         const player_name = msg[1];
