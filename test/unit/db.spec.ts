@@ -9,9 +9,7 @@ const player_JSON = {
     "total_hands": 10,
     "walks": 2,
     "vpip_hands": 5,
-    "vpip_stat": 0.625,
-    "pfr_hands": 3,
-    "pfr_stat": 0.375
+    "pfr_hands": 3
 }
 
 describe('cachePlayer tests', async() => {
@@ -42,7 +40,7 @@ describe('cachePlayer tests', async() => {
         assert.equal(table.getPlayerCache().size, 1);
         assert.isNotNull(table.getPlayerCache().get(player_id));
         const player = table.getPlayerCache().get(player_id)!;
-        assert.equal(player.getPlayerStats().getTotalHands(), 10);
+        assert.equal(player.getPlayerData().getTotalHands(), 10);
     
         //cleanup
         player_service.remove(player_id);
