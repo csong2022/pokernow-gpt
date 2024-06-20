@@ -13,14 +13,12 @@ export class Player {
         return this.name;
     }
 
-    public getPlayerData(): PlayerStats {
+    public getPlayerStats(): PlayerStats {
         return this.player_stats;
     }
 
-    public updatePlayerData(id: string, total_hands?: number): void {
-        if (total_hands) {
-            this.player_stats.setTotalHands(total_hands);
-        }
+    public updatePlayerStats(player_data: PlayerStats): void {
+        this.player_stats = player_data;
     }
 }
 
