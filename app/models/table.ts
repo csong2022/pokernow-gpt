@@ -46,16 +46,16 @@ export class Table {
         // 0 means they didn't put in money, 1 means they put in money but didn't raise (CALL)
         // 2 means they put in money through a raise. 1 -> vpip, 2 -> vpip & pfr
         // higher numbers override lower numbers
-        const pfr = [Actions.BET, Actions.RAISE]
+        const pfr = [Actions.BET, Actions.RAISE];
         logs.forEach((element) => {
             if (element.length > 3) {
-                let id = element[0]
-                let action = element[2]
-                let actionNum = 0
+                let id = element[0];
+                let action = element[2];
+                let actionNum = 0;
                 if (action == Actions.CALL) {
-                    actionNum = 1
+                    actionNum = 1;
                 } else if (action in pfr) {
-                    actionNum = 2
+                    actionNum = 2;
                 }
                 if ((!(id in this.player_action)) || this.player_action.get(id)! < actionNum) {
                     this.player_action.set(id, actionNum);
@@ -64,12 +64,42 @@ export class Table {
         })
     }
 
+    public processPlayers() {
+        for (let playerID of this.player_action.keys()) {
+            let player = this.player_cache.get(playerID);
+            let player_action = this.player_action.get(playerID);
+            let player_stats = player?.getPlayerStats()
+            if (player_action == 2) {
+                player_stats ?.setVPIPHands(player_stats?.getVPIPHands() + 1)
+                player_stats ?.setPFRHands(player_stats?.getPFRHands() + 1)
+            } else if (player_action == 1) {
+                player_stats?.setVPIPHands(player_stats?.getVPIPHands() + 1)
+            }
+            player_stats?.setTotalHands(player_stats?.getTotalHands() + 1)
+            player?.updatePlayerStats(player_stats!)
+            this.player_cache.set(playerID, player!)
+        }
+    }
+
+    public async cacheFromLogs(logs: Array<Array<string>>): Promise<void> {
+        for (let i = 0; i < logs.length; i++) {
+            let msg = logs[i];
+            if (msg.length > 3) {
+                await this.cachePlayer(msg);
+            }
+        }
+    }
+
     public popLogsQueue(): Array<string> | undefined{
         if (!(this.logs_queue.isEmpty())) {
             let res = this.logs_queue.dequeue()!;
             return res;
         }
         return undefined
+    }
+
+    public getPlayerAction(): Map<string, number> {
+        return this.player_action;
     }
 
     public getLogsQueue(): Queue<Array<string>> {
