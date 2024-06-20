@@ -51,23 +51,25 @@ export class Table {
         return this.logs_queue;
     }
 
-    public cacheAndUpdatePlayer(msg: string): void {
+    public async cachePlayer(msg: string): Promise<void> {
         const player_id = msg[0];
         const player_name = msg[1];
 
-
         if (!this.player_cache.has(player_id)) {
-            const player_str = player_service.get(player_id);
+            const player_str = await player_service.get(player_id);
             // if the player does not currently exist in the database, create a new player in db
             // otherwise retrieve the existing player from database,
-            // then, add player to player_cache and update player_stats based on the action in msg
+            // then, add player to player_cache
             let player: Player;
             if (!player_str) {
                 const new_player_stats = new PlayerStats(player_id);
-                player_service.create(new_player_stats);
+                await player_service.create(new_player_stats.toJSON());
                 player = new Player(player_name, new_player_stats);
             } else {
+                const player_JSON = JSON.parse(player_str);
+                player = new Player(player_name, new PlayerStats(player_id, player_JSON));
             }
+            this.player_cache.set(player_id, player);
         }
     }
 
