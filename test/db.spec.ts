@@ -43,7 +43,7 @@ describe('cachePlayer tests', async() => {
         assert.equal(table.getPlayerCache().size, 1);
         assert.isNotNull(table.getPlayerCache().get(player_id));
         const player = table.getPlayerCache().get(player_id)!;
-        assert.equal(player.getPlayerData().getTotalHands(), 10);
+        assert.equal(player.getPlayerStats().getTotalHands(), 10);
     
         //cleanup
         player_service.remove(player_id);

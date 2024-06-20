@@ -8,18 +8,6 @@ test('test chens table', async () => {
     const log = await fetchData("GET", "pgltNd4w17e6J4JXouHm6dw5l")
     if (log.code === SUCCESS_RESPONSE) {
         console.log('success', log.data)
-        /* let res = getData(log)
-        let res1 = getMsg(res)
-        console.log(res1)
-        let p1 = getPlayer(res1[0])
-        console.log(p1)
-        let p2 = getPlayerAction(res1[0], "EpfAPvbm1K")
-        console.log(p2)
-        let p3 = getFirstWord(p2)
-        console.log(p3)
-        let res2 = getCreatedAt(res)
-        console.log(res2) */
-        //console.log(res.logs[0].msg)
     }
     if (log.code === ERROR_RESPONSE) {
         console.log('error', log.error)
