@@ -1,4 +1,4 @@
-export enum Actions {
+export enum Action {
     BET = "bets",
     CALL = "calls",
     FOLD = "folds",
@@ -7,10 +7,13 @@ export enum Actions {
     CHECK = "checks",
 }
 
-export enum Streets {
+export enum Street {
     PREFLOP = "Preflop",
     FLOP = "Flop",
     TURN = "Turn",
     RIVER = "River",
 }
 
+export function convertToBB(bet_amount: number, stakes: number): number {
+    return bet_amount / stakes;
+}

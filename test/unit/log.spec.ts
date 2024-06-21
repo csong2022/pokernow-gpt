@@ -26,7 +26,7 @@ describe('log service test', async () => {
             console.log("valid actions until starting", pruneres);
             const t = new Table();
             t.nextHand();
-            t.processLogs(pruneres);
+            t.preProcessLogs(pruneres);
             t.processStats(prune_flop_verify);
             console.log("player_actions", t.getPlayerAction());
             await t.cacheFromLogs(prune_flop_verify)
