@@ -1,11 +1,11 @@
-import { Player } from "./player.ts"
-import { Queue } from "../utils/data-structures.ts"
 import * as player_service from "../services/player-service.ts"
+import { Action } from "../utils/log-processing-utils.ts";
+import { Player } from "./player.ts"
+import { PlayerAction } from "./player-action.ts";
 import { PlayerStats } from "./player-stats.ts";
-import { Actions } from "../utils/log-processing-utils.ts";
+import { Queue } from "../utils/data-structures.ts"
 
-const streets = ["Flop", "Turn", "River"]
-
+const streets = ["Flop", "Turn", "River"];
 
 export class Table {
     private logs_queue: Queue<Array<string>>;
@@ -14,7 +14,9 @@ export class Table {
     private player_positions: Map<string, string>;
     private pot: number;
     private runout: string;
+    //TODO: rename this
     private player_action: Map<string, number>;
+    private player_actions: Map<string, PlayerAction[]>;
 
     constructor() {
         this.logs_queue = new Queue();
@@ -24,9 +26,10 @@ export class Table {
         this.pot = 0;
         this.runout = "";
         this.player_action = new Map<string, number>();
+        this.player_actions = new Map<string, PlayerAction[]>;
     }
 
-    public processLogs(logs: Array<Array<string>>) {
+    public preProcessLogs(logs: Array<Array<string>>) {
         this.logs_queue = new Queue();
         logs = logs.reverse();
         logs.forEach((element) => {
@@ -46,13 +49,13 @@ export class Table {
         // 0 means they didn't put in money, 1 means they put in money but didn't raise (CALL)
         // 2 means they put in money through a raise. 1 -> vpip, 2 -> vpip & pfr
         // higher numbers override lower numbers
-        const pfr = [Actions.BET, Actions.RAISE];
+        const pfr = [Action.BET, Action.RAISE];
         logs.forEach((element) => {
             if (element.length > 3) {
                 let id = element[0];
                 let action = element[2];
                 let actionNum = 0;
-                if (action == Actions.CALL) {
+                if (action == Action.CALL) {
                     actionNum = 1;
                 } else if (action in pfr) {
                     actionNum = 2;
@@ -100,6 +103,20 @@ export class Table {
 
     public getPlayerAction(): Map<string, number> {
         return this.player_action;
+    }
+
+    public getPlayerActions(): Map<string, PlayerAction[]> {
+        return this.getPlayerActions();
+    }
+
+    public updateOrCreatePlayerAction(player_id: string, player_action: PlayerAction): void {
+        const actions = this.player_actions.get(player_id) ?? [];
+        if (actions.length > 0) {
+            actions.push(player_action);
+        } else {
+            actions.push(player_action);
+            this.player_actions.set(player_id, actions);
+        }
     }
 
     public getLogsQueue(): Queue<Array<string>> {

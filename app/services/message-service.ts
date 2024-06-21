@@ -1,4 +1,4 @@
-import { Actions, Streets } from "../utils/log-processing-utils.ts";
+import { Action, Street } from "../utils/log-processing-utils.ts";
 
 export function getPlayer(msg: string): Array<string> {
     const res = new Array<string>;
@@ -65,12 +65,12 @@ export function pruneFlop(msgs: Array<string>): Array<string> {
 export function validateMsg(msg: string): Array<string> {
     let w = getFirstWord(msg);
     let temp = msg.split(": ")[0];
-    if (Object.values<string>(Streets).includes(temp)) {
+    if (Object.values<string>(Street).includes(temp)) {
         w = w.substring(0, w.length - 1);
         const temp = msg.split(": ");
         msg = temp[1];
         return [w, msg];
-    } else if (Object.values<string>(Actions).includes(w)) {
+    } else if (Object.values<string>(Action).includes(w)) {
         return [w, msg];
     }
     return [];
@@ -82,7 +82,7 @@ export function validateAllMsg(msgs: Array<string>): Array<Array<string>> {
         const first = getFirstWord(element);
         const player = getPlayer(element);
         let temp = element.split(": ")[0];
-        if (Object.values<string>(Streets).includes(temp)) {
+        if (Object.values<string>(Street).includes(temp)) {
             res.push(validateMsg(element));
         }
         if (player.length > 1) {
