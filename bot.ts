@@ -73,7 +73,7 @@ export class Bot {
                 }
                 let onlyValid = validateAllMsg(msg);
         
-                this.table.processLogs(onlyValid);
+                this.table.preProcessLogs(onlyValid);
                 console.log("onlyValid", onlyValid);
                 this.table.convertDict();
                 console.log("updated player positions")
@@ -92,7 +92,8 @@ export class Bot {
             res = await puppeteer_service.waitForPlayerTurn();
             // player's turn
             if (res.code == "success") {
-
+                // get my hole cards
+                
             }
         
             console.log("Checking for winner.");

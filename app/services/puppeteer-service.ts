@@ -177,6 +177,25 @@ export async function waitForPlayerTurn<D, E=Error>(): Response<D, E> {
     }
 }
 
+export async function getHand<D, E=Error>(): Response<D, E> {
+    let cards: string[] = [];
+    try {
+        await page.$$eval(".decision-current > .table-player-cards > div", (div: any) => 
+            cards.push(div.querySelector(".value").textContent) + 
+            cards.push(div.querySelector(".sub-suit").textContent));
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error("Failed to retrieve player's hand.") as E
+        }
+    }
+    return {
+        code: "success",
+        data: cards as D,
+        msg: "Successfully retrieved player's hand."
+    }
+}
+
 export async function waitForPlayerAction<D, E=Error>(): Response<D, E> {
     try {
         await page.waitForSelector(".table-player.decision-current", {timeout: default_timeout});
