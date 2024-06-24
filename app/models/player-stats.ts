@@ -45,7 +45,7 @@ export class PlayerStats {
     }
 
     public computeVPIPStat(): number {
-        return this.vpip_hands / (this.total_hands - this.walks);
+        return this.vpip_hands / (this.total_hands - this.walks) * 100;
     }
 
     public getPFRHands(): number {
@@ -57,7 +57,7 @@ export class PlayerStats {
     }
 
     public computePFRStat(): number {
-        return this.pfr_hands / (this.total_hands - this.walks);
+        return this.pfr_hands / (this.total_hands - this.walks) * 100;
     }
 
     public toJSON(): any {

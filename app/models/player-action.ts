@@ -7,16 +7,26 @@ export class PlayerAction {
 
     constructor(player_id: string, action: string, bet_amount_BBs?: number) {
         this.player_id = player_id;
-        this.action = action as Action;
+        this.action = Action[action as keyof typeof Action];
         if (bet_amount_BBs) {
             this.bet_amount_BBs = bet_amount_BBs;
         } else {
             this.bet_amount_BBs = 0;
         }
     }
+    public getPlayerId(): string {
+        return this.player_id;
+    }
+    public getAction(): string {
+        return this.action;
+    }
+    public getBetAmount(): number {
+        return this.bet_amount_BBs;
+    }
 
-    private toString() {
+    public toString() {
         let action_str = "";
+        console.log(this.action);
         switch (this.action) {
             case Action.BET:
                 action_str = `bet ${this.bet_amount_BBs}`

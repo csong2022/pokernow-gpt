@@ -5,8 +5,7 @@ import { PlayerAction } from "./player-action.ts";
 import { PlayerStats } from "./player-stats.ts";
 import { Queue } from "../utils/data-structures.ts"
 import { pruneFlop, pruneStarting, getPlayerStacksMsg } from "../services/message-service.ts";
-
-const streets = ["Flop", "Turn", "River"];
+import { Street } from "../utils/log-processing-utils.ts";
 
 export class Table {
     private logs_queue: Queue<Array<string>>;
@@ -38,7 +37,7 @@ export class Table {
         this.logs_queue = new Queue();
         logs = logs.reverse();
         logs.forEach((element) => {
-            if (!(streets.includes(element[0]))) {
+            if (!(Object.values<string>(Street).includes(element[0]))) {
                 if (!(this.player_positions.has(element[0]))) {
                     this.num_players += 1;
                     this.player_positions.set(element[0], this.num_players.toString())
@@ -117,7 +116,7 @@ export class Table {
     }
 
     public getPlayerActions(): Array<PlayerAction> {
-        return this.getPlayerActions();
+        return this.player_actions;
     }
 
     public updatePlayerActions(player_action: PlayerAction): void {
@@ -130,6 +129,10 @@ export class Table {
 
     public getPlayerCache(): Map<string, Player> {
         return this.player_cache;
+    }
+
+    public getPlayerStatsFromId(id: string): PlayerStats {
+        return this.player_cache.get(id)?.getPlayerStats()!;
     }
 
     // take in a list of players and cache all the players into player_cache if not exists already
@@ -157,6 +160,10 @@ export class Table {
 
     public getPlayerPositions(): Map<string, string> {
         return this.player_positions;
+    }
+
+    public getPositionFromID(id: string): string {
+        return this.player_positions.get(id)!;
     }
 
     public convertPosition(curr: string | undefined, total_players: number): string {
