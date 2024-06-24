@@ -16,7 +16,8 @@ export class Table {
     private runout: string;
     //TODO: rename this
     private player_action: Map<string, number>;
-    private player_actions: Map<string, PlayerAction[]>;
+    private player_actions: Array<PlayerAction>;
+    private all_in_runout: boolean;
 
     constructor() {
         this.logs_queue = new Queue();
@@ -26,7 +27,8 @@ export class Table {
         this.pot = 0;
         this.runout = "";
         this.player_action = new Map<string, number>();
-        this.player_actions = new Map<string, PlayerAction[]>;
+        this.player_actions = new Array<PlayerAction>;
+        this.all_in_runout = false;
     }
 
     public preProcessLogs(logs: Array<Array<string>>) {
@@ -229,6 +231,14 @@ export class Table {
 
     public getRunout(): string {
         return this.runout;
+    }
+
+    public getAllInRunout(): boolean {
+        return this.all_in_runout;
+    }
+
+    public setAllInRunout(all_in_runout: boolean): void {
+        this.all_in_runout = all_in_runout;
     }
 
 }
