@@ -16,7 +16,6 @@ describe('log service test', async () => {
             console.log("pruned until starting", prune);
             const prune_flop = pruneFlop(prune);
             console.log("prune_flop", prune_flop);
-            getPlayerStacksMsg(prune_flop);
             const prune_flop_verify = validateAllMsg(prune_flop);
             console.log("prune_flop verified", prune_flop_verify);
 
@@ -28,6 +27,8 @@ describe('log service test', async () => {
             t.nextHand();
             t.preProcessLogs(pruneres);
             t.processStats(prune_flop_verify);
+            t.setPlayerStacks(res1);
+            console.log("stacks", t.getPlayerStacks());
             console.log("player_actions", t.getPlayerAction());
             await t.cacheFromLogs(prune_flop_verify)
             console.log("player cache", t.getPlayerCache());

@@ -4,6 +4,7 @@ import { Player } from "./player.ts"
 import { PlayerAction } from "./player-action.ts";
 import { PlayerStats } from "./player-stats.ts";
 import { Queue } from "../utils/data-structures.ts"
+import { pruneFlop, pruneStarting, getPlayerStacksMsg } from "../services/message-service.ts";
 
 const streets = ["Flop", "Turn", "River"];
 
@@ -17,6 +18,7 @@ export class Table {
     //TODO: rename this
     private player_action: Map<string, number>;
     private player_actions: Map<string, PlayerAction[]>;
+    private player_stacks: Map<string, number>;
 
     constructor() {
         this.logs_queue = new Queue();
@@ -26,7 +28,8 @@ export class Table {
         this.pot = 0;
         this.runout = "";
         this.player_action = new Map<string, number>();
-        this.player_actions = new Map<string, PlayerAction[]>;
+        this.player_actions = new Map<string, PlayerAction[]>();
+        this.player_stacks = new Map<string, number>();
     }
 
     public preProcessLogs(logs: Array<Array<string>>) {
@@ -65,6 +68,14 @@ export class Table {
                 }
             }
         })
+    }
+
+    public getPlayerStacks(): Map<string, number> {
+        return this.player_stacks;
+    }
+
+    public setPlayerStacks(msgs: string[]): void {
+        this.player_stacks = getPlayerStacksMsg(pruneFlop(pruneStarting(msgs)));
     }
 
     public processPlayers() {
