@@ -44,8 +44,6 @@ export class Table {
                 this.logs_queue.enqueue(element);
             }
         })
-        //console.log(this.queue)
-        //console.log(this.dict)
     }
 
     public processStats(logs: Array<Array<string>>) {
@@ -206,7 +204,6 @@ export class Table {
         for (let key of this.player_positions.keys()) {
             this.player_positions.set(key, this.convertPosition(this.player_positions.get(key), this.num_players));
         }
-        console.log(this.player_positions);
     }
 
     public nextHand(): void {

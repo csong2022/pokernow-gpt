@@ -31,7 +31,6 @@ export function getPlayerStacksMsg(msgs: Array<string>): Map<string, number>{
     let res = new Map<string, number>;
 
     for (let i = 0; i < msgs.length; i++) {
-        console.log(msgs[i]);
         if (msgs[i].includes("Player stacks: ")) {
             let regExps = [...msgs[i].matchAll(re)];
             regExps.forEach((element) => {
@@ -39,7 +38,6 @@ export function getPlayerStacksMsg(msgs: Array<string>): Map<string, number>{
             })
         }
     }
-    //console.log(res);
     return res
 }
 
