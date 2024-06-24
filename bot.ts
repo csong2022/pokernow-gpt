@@ -21,9 +21,9 @@ export class Bot {
 
     public async run() {
         await this.enterTableInProgress();
-        await this.waitForHand();
         //TODO: implement loop until STOP SIGNAL (perhaps from UI?)
         while (true) {
+            await this.waitForHand();
             await this.playOneHand();
         }
     }
@@ -62,40 +62,51 @@ export class Bot {
         var lastCreated;
         while (true) {
             var res;
-            const log = await fetchData("GET", this.game.getGameId(), "", lastCreated);
-            if (log.code === "success") {
-                let res = getData(log);
-                let msg = getMsg(res);
-                // first action by any player
-                if (this.first_fetch) {
-                    msg = pruneStarting(msg);
-                    this.first_fetch = false;
+            if (!this.table.getAllInRunout()) {
+                const log = await fetchData("GET", this.game.getGameId(), "", lastCreated);
+                if (log.code === "success") {
+                    let res = getData(log);
+                    let msg = getMsg(res);
+                    // first action by any player
+                    if (this.first_fetch) {
+                        msg = pruneStarting(msg);
+                        this.first_fetch = false;
+                    }
+                    let onlyValid = validateAllMsg(msg);
+            
+                    this.table.preProcessLogs(onlyValid);
+                    console.log("onlyValid", onlyValid);
+                    this.table.convertDict();
+                    console.log("updated player positions")
+                    
+                    console.log(lastCreated);
+            
+                    lastCreated = getFirst(getCreatedAt(res));
+                    console.log("updated lastCreated");
+                    console.log(lastCreated);
                 }
-                let onlyValid = validateAllMsg(msg);
-        
-                this.table.preProcessLogs(onlyValid);
-                console.log("onlyValid", onlyValid);
-                this.table.convertDict();
-                console.log("updated player positions")
-                
-                console.log(lastCreated);
-        
-                lastCreated = getFirst(getCreatedAt(res));
-                console.log("updated lastCreated");
-                console.log(lastCreated);
             }
-        
-            console.log("Waiting for next player action to start.");
-            logResponse(await puppeteer_service.waitForNextPlayerAction(30), this.debug_mode);
 
-            console.log("Checking for player's turn.");
-            res = await puppeteer_service.waitForPlayerTurn();
-            // player's turn
-            if (res.code == "success") {
-                // get my hole cards
-                
-            }
+            //only check for next player action if the hand is not in a runout scenario (there are no more actions until end of hand)
+            if (!this.table.getAllInRunout()) {
+                console.log("Waiting for next player action to start.");
+                logResponse(await puppeteer_service.waitForNextPlayerAction(30), this.debug_mode);
         
+                console.log("Checking for player's turn.");
+                res = await puppeteer_service.waitForPlayerTurn();
+                // player's turn
+                if (res.code == "success") {
+                    // get my hole cards
+                        
+                }
+            }
+
+            res = await puppeteer_service.waitForAllInRunout();
+            if (res.code == "success") {
+                console.log("All in runout detected");
+                this.table.setAllInRunout(true);
+            }
+
             console.log("Checking for winner.");
             res = await puppeteer_service.waitForWinner();
             // end of hand
@@ -105,6 +116,7 @@ export class Bot {
         }
         console.log("Waiting for hand to end.")
         logResponse(await puppeteer_service.waitForHandEnd(), this.debug_mode);
+        this.table.setAllInRunout(false);
         console.log("Completed a hand.");
     }
 }
