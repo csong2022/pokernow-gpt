@@ -7,7 +7,7 @@ export class PlayerAction {
 
     constructor(player_id: string, action: string, bet_amount_BBs?: number) {
         this.player_id = player_id;
-        this.action = Action[action as keyof typeof Action];
+        this.action = action as Action;
         if (bet_amount_BBs) {
             this.bet_amount_BBs = bet_amount_BBs;
         } else {
@@ -26,20 +26,25 @@ export class PlayerAction {
 
     public toString() {
         let action_str = "";
-        console.log(this.action);
         switch (this.action) {
             case Action.BET:
-                action_str = `bet ${this.bet_amount_BBs}`
+                action_str = `bet ${this.bet_amount_BBs}`;
+                break;
             case Action.CALL:
-                action_str = `call ${this.bet_amount_BBs}`
+                action_str = `call ${this.bet_amount_BBs}`;
+                break;
             case Action.FOLD:
-                action_str = `fold`
+                action_str = "fold";
+                break;
             case Action.RAISE:
-                action_str = `bet ${this.bet_amount_BBs}`
+                action_str = `bet ${this.bet_amount_BBs}`;
+                break;
             case Action.POST:
-                action_str = `bet ${this.bet_amount_BBs}` 
+                action_str = `bet ${this.bet_amount_BBs}`;
+                break;
             case Action.CHECK:
-                action_str = `check`
+                action_str = "check";
+                break;
         }
         return action_str;
     }
