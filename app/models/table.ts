@@ -116,18 +116,12 @@ export class Table {
         return this.player_action;
     }
 
-    public getPlayerActions(): Map<string, PlayerAction[]> {
+    public getPlayerActions(): Array<PlayerAction> {
         return this.getPlayerActions();
     }
 
-    public updateOrCreatePlayerAction(player_id: string, player_action: PlayerAction): void {
-        const actions = this.player_actions.get(player_id) ?? [];
-        if (actions.length > 0) {
-            actions.push(player_action);
-        } else {
-            actions.push(player_action);
-            this.player_actions.set(player_id, actions);
-        }
+    public updatePlayerActions(player_action: PlayerAction): void {
+        this.player_actions.push(player_action);
     }
 
     public getLogsQueue(): Queue<Array<string>> {
