@@ -46,16 +46,16 @@ function defineCommunityCards(street: string, cards: string[]): string {
 
 function appendCards(query: string, cards: string[]): string {
     for (var i = 0; i < cards.length; i++) {
-        query.concat(cards[i]);
+        query = query.concat(cards[i]);
         if (i != cards.length - 1) {
-            query.concat(", ");
+            query = query.concat(", ");
         }
     }
     return query;
 }
 
 export function defineActions(table: Table) {
-    let query = "Here are the current actions that are relevant: ";
+    let query = "Here are the current actions that are relevant:\n";
     const player_actions = table.getPlayerActions();
     for (var i = 0; i < player_actions.length; i++)  {
         console.log("player_action indexed", player_actions[i]);
@@ -64,16 +64,18 @@ export function defineActions(table: Table) {
         let player_action_string = player_actions[i].toString();
         console.log("player action", player_action_string);
         let curr = `${player_pos} ${player_action_string}`;
+        //console.log("current action", curr);
         if (i != player_actions.length - 1) {
-            curr.concat(", ");
+            curr = curr.concat(", ");
+
         }
-        query.concat(curr);
+        query = query.concat(curr);
     }
     return query
 }
 
 export function defineStats(table: Table) {
-    let query = "Stats of players in the pot: "
+    let query = "Stats of players in the pot:\n"
     let cache = table.getPlayerCache();
     let player_ids = Array.from(table.getPlayerPositions().keys());
 
@@ -83,9 +85,9 @@ export function defineStats(table: Table) {
         let player_pos = table.getPositionFromID(player_id);
         let curr = `${player_pos}: VPIP: ${player_stats.computeVPIPStat()}, PFR: ${player_stats.computePFRStat()}`;
         if (i != player_ids.length - 1) {
-            curr.concat("\\n");
+            curr = curr.concat("\n");
         }
-        query.concat(curr);
+        query = query.concat(curr);
     }
     return query;
 }
