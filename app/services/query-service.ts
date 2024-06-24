@@ -1,12 +1,23 @@
+import { Game } from "../models/game.ts";
+import { PlayerAction } from "../models/player-action.ts";
+import { Player } from "../models/player.ts";
+import { Table } from "../models/table.ts";
 import { Queue } from "../utils/data-structures.ts";
+import { Street, convertToBB } from "../utils/log-processing-utils.ts";
 
 export async function constructQuery(street: string, stack_size: number, ) {
-    
+
 }
 
-function postProcessLogs(logs_queue: Queue<Array<string>>) {
-    while (logs_queue) {
+export function postProcessLogs(logs_queue: Queue<Array<string>>, game: Game) {
+    const table = game.getTable();
+    while (!(logs_queue.isEmpty())) {
+        //console.log(logs_queue);
         const log = logs_queue.dequeue();
+        if (log != null && !(Object.values<string>(Street).includes(log[0]))) {
+            let player_action = new PlayerAction(log[0], log[2], convertToBB(Number(log[4]), game.getStakes()));
+            table.updatePlayerActions(player_action);
+        }
     }
 }
 
@@ -43,7 +54,38 @@ function appendCards(query: string, cards: string[]): string {
     return query;
 }
 
-function defineActions() {
-    let query = "Here are the past player actions:"
-    
+export function defineActions(table: Table) {
+    let query = "Here are the current actions that are relevant: ";
+    const player_actions = table.getPlayerActions();
+    for (var i = 0; i < player_actions.length; i++)  {
+        console.log("player_action indexed", player_actions[i]);
+        let player_pos = table.getPositionFromID(player_actions[i].getPlayerId());
+        console.log("player position", player_pos);
+        let player_action_string = player_actions[i].toString();
+        console.log("player action", player_action_string);
+        let curr = `${player_pos} ${player_action_string}`;
+        if (i != player_actions.length - 1) {
+            curr.concat(", ");
+        }
+        query.concat(curr);
+    }
+    return query
+}
+
+export function defineStats(table: Table) {
+    let query = "Stats of players in the pot: "
+    let cache = table.getPlayerCache();
+    let player_ids = Array.from(table.getPlayerPositions().keys());
+
+    for (var i = 0; i < player_ids.length; i++)  {
+        let player_id = player_ids[i]
+        let player_stats = table.getPlayerStatsFromId(player_id)
+        let player_pos = table.getPositionFromID(player_id);
+        let curr = `${player_pos}: VPIP: ${player_stats.computeVPIPStat()}, PFR: ${player_stats.computePFRStat()}`;
+        if (i != player_ids.length - 1) {
+            curr.concat("\\n");
+        }
+        query.concat(curr);
+    }
+    return query;
 }
