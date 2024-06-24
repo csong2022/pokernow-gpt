@@ -52,10 +52,10 @@ export class Table {
         // 2 means they put in money through a raise. 1 -> vpip, 2 -> vpip & pfr
         // higher numbers override lower numbers
         const pfr = [Action.BET, Action.RAISE];
-        logs.forEach((element) => {
-            if (element.length > 3) {
-                let id = element[0];
-                let action = element[2];
+        logs.forEach((log_data) => {
+            if (log_data.length > 3) {
+                let id = log_data[0];
+                let action = log_data[2];
                 let actionNum = 0;
                 if (action == Action.CALL) {
                     actionNum = 1;
