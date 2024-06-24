@@ -1,7 +1,7 @@
 import { Queue } from "../utils/data-structures.ts";
 
-export async function constructQuery() {
-
+export async function constructQuery(street: string, stack_size: number, ) {
+    
 }
 
 function postProcessLogs(logs_queue: Queue<Array<string>>) {

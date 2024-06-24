@@ -43,8 +43,8 @@ export class Table {
                     this.num_players += 1;
                     this.player_positions.set(element[0], this.num_players.toString())
                 }
-                this.logs_queue.enqueue(element);
             }
+            this.logs_queue.enqueue(element);
         })
     }
 

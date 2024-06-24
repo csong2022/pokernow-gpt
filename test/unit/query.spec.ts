@@ -10,37 +10,33 @@ describe('log service test', async () => {
         if (log.code === SUCCESS_RESPONSE) {
             //console.log('success', log.data)
             const res1 = getMsg(getData(log));
-            console.log("all messages", res1);
+        
 
             const prune = pruneStarting(res1);
-            console.log("pruned until starting", prune);
+            
 
             const prune_flop = pruneFlop(prune);
-            console.log("prune_flop", prune_flop);
+            
 
             const prune_flop_verify = validateAllMsg(prune_flop);
-            console.log("prune_flop verified", prune_flop_verify);
+            
 
             const pruneres = validateAllMsg(prune);
-            console.log("valid actions until starting", pruneres);
+            
 
             const t = new Table();
             t.nextHand();
             t.preProcessLogs(pruneres);
             t.processStats(prune_flop_verify);
             t.setPlayerStacks(res1);
-            console.log("stacks", t.getPlayerStacks());
-            console.log("player_actions", t.getPlayerAction());
+            
             await t.cacheFromLogs(prune_flop_verify)
-            console.log("player cache", t.getPlayerCache());
+            
             t.processPlayers();
-            console.log("player cache after processing", t.getPlayerCache());
+            
             t.convertDict();
-            console.log(t.getLogsQueue());
-            console.log("player positions", t.getPlayerPositions());
+            
 
-
-            //console.log(t.getPlayerPositions.)
         }
         if (log.code === ERROR_RESPONSE) {
             console.log('error', log.error);
