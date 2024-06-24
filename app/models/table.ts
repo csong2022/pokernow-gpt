@@ -4,6 +4,7 @@ import { Player } from "./player.ts"
 import { PlayerAction } from "./player-action.ts";
 import { PlayerStats } from "./player-stats.ts";
 import { Queue } from "../utils/data-structures.ts"
+import { pruneFlop, pruneStarting, getPlayerStacksMsg } from "../services/message-service.ts";
 
 const streets = ["Flop", "Turn", "River"];
 
@@ -18,6 +19,7 @@ export class Table {
     private player_action: Map<string, number>;
     private player_actions: Array<PlayerAction>;
     private all_in_runout: boolean;
+    private player_stacks: Map<string, number>;
 
     constructor() {
         this.logs_queue = new Queue();
@@ -29,6 +31,7 @@ export class Table {
         this.player_action = new Map<string, number>();
         this.player_actions = new Array<PlayerAction>;
         this.all_in_runout = false;
+        this.player_stacks = new Map<string, number>();
     }
 
     public preProcessLogs(logs: Array<Array<string>>) {
@@ -43,8 +46,6 @@ export class Table {
                 this.logs_queue.enqueue(element);
             }
         })
-        //console.log(this.queue)
-        //console.log(this.dict)
     }
 
     public processStats(logs: Array<Array<string>>) {
@@ -67,6 +68,14 @@ export class Table {
                 }
             }
         })
+    }
+
+    public getPlayerStacks(): Map<string, number> {
+        return this.player_stacks;
+    }
+
+    public setPlayerStacks(msgs: string[]): void {
+        this.player_stacks = getPlayerStacksMsg(pruneFlop(pruneStarting(msgs)));
     }
 
     public processPlayers() {
@@ -197,7 +206,6 @@ export class Table {
         for (let key of this.player_positions.keys()) {
             this.player_positions.set(key, this.convertPosition(this.player_positions.get(key), this.num_players));
         }
-        console.log(this.player_positions);
     }
 
     public nextHand(): void {

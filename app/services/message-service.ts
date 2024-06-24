@@ -25,17 +25,20 @@ export function getFirstWord(msg: string): string {
     return res;
 }
 
-export function getPlayerStacksMsg(msgs: Array<string>): void{
+export function getPlayerStacksMsg(msgs: Array<string>): Map<string, number>{
     //starts from the bottom of logs
-    const res = new Array<string>;
+    const re = RegExp('\\@\\s([^"]*)\\"\\s\\((\\d+)\\)', 'g');
+    let res = new Map<string, number>;
+
     for (let i = 0; i < msgs.length; i++) {
-        console.log(msgs[i])
         if (msgs[i].includes("Player stacks: ")) {
-            const re = RegExp('\\@\\s([^"]*)\\"\\s\\((\\d+)\\)');
-            const matches = re.exec(msgs[i]);
-            console.log(matches);
+            let regExps = [...msgs[i].matchAll(re)];
+            regExps.forEach((element) => {
+                res.set(element[1], Number(element[2]));
+            })
         }
     }
+    return res
 }
 
 export function pruneStarting(msgs: Array<string>): Array<string> {

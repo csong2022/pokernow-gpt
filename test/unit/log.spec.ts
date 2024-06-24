@@ -9,25 +9,30 @@ describe('log service test', async () => {
         const log = await fetchData("GET", "pglASZj2h6E1zduo4KGuhggyg", "", "")
         if (log.code === SUCCESS_RESPONSE) {
             //console.log('success', log.data)
-            const res = getData(log);
-            const res1 = getMsg(res);
-            console.log("messages", res1);
+            const res1 = getMsg(getData(log));
+            console.log("all messages", res1);
+
             const prune = pruneStarting(res1);
             console.log("pruned until starting", prune);
+
             const prune_flop = pruneFlop(prune);
             console.log("prune_flop", prune_flop);
-            getPlayerStacksMsg(prune_flop);
+
             const prune_flop_verify = validateAllMsg(prune_flop);
             console.log("prune_flop verified", prune_flop_verify);
 
             const res5 = validateAllMsg(res1);
-            console.log("all msgs", res5);
+            console.log("all validated msgs", res5);
+
             const pruneres = validateAllMsg(prune);
             console.log("valid actions until starting", pruneres);
+
             const t = new Table();
             t.nextHand();
             t.preProcessLogs(pruneres);
             t.processStats(prune_flop_verify);
+            t.setPlayerStacks(res1);
+            console.log("stacks", t.getPlayerStacks());
             console.log("player_actions", t.getPlayerAction());
             await t.cacheFromLogs(prune_flop_verify)
             console.log("player cache", t.getPlayerCache());
@@ -35,10 +40,7 @@ describe('log service test', async () => {
             console.log("player cache after processing", t.getPlayerCache());
             t.convertDict();
             console.log(t.getLogsQueue());
-            console.log(t.getLogsQueue().size());
-            console.log(t.popLogsQueue());
-            console.log(t.getLogsQueue());
-            console.log(t.getLogsQueue().size());
+            console.log("player positions", t.getPlayerPositions());
 
 
             //console.log(t.getPlayerPositions.)
