@@ -212,6 +212,22 @@ export async function waitForPlayerAction<D, E=Error>(): Response<D, E> {
     }
 }
 
+export async function waitForAllInRunout<D, E=Error>(): Response<D, E> {
+    try {
+        const el = await page.waitForSelector(".table-player > .win-odds-container", {timeout: default_timeout * 4});
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error("No runout detected.") as E
+        }
+    }
+    return {
+        code: "success",
+        data: null as D,
+        msg: "Waited for runout scenario."
+    }
+}
+
 // player turn ends -> current player no longer has 'decision-current' class
 // player turn ends AND someone has won the hand -> current player no longer has 'decision-current' class and some player has 'winner' class
 export async function waitForNextPlayerAction<D, E=Error>(max_turn_length: number): Response<D, E> {
@@ -254,7 +270,7 @@ export async function waitForWinner<D, E=Error>(): Response<D, E> {
 // wait for the current hand to finish after a winner has been decided (when the "winner" elem is no longer present)
 export async function waitForHandEnd<D, E=Error>(): Response<D, E> {
     try {
-        await page.waitForSelector('.table-player.winner', {hidden: true, timeout: default_timeout * 10});
+        await page.waitForSelector('.table-player.winner', {hidden: true, timeout: default_timeout * 20});
     } catch (err) {
         return {
             code: "error",
