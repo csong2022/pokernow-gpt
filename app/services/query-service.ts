@@ -5,8 +5,22 @@ import { Table } from "../models/table.ts";
 import { Queue } from "../utils/data-structures.ts";
 import { Street, convertToBB } from "../utils/log-processing-utils.ts";
 
-export async function constructQuery(street: string, stack_size: number, ) {
-    
+export function constructQuery(hero_name: string, game: Game): string{
+    let table = game.getTable();
+    //let num_players = 
+    let hero_id = table.getNameToID().get(hero_name)!;
+    let hero_stack = table.getPlayerStacks().get(hero_id)!;
+    let hero_position = table.getPlayerPositions().get(hero_id)!;
+    let query = ""
+
+    query = query.concat(defineObjective(hero_position, hero_stack));
+    //query = query.concat(defineHand())
+    //query = query.concat(defineGameState(game.getStreet(), num_players, table.getPot()))
+    query = query.concat(defineStacks(table))
+    query = query.concat(defineActions(table))
+    query = query.concat(defineStats(table))
+
+    return query
 }
 
 export function postProcessLogs(logs_queue: Queue<Array<string>>, game: Game) {
@@ -23,8 +37,7 @@ export function postProcessLogs(logs_queue: Queue<Array<string>>, game: Game) {
 }
 
 function defineObjective(position: string, stack_size: number) {
-    return `Help me decide my action in No Limit Holdem poker. 
-            My position is ${position} and I have a stack size of ${stack_size} bbs.`;
+    return `Help me decide my action in No Limit Hold'em poker. I'm in the ${position} with a stack size of ${stack_size} BBs. `;
 }
 
 function defineHand(cards: string[]) {
@@ -32,7 +45,7 @@ function defineHand(cards: string[]) {
 }
 
 function defineGameState(street: string, num_players: number, pot_in_BBs: number) {
-    return `The current street is ${street} and it is ${num_players}-handed. The pot is ${pot_in_BBs} BB.`;
+    return `The current street is ${street} and it is ${num_players}-handed. The pot is ${pot_in_BBs} BB. `;
 }
 
 function defineCommunityCards(street: string, cards: string[]): string {
