@@ -38,6 +38,9 @@ describe('log service test', async () => {
             const stats_msg = defineStats(t);
             console.log("stats query", stats_msg);
 
+            const name_to_id = t.getNameToID();
+            console.log(name_to_id);
+
         }
         if (log.code === ERROR_RESPONSE) {
             console.log('error', log.error);

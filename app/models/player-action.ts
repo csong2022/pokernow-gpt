@@ -28,22 +28,22 @@ export class PlayerAction {
         let action_str = "";
         switch (this.action) {
             case Action.BET:
-                action_str = `bet ${this.bet_amount_BBs}`;
+                action_str = `bets ${this.bet_amount_BBs} BB`;
                 break;
             case Action.CALL:
-                action_str = `call ${this.bet_amount_BBs}`;
+                action_str = `calls ${this.bet_amount_BBs} BB`;
                 break;
             case Action.FOLD:
-                action_str = "fold";
+                action_str = "folds";
                 break;
             case Action.RAISE:
-                action_str = `bet ${this.bet_amount_BBs}`;
+                action_str = `bets ${this.bet_amount_BBs} BB`;
                 break;
             case Action.POST:
-                action_str = `bet ${this.bet_amount_BBs}`;
+                action_str = `posts ${this.bet_amount_BBs} BB`;
                 break;
             case Action.CHECK:
-                action_str = "check";
+                action_str = "checks";
                 break;
         }
         return action_str;
