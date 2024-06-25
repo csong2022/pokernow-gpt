@@ -29,9 +29,14 @@ export function postProcessLogs(logs_queue: Queue<Array<string>>, game: Game) {
         //console.log(logs_queue);
         const log = logs_queue.dequeue();
         //process player action
-        if (log != null && !(Object.values<string>(Street).includes(log[0]))) {
-            let player_action = new PlayerAction(log[0], log[2], convertToBB(Number(log[4]), game.getStakes()));
-            table.updatePlayerActions(player_action);
+        if (log != null) {
+            if (!Object.values<string>(Street).includes(log[0])) {
+                let player_action = new PlayerAction(log[0], log[2], convertToBB(Number(log[4]), game.getStakes()));
+                table.updatePlayerActions(player_action);
+            } else {
+                table.setStreet(log[0].toLowerCase());
+                table.setRunout(log[1]);
+            }
         }
     }
 }
@@ -41,24 +46,7 @@ function defineObjective(position: string, stack_size: number) {
 }
 
 function defineHand(cards: string[]) {
-    return appendCards("My hole cards are: ", cards);
-}
-
-function defineGameState(street: string, num_players: number, pot_in_BBs: number) {
-    return `The current street is ${street} and it is ${num_players}-handed. The pot is ${pot_in_BBs} BB. `;
-}
-
-function defineCommunityCards(street: string, cards: string[]): string {
-    let query;
-    if (street === "preflop") {
-        query = "There are currently no community cards showing."
-    } else {
-        query = appendCards("The current community cards are: ", cards);
-    }
-    return query;
-}
-
-function appendCards(query: string, cards: string[]): string {
+    let query = "My hole cards are: ";
     for (var i = 0; i < cards.length; i++) {
         query = query.concat(cards[i]);
         if (i != cards.length - 1) {
@@ -67,14 +55,27 @@ function appendCards(query: string, cards: string[]): string {
     }
     return query;
 }
-export function defineStacks(table: Table): string {
+
+function defineGameState(street: string, num_players: number, pot_in_BBs: number) {
+    return `The current street is ${street} and it is ${num_players}-handed. The pot is ${pot_in_BBs} BB.`;
+}
+
+function defineCommunityCards(street: string, runout: string): string {
+    let query;
+    if (street === "preflop") {
+        query = "There are currently no community cards showing."
+    } else {
+        query = `The current community cards are: ${runout}`;
+    }
+    return query;
+}
+
+export function defineStacks(player_stacks: Map<string, number>, player_positions: Map<string, string>): string {
     let query = "Here are the initial stack sizes of all players involved: \n";
-    const player_stacks = table.getPlayerStacks();
-    const player_pos = table.getPlayerPositions();
-    const player_ids = [...player_pos.keys()];
+    const player_ids = Array.from(player_positions.keys());
     for (var i = 0; i < player_ids.length; i++)  {
         let curr_id = player_ids[i]
-        let pos = player_pos.get(curr_id);
+        let pos = player_positions.get(curr_id);
         let stack = player_stacks.get(curr_id);
         query = query.concat(`${pos}: ${stack} BBs`)
         if (i != player_ids.length - 1) {
@@ -84,9 +85,8 @@ export function defineStacks(table: Table): string {
     return query;
 }
 
-export function defineActions(table: Table) {
+export function defineActions(player_actions: Array<PlayerAction>, table: Table) {
     let query = "Here are the current actions that are relevant:\n";
-    const player_actions = table.getPlayerActions();
     for (var i = 0; i < player_actions.length; i++)  {
         let player_pos = table.getPositionFromID(player_actions[i].getPlayerId());
         let player_action_string = player_actions[i].toString();
@@ -100,10 +100,9 @@ export function defineActions(table: Table) {
     return query
 }
 
-export function defineStats(table: Table) {
+export function defineStats(player_positions: Map<string, string>, table: Table) {
     let query = "Stats of players in the pot:\n"
-    let cache = table.getPlayerCache();
-    let player_ids = Array.from(table.getPlayerPositions().keys());
+    let player_ids = Array.from(player_positions.keys());
 
     for (var i = 0; i < player_ids.length; i++)  {
         let player_id = player_ids[i]
