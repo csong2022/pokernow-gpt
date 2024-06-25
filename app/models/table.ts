@@ -55,8 +55,8 @@ export class Table {
         })
     }
 
-    public getNameToID(): Map<string, string> {
-        return this.name_to_id;
+    public getIDFromName(name: string): string {
+        return this.name_to_id.get(name)!;
     }
 
     public processStats(logs: Array<Array<string>>) {
