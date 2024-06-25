@@ -3,7 +3,7 @@ import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-
 import { closeBrowser, getData, getMsg, getLast, getFirst } from '../../app/services/log-service.ts';
 import { getPlayer, getPlayerAction, getFirstWord, validateAllMsg, validateMsg, pruneStarting, pruneFlop, getPlayerStacksMsg } from "../../app/services/message-service.ts";
 import { Table } from "../../app/models/table.ts";
-import { defineActions, defineStats, defineStacks, postProcessLogs } from "../../app/services/query-service.ts";
+import { defineActions, defineStats, defineStacks, postProcessLogs, constructQuery } from "../../app/services/query-service.ts";
 import { Game } from "../../app/models/game.ts";
 
 describe('log service test', async () => {
@@ -29,7 +29,7 @@ describe('log service test', async () => {
             postProcessLogs(t.getLogsQueue(), g);
             //console.log("player_actions", t.getPlayerActions());
             
-            const stacks_msg = defineStacks(t);
+            /* const stacks_msg = defineStacks(t);
             console.log("stacks query", stacks_msg);
 
             const action_msg = defineActions(t);
@@ -39,7 +39,9 @@ describe('log service test', async () => {
             console.log("stats query", stats_msg);
 
             const name_to_id = t.getNameToID();
-            console.log(name_to_id);
+            console.log(name_to_id); */
+
+            console.log(constructQuery('xdd', g))
 
         }
         if (log.code === ERROR_RESPONSE) {
