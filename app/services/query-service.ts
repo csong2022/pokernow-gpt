@@ -5,20 +5,22 @@ import { Table } from "../models/table.ts";
 import { Queue } from "../utils/data-structures.ts";
 import { Street, convertToBB } from "../utils/log-processing-utils.ts";
 
-export function constructQuery(hero_name: string, game: Game): string{
+export function constructQuery(game: Game): string{
     let table = game.getTable();
+    let hero_name = game.getHero()!.getName();
     //let num_players = 
-    let hero_id = table.getNameToID().get(hero_name)!;
+    let hero_id = table.getIDFromName(hero_name)!;
     let hero_stack = table.getPlayerStacks().get(hero_id)!;
     let hero_position = table.getPlayerPositions().get(hero_id)!;
     let player_stacks = table.getPlayerStacks();
     let player_positions = table.getPlayerPositions();
     let player_actions = table.getPlayerActions();
+    let hero_cards = game.getHero()!.getHand();
     let query = "";
 
-    query = query.concat(defineObjective(hero_position, hero_stack));
-    //query = query.concat(defineHand())
-    //query = query.concat(defineGameState(game.getStreet(), num_players, table.getPot()))
+    query = query.concat(defineObjective(hero_position, hero_stack), '\n');
+    query = query.concat(defineHand(hero_cards), '\n');
+    query = query.concat(defineGameState(table.getStreet()), '\n');
     query = query.concat(defineStacks(player_stacks, player_positions), '\n');
     
     query = query.concat(defineActions(player_actions, table), '\n');
@@ -60,8 +62,8 @@ function defineHand(cards: string[]) {
     return query;
 }
 
-function defineGameState(street: string, num_players: number, pot_in_BBs: number) {
-    return `The current street is ${street} and it is ${num_players}-handed. The pot is ${pot_in_BBs} BB.`;
+function defineGameState(street: string) {
+    return `The current street is the ${street}.`;
 }
 
 function defineCommunityCards(street: string, runout: string): string {
