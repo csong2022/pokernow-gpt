@@ -13,6 +13,7 @@ export class Table {
     private player_cache: Map<string, Player>;
     private player_positions: Map<string, string>;
     private pot: number;
+    private street: string;
     private runout: string;
     //TODO: rename this
     private player_action: Map<string, number>;
@@ -27,6 +28,7 @@ export class Table {
         this.player_cache = new Map<string, Player>();
         this.player_positions = new Map<string, string>();
         this.pot = 0;
+        this.street = "";
         this.runout = "";
         this.player_action = new Map<string, number>();
         this.player_actions = new Array<PlayerAction>;
@@ -225,21 +227,6 @@ export class Table {
         this.logs_queue = new Queue();
     }
 
-    public getStreet(): string {
-        if (this.runout.length == 0) {
-            return "Preflop";
-        } else if (this.runout.length == 3) {
-            return "Flop";
-        } else if (this.runout.length == 4) {
-            return "Turn";
-        } else if (this.runout.length == 5) {
-            return "River";
-        } else {
-            console.error("Could not get runout street");
-            return "Error";
-        }
-    }
-
     public updatePot(bet: number): void {
         this.pot += bet;
     }
@@ -248,8 +235,20 @@ export class Table {
         return this.pot;
     }
 
+    public getStreet(): string {
+        return this.street;
+    }
+
+    public setStreet(street: string): void {
+        this.street = street;
+    }
+
     public getRunout(): string {
         return this.runout;
+    }
+
+    public setRunout(runout: string): void {
+        this.runout = runout;
     }
 
     public getAllInRunout(): boolean {
