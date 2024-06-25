@@ -19,6 +19,7 @@ export class Table {
     private player_actions: Array<PlayerAction>;
     private all_in_runout: boolean;
     private player_stacks: Map<string, number>;
+    private name_to_id: Map<string, string>;
 
     constructor() {
         this.logs_queue = new Queue();
@@ -31,6 +32,7 @@ export class Table {
         this.player_actions = new Array<PlayerAction>;
         this.all_in_runout = false;
         this.player_stacks = new Map<string, number>();
+        this.name_to_id = new Map<string, string>();
     }
 
     public preProcessLogs(logs: Array<Array<string>>) {
@@ -42,9 +44,17 @@ export class Table {
                     this.num_players += 1;
                     this.player_positions.set(element[0], this.num_players.toString())
                 }
+                if (!(this.name_to_id.has(element[1]))) {
+                    this.name_to_id.set(element[1], element[0])
+                }
+
             }
             this.logs_queue.enqueue(element);
         })
+    }
+
+    public getNameToID(): Map<string, string> {
+        return this.name_to_id;
     }
 
     public processStats(logs: Array<Array<string>>) {

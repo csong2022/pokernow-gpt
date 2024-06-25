@@ -63,7 +63,7 @@ export function defineStacks(table: Table): string {
         let curr_id = player_ids[i]
         let pos = player_pos.get(curr_id);
         let stack = player_stacks.get(curr_id);
-        query = query.concat(`${pos}: ${stack}`)
+        query = query.concat(`${pos}: ${stack} BBs`)
         if (i != player_ids.length - 1) {
             query = query.concat(", ");
         }
