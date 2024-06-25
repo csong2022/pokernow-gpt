@@ -6,7 +6,7 @@ import { Queue } from "../utils/data-structures.ts";
 import { Street, convertToBB } from "../utils/log-processing-utils.ts";
 
 export async function constructQuery(street: string, stack_size: number, ) {
-
+    
 }
 
 export function postProcessLogs(logs_queue: Queue<Array<string>>, game: Game) {
@@ -14,6 +14,7 @@ export function postProcessLogs(logs_queue: Queue<Array<string>>, game: Game) {
     while (!(logs_queue.isEmpty())) {
         //console.log(logs_queue);
         const log = logs_queue.dequeue();
+        //process player action
         if (log != null && !(Object.values<string>(Street).includes(log[0]))) {
             let player_action = new PlayerAction(log[0], log[2], convertToBB(Number(log[4]), game.getStakes()));
             table.updatePlayerActions(player_action);

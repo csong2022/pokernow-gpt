@@ -6,7 +6,7 @@ import { Table } from "../../app/models/table.ts";
 
 describe('log service test', async () => {
     it("should properly get logs and filter through them", async() => {
-        const log = await fetchData("GET", "pglASZj2h6E1zduo4KGuhggyg", "", "")
+        const log = await fetchData("pglASZj2h6E1zduo4KGuhggyg", "", "")
         if (log.code === SUCCESS_RESPONSE) {
             //console.log('success', log.data)
             const res1 = getMsg(getData(log));
