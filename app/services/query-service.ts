@@ -11,14 +11,18 @@ export function constructQuery(hero_name: string, game: Game): string{
     let hero_id = table.getNameToID().get(hero_name)!;
     let hero_stack = table.getPlayerStacks().get(hero_id)!;
     let hero_position = table.getPlayerPositions().get(hero_id)!;
-    let query = ""
+    let player_stacks = table.getPlayerStacks();
+    let player_positions = table.getPlayerPositions();
+    let player_actions = table.getPlayerActions();
+    let query = "";
 
     query = query.concat(defineObjective(hero_position, hero_stack));
     //query = query.concat(defineHand())
     //query = query.concat(defineGameState(game.getStreet(), num_players, table.getPot()))
-    query = query.concat(defineStacks(table))
-    query = query.concat(defineActions(table))
-    query = query.concat(defineStats(table))
+    query = query.concat(defineStacks(player_stacks, player_positions), '\n');
+    
+    query = query.concat(defineActions(player_actions, table), '\n');
+    query = query.concat(defineStats(player_positions, table), '\n');
 
     return query
 }
