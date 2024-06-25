@@ -161,7 +161,7 @@ export async function waitForNextHand<D, E=Error>(num_players: number, max_turn_
 }
 
 // wait for player turn
-export async function waitForPlayerTurn<D, E=Error>(): Response<D, E> {
+export async function waitForBotTurn<D, E=Error>(): Response<D, E> {
     try {
         await page.waitForSelector(".decision-current.you-player", {timeout: default_timeout});
     } catch (err) {
