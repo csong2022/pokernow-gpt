@@ -1,57 +1,36 @@
-import fetch from 'node-fetch'
-
+import puppeteer from 'puppeteer';
 import type { Response } from '../utils/error-handling-utils.ts';
 
+const browser = await puppeteer.launch({
+    defaultViewport: null,
+    headless: true
+});
+const page = await browser.newPage();
+
 export const fetchData = async <D, E=Error>(
-    method: string = "GET",
-    url: string,
+    game_id: string,
     before: string = "",
-    after: string = "",
-    bodyData?: Record<string, unknown>
+    after: string = ""
 ): Response<D, E> => {
-    const fetchOptions: RequestInit = {
-        headers: {
-            'Content=type': 'applications/json'
-        },
-        method,
-    };
-    const baseURL = "https://www.pokernow.club/games/".concat(url);
-    const beforeStr = "/log?before_at=".concat(before);
-    const afterStr = "&after_at=".concat(after);
-    const fullargs = beforeStr.concat(afterStr).concat("&mm=false&v=2");
-    const apiUrl = baseURL.concat(fullargs);
-    console.log(apiUrl);
-
-    const urlSearchParams = new URLSearchParams();
-    
+    const url = `https://www.pokernow.club/games/${game_id}/log?before_at=${before}&after_at=${after}&mm=false&v=2`;
+    await page.goto(url);
     try {
-        const response = await fetch(apiUrl);
-        if (response.ok) {
-            try {
-                const data = (await response.json()) as D;
-                return {
-                    code: "success",
-                    data,
-                    msg: ""
-                };
-
-            } catch (error) {
-                throw error;
-            }
+        await page.waitForSelector("body > pre", {timeout: 2000});
+        const logs_str = await page.$eval("body > pre", pre => pre.textContent);
+        return {
+            code: "success",
+            data: JSON.parse(logs_str!) as D,
+            msg: "Successfully got logs."
+            
         }
-    } catch (error) {
+    } catch (err) {
         return {
             code: "error",
-            error: error as E,
-        };
+            error: new Error("Failed to retrieve the text content of the api call.") as E
+        }
     }
 
-    return {
-        code: "error",
-        error: new Error("Cannot make the service request") as E,
-    };
 };
-
 interface Data {
     logs: Array<Log>
 }

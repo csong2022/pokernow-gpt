@@ -7,12 +7,14 @@ import { pruneStarting, validateAllMsg } from './app/services/message-service.ts
 import { logResponse, DebugMode } from './app/utils/error-handling-utils.ts';
 
 export class Bot {
+    private bot_name: string;
     private game: Game;
     private table: Table;
     private debug_mode: DebugMode;
     private first_fetch: boolean;
 
     constructor(debug_mode: DebugMode, game: Game) {
+        this.bot_name = "";
         this.game = game;
         this.debug_mode = debug_mode;
         this.first_fetch = true;
@@ -33,6 +35,7 @@ export class Bot {
         while (true) {
             const name = io("What is your desired player name? ");
             console.log(`Your player name will be ${name}.` )
+            this.bot_name = name;
     
             const stack_size = io("What is your desired stack size? ");
             console.log(`Your initial stack size will be ${stack_size}.`)
@@ -63,7 +66,7 @@ export class Bot {
         while (true) {
             var res;
             if (!this.table.getAllInRunout()) {
-                const log = await fetchData("GET", this.game.getGameId(), "", lastCreated);
+                const log = await fetchData(this.game.getGameId(), "", lastCreated);
                 if (log.code === "success") {
                     let res = getData(log);
                     let msg = getMsg(res);
@@ -93,7 +96,7 @@ export class Bot {
                 logResponse(await puppeteer_service.waitForNextPlayerAction(30), this.debug_mode);
         
                 console.log("Checking for player's turn.");
-                res = await puppeteer_service.waitForPlayerTurn();
+                res = await puppeteer_service.waitForBotTurn();
                 // player's turn
                 if (res.code == "success") {
                     // get my hole cards
