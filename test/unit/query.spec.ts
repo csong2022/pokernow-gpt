@@ -5,6 +5,8 @@ import { getPlayer, getPlayerAction, getFirstWord, validateAllMsg, validateMsg, 
 import { Table } from "../../app/models/table.ts";
 import { defineActions, defineStats, defineStacks, postProcessLogs, constructQuery } from "../../app/services/query-service.ts";
 import { Game } from "../../app/models/game.ts";
+import { Hero, Player } from "../../app/models/player.ts";
+import { PlayerStats } from "../../app/models/player-stats.ts";
 
 describe('log service test', async () => {
     it("should properly get logs and filter through them", async() => {
@@ -18,6 +20,9 @@ describe('log service test', async () => {
             const pruneres = validateAllMsg(prune);
             const g = new Game("11", 10, "NLH");
             const t = g.getTable()
+            let hero_stats = new PlayerStats('aa')
+            let hero = new Hero('xdd', hero_stats, ['4♣','4♥'])
+            g.setHero(hero)
             t.nextHand();
             t.preProcessLogs(pruneres);
             t.processStats(prune_flop_verify);
@@ -41,7 +46,7 @@ describe('log service test', async () => {
             const name_to_id = t.getNameToID();
             console.log(name_to_id); */
 
-            console.log(constructQuery('xdd', g))
+            console.log(constructQuery(g))
 
         }
         if (log.code === ERROR_RESPONSE) {
