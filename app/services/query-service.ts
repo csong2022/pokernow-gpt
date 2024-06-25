@@ -54,6 +54,22 @@ function appendCards(query: string, cards: string[]): string {
     }
     return query;
 }
+export function defineStacks(table: Table): string {
+    let query = "Here are the initial stack sizes of all players involved: \n";
+    const player_stacks = table.getPlayerStacks();
+    const player_pos = table.getPlayerPositions();
+    const player_ids = [...player_pos.keys()];
+    for (var i = 0; i < player_ids.length; i++)  {
+        let curr_id = player_ids[i]
+        let pos = player_pos.get(curr_id);
+        let stack = player_stacks.get(curr_id);
+        query = query.concat(`${pos}: ${stack}`)
+        if (i != player_ids.length - 1) {
+            query = query.concat(", ");
+        }
+    }
+    return query;
+}
 
 export function defineActions(table: Table) {
     let query = "Here are the current actions that are relevant:\n";
