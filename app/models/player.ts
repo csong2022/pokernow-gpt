@@ -23,7 +23,17 @@ export class Player {
 }
 
 export class Hero extends Player {
-    constructor(name: string, player_data: PlayerStats) {
+    private hand: string[];
+    constructor(name: string, player_data: PlayerStats, hand: string[]) {
         super(name, player_data);
+        this.hand = hand;
+    }
+
+    public getHand(): string[] {
+        return this.hand;
+    }
+
+    public setHand(hand: string[]): void {
+        this.hand = hand;
     }
 }

@@ -2,9 +2,11 @@ import prompt from 'prompt-sync';
 import * as puppeteer_service from './app/services/puppeteer-service.ts';
 import { Game } from './app/models/game.ts';
 import { Table } from './app/models/table.ts';
+import { PlayerStats } from './app/models/player-stats.ts';
 import { fetchData, getFirst, getCreatedAt, getData, getMsg } from './app/services/log-service.ts';
 import { pruneStarting, validateAllMsg } from './app/services/message-service.ts';
 import { logResponse, DebugMode } from './app/utils/error-handling-utils.ts';
+import { Hero } from './app/models/player.ts';
 
 export class Bot {
     private bot_name: string;
@@ -99,8 +101,19 @@ export class Bot {
                 res = await puppeteer_service.waitForBotTurn();
                 // player's turn
                 if (res.code == "success") {
-                    // get my hole cards
-                        
+                    res = await puppeteer_service.getHand();
+                    var hand: string[] = [];
+                    if (res.code === "success") {
+                        hand = res.data as string[];
+                    } else {
+                        console.log(res.error);
+                    }
+                    // create a Hero in Game if not exists
+                    if (!this.game.getHero()) {
+                        this.game.setHero(new Hero(this.bot_name, new PlayerStats(this.table.getIDFromName(this.bot_name)), hand));
+                    } else {
+                        this.game.getHero()?.setHand(hand);
+                    }
                 }
             }
 
