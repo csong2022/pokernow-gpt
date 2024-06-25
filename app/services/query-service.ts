@@ -58,16 +58,12 @@ export function defineActions(table: Table) {
     let query = "Here are the current actions that are relevant:\n";
     const player_actions = table.getPlayerActions();
     for (var i = 0; i < player_actions.length; i++)  {
-        console.log("player_action indexed", player_actions[i]);
         let player_pos = table.getPositionFromID(player_actions[i].getPlayerId());
-        console.log("player position", player_pos);
         let player_action_string = player_actions[i].toString();
-        console.log("player action", player_action_string);
         let curr = `${player_pos} ${player_action_string}`;
         //console.log("current action", curr);
         if (i != player_actions.length - 1) {
             curr = curr.concat(", ");
-
         }
         query = query.concat(curr);
     }
