@@ -1,5 +1,6 @@
 import puppeteer from 'puppeteer';
 import type { Response } from '../utils/error-handling-utils.ts';
+import { letterToSuit } from '../utils/log-processing-utils.ts';
 import * as bot_utils from '../utils/bot-utils.ts';
 
 
@@ -182,7 +183,7 @@ export async function getHand<D, E=Error>(): Response<D, E> {
     try {
         await page.$$eval(".decision-current > .table-player-cards > div", (div: any) => 
             cards.push(div.querySelector(".value").textContent) + 
-            cards.push(div.querySelector(".sub-suit").textContent));
+            cards.push(letterToSuit.get(div.querySelector(".sub-suit").textContent)!));
     } catch (err) {
         return {
             code: "error",
