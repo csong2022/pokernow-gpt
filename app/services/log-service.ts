@@ -21,7 +21,6 @@ export const fetchData = async <D, E=Error>(
             code: "success",
             data: JSON.parse(logs_str!) as D,
             msg: "Successfully got logs."
-            
         }
     } catch (err) {
         return {
@@ -39,6 +38,10 @@ interface Log {
     at: string,
     created_at: string,
     msg: string
+}
+
+export function closeBrowser(): void {
+    browser.close();
 }
 
 export function getData(log: any): Data {
