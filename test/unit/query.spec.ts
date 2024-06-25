@@ -1,6 +1,6 @@
 import { fetchData, getCreatedAt } from "../../app/services/log-service.ts"
 import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-utils.ts';
-import { getData, getMsg, getLast, getFirst } from '../../app/services/log-service.ts';
+import { closeBrowser, getData, getMsg, getLast, getFirst } from '../../app/services/log-service.ts';
 import { getPlayer, getPlayerAction, getFirstWord, validateAllMsg, validateMsg, pruneStarting, pruneFlop, getPlayerStacksMsg } from "../../app/services/message-service.ts";
 import { Table } from "../../app/models/table.ts";
 import { defineActions, defineStats, postProcessLogs } from "../../app/services/query-service.ts";
@@ -39,5 +39,6 @@ describe('log service test', async () => {
         if (log.code === ERROR_RESPONSE) {
             console.log('error', log.error);
         }
+        closeBrowser();
     })
 })
