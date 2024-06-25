@@ -132,3 +132,6 @@ dist
 
 # sqlite3 db file
 *.db
+
+# env file
+*.env
