@@ -25,6 +25,7 @@ export function constructQuery(game: Game): string{
     
     query = query.concat(defineActions(player_actions, table), '\n');
     query = query.concat(defineStats(player_positions, table), '\n');
+    query = query.concat("Please limit response to only the action word and bet size (if betting)", '\n');
 
     return query
 }

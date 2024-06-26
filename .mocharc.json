@@ -1,5 +1,5 @@
 {
     "loader": "ts-node/esm",
     "require": ["chai/register-expect.js"],
-    "spec": "./test/**/*.spec.ts"
+    "spec": "./src/test/unit/*.spec.ts"
 }
