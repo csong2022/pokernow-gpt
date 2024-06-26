@@ -68,6 +68,11 @@ export class Bot {
         var lastCreated;
         while (true) {
             var res;
+            res = await puppeteer_service.getNumPlayers();
+            if (res.code === "success") {
+                this.table.setNumPlayers(res.data as number);
+            }
+            
             const log = await fetchData(this.game.getGameId(), "", lastCreated);
             if (log.code === "success") {
                 let res = getData(log);
@@ -81,7 +86,7 @@ export class Bot {
         
                 this.table.preProcessLogs(onlyValid);
                 console.log("onlyValid", onlyValid);
-                this.table.convertDict();
+                this.table.convertAllOrdersToPosition();
                 console.log("updated player positions")
                 
                 console.log(lastCreated);
@@ -118,7 +123,7 @@ export class Bot {
                     }
                     await postProcessLogs(this.table.getLogsQueue(), this.game);
                     console.log(constructQuery(this.game));
-                    // make action
+                    // make action  
                     // await puppeteer_service.fold();
                     console.log("Waiting for bot's turn to end");
                     logResponse(await puppeteer_service.waitForBotTurnEnd(), this.debug_mode);
@@ -129,6 +134,7 @@ export class Bot {
         }
         console.log("Waiting for hand to end.")
         logResponse(await puppeteer_service.waitForHandEnd(), this.debug_mode);
+        this.table.nextHand();
         console.log("Completed a hand.");
     }
 }
