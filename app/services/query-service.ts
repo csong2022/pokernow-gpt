@@ -8,7 +8,6 @@ import { Street, convertToBB } from "../utils/log-processing-utils.ts";
 export function constructQuery(game: Game): string{
     let table = game.getTable();
     let hero_name = game.getHero()!.getName();
-    //let num_players = 
     let hero_id = table.getIDFromName(hero_name)!;
     let hero_stack = table.getPlayerStacks().get(hero_id)!;
     let hero_position = table.getPlayerPositions().get(hero_id)!;

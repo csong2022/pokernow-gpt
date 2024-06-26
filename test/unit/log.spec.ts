@@ -27,15 +27,15 @@ describe('log service test', async () => {
             const t = new Table();
             t.nextHand();
             t.preProcessLogs(pruneres);
-            t.processStats(prune_flop_verify);
+            t.classifyAction(prune_flop_verify);
             t.setPlayerStacks(res1);
             console.log("stacks", t.getPlayerStacks());
-            console.log("player_actions", t.getPlayerAction());
+            console.log("player_actions", t.getActionNumFromId());
             await t.cacheFromLogs(prune_flop_verify)
             console.log("player cache", t.getPlayerCache());
             t.processPlayers();
             console.log("player cache after processing", t.getPlayerCache());
-            t.convertDict();
+            t.convertAllOrdersToPosition();
             console.log(t.getLogsQueue());
             console.log("player positions", t.getPlayerPositions());
 
