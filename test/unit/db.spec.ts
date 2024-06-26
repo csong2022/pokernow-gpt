@@ -1,7 +1,7 @@
-import * as player_service from "../../../app/services/player-service.ts"
+import * as player_service from "../../app/services/player-service.ts"
 import { assert } from "chai";
-import { PlayerStats } from "../../../app/models/player-stats.ts"
-import { Table } from "../../../app/models/table.ts";
+import { PlayerStats } from "../../app/models/player-stats.ts"
+import { Table } from "../../app/models/table.ts";
 
 const player_id = "chan-abcd";
 const player_JSON = {
