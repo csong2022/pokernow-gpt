@@ -2,11 +2,10 @@ import prompt from 'prompt-sync';
 import * as puppeteer_service from './services/puppeteer-service.ts';
 import { Game } from './models/game.ts';
 import { Table } from './models/table.ts';
-import { PlayerStats } from './models/player-stats.ts';
 import { fetchData, getFirst, getCreatedAt, getData, getMsg } from './services/log-service.ts';
 import { pruneStarting, validateAllMsg } from './services/message-service.ts';
 import { logResponse, DebugMode } from './utils/error-handling-utils.ts';
-import { Hero } from './models/player.ts';
+import type { LogsInfo } from './utils/log-processing-utils.ts';
 import { constructQuery, postProcessLogs } from './services/query-service.ts';
 
 export class Bot {
@@ -14,13 +13,11 @@ export class Bot {
     private game: Game;
     private table: Table;
     private debug_mode: DebugMode;
-    private first_fetch: boolean;
 
     constructor(debug_mode: DebugMode, game: Game) {
         this.bot_name = "";
         this.game = game;
         this.debug_mode = debug_mode;
-        this.first_fetch = true;
         this.table = game.getTable();
     }
 
@@ -29,7 +26,13 @@ export class Bot {
         //TODO: implement loop until STOP SIGNAL (perhaps from UI?)
         while (true) {
             await this.waitForHand();
+            const res = await puppeteer_service.getNumPlayers();
+            if (res.code === "success") {
+                this.table.setNumPlayers(res.data as number);
+            }
+            console.log("Number of players in game:", this.table.getNumPlayers());
             await this.playOneHand();
+            this.table.nextHand();
         }
     }
 
@@ -65,37 +68,13 @@ export class Bot {
     // check if it is the player's turn -> perform actions
     // check if there is a winner -> perform end of hand actions
     private async playOneHand() {
-        var lastCreated;
+
+        let logs_info = {
+            last_created: "",
+            first_fetch: true
+        }
         while (true) {
             var res;
-            res = await puppeteer_service.getNumPlayers();
-            if (res.code === "success") {
-                this.table.setNumPlayers(res.data as number);
-            }
-            
-            const log = await fetchData(this.game.getGameId(), "", lastCreated);
-            if (log.code === "success") {
-                let res = getData(log);
-                let msg = getMsg(res);
-                // first action by any player
-                if (this.first_fetch) {
-                    msg = pruneStarting(msg);
-                    this.first_fetch = false;
-                }
-                let onlyValid = validateAllMsg(msg);
-        
-                this.table.preProcessLogs(onlyValid);
-                console.log("onlyValid", onlyValid);
-                this.table.convertAllOrdersToPosition();
-                console.log("updated player positions")
-                
-                console.log(lastCreated);
-        
-                lastCreated = getFirst(getCreatedAt(res));
-                console.log("updated lastCreated");
-                console.log(lastCreated);
-            }
-
             // wait for the bot's turn -> perform actions
             // OR winner is detected -> pull all the logs
             console.log("Checking for bot's turn or winner of hand.");
@@ -104,25 +83,32 @@ export class Bot {
             logResponse(res, this.debug_mode);
 
             if (res.code == "success") {
+                logs_info = await this.pullLogs(logs_info.last_created, logs_info.first_fetch);
                 const data = res.data as string;
-                // bot's turn
                 if (data.includes("action-signal")) {
-                    console.log("Performing player actions.");
+                    console.log("Performing bot actions.");
+
+                    // get hand
                     var hand: string[] = [];
                     res = await puppeteer_service.getHand();
                     logResponse(res, this.debug_mode);
                     if (res.code == "success") {
                         hand = res.data as string[];
                     }
-                    console.log("Bot's hand:", hand);
-                    // create a Hero in Game if not exists
-                    if (!this.game.getHero()) {
-                        this.game.setHero(new Hero(this.bot_name, new PlayerStats(this.table.getIDFromName(this.bot_name)), hand));
+
+                    // create hero if not exists
+                    // update hand
+                    const hero = this.game.getHero();
+                    if (!hero) {
+                        this.game.createAndSetHero(this.bot_name, hand);
                     } else {
-                        this.game.getHero()?.setHand(hand);
+                        hero.setHand(hand);
                     }
+
+                    // post process logs and construct query
                     await postProcessLogs(this.table.getLogsQueue(), this.game);
                     console.log(constructQuery(this.game));
+
                     // make action  
                     // await puppeteer_service.fold();
                     console.log("Waiting for bot's turn to end");
@@ -132,9 +118,33 @@ export class Bot {
                 }
             }
         }
-        console.log("Waiting for hand to end.")
         logResponse(await puppeteer_service.waitForHandEnd(), this.debug_mode);
-        this.table.nextHand();
         console.log("Completed a hand.");
+    }
+
+    private async pullLogs(last_created: string, first_fetch: boolean): Promise<LogsInfo> {
+        const log = await fetchData(this.game.getGameId(), "", last_created);
+        if (log.code === "success") {
+            let res = getData(log);
+            let msg = getMsg(res);
+            if (first_fetch) {
+                msg = pruneStarting(msg);
+                first_fetch = false;
+            }
+            let onlyValid = validateAllMsg(msg);
+    
+            this.table.preProcessLogs(onlyValid);
+            this.table.convertAllOrdersToPosition();
+
+            last_created = getFirst(getCreatedAt(res));
+            //console.log("updated lastCreated");
+            //console.log(lastCreated);
+            return {
+                last_created: last_created,
+                first_fetch: first_fetch
+            }
+        } else {
+            throw new Error("Failed to pull logs.");
+        }
     }
 }

@@ -1,7 +1,7 @@
 {
   "name": "pokernow-gpt",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "app/index.ts",
   "type": "module",
   "scripts": {
     "test": "mocha --timeout 5000"

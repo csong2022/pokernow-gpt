@@ -2,7 +2,7 @@ import sqlite3, { Database } from 'sqlite3';
 import { open } from 'sqlite';
 
 const db = await open({
-        filename: './src/app/pokernow-gpt.db',
+        filename: './app/pokernow-gpt.db',
         driver: sqlite3.Database
 }).then((db) => {
     createTables(db);
