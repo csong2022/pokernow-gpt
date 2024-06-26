@@ -7,7 +7,7 @@ import { defineActions, defineStats, defineStacks, postProcessLogs, constructQue
 import { Game } from "../../app/models/game.ts";
 import { Hero, Player } from "../../app/models/player.ts";
 import { PlayerStats } from "../../app/models/player-stats.ts";
-import { queryGPT } from "../../app/services/openai-service.js";
+import { queryGPT } from "../../app/services/openai-service.ts";
 import { queryObjects } from "v8";
 
 describe('log service test', async () => {
@@ -60,12 +60,15 @@ describe('log service test', async () => {
                 Stats of players in the pot:
                 SB: VPIP: 0, PFR: 0
                 BB: VPIP: 100, PFR: 0
-                Please limit response to only the action word and bet size (if betting)`;
+                Please respond in this format: {action, bet size in BBs}`;
             
             //let query = "hi my name is bob"
 
+            console.log(process.env["OPENAI_API_KEY"]);
             console.log("query", query)
-            let [resp, messages] = await queryGPT(query, null)
+            let GPTResponse = await queryGPT(query, []);
+            const resp = GPTResponse.choices;
+            const messages = GPTResponse.prevMessages;
             console.log("response", resp)
             console.log("content", resp!.message.content)
             console.log("messages", messages)
