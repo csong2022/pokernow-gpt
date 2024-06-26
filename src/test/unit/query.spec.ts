@@ -61,11 +61,22 @@ describe('log service test', async () => {
                 SB: VPIP: 0, PFR: 0
                 BB: VPIP: 100, PFR: 0
                 Please limit response to only the action word and bet size (if betting)`;
+            
+            //let query = "hi my name is bob"
 
             console.log("query", query)
-            let resp = await queryGPT(query)
+            let [resp, messages] = await queryGPT(query, null)
             console.log("response", resp)
-            console.log("content", resp.message.content)
+            console.log("content", resp!.message.content)
+            console.log("messages", messages)
+            /* messages.push(resp!.message)
+            console.log("messages after push", messages)
+            let query1 = "do you remember my name?"
+
+            console.log("query1", query1)
+            let [resp1, messages1] = await queryGPT(query1, messages)
+            console.log("resp1", resp1)
+            console.log("messages1", messages1) */
 
         }
         if (log.code === ERROR_RESPONSE) {
