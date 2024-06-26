@@ -25,11 +25,11 @@ describe('log service test', async () => {
             g.setHero(hero)
             t.nextHand();
             t.preProcessLogs(pruneres);
-            t.processStats(prune_flop_verify);
+            t.classifyAction(prune_flop_verify);
             t.setPlayerStacks(res1);
             await t.cacheFromLogs(prune_flop_verify);
             t.processPlayers();
-            t.convertDict();
+            t.convertAllOrdersToPosition();
 
             postProcessLogs(t.getLogsQueue(), g);
             //console.log("player_actions", t.getPlayerActions());

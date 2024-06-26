@@ -160,6 +160,25 @@ export async function waitForNextHand<D, E=Error>(num_players: number, max_turn_
     }
 }
 
+export async function getNumPlayers<D, E=Error>(): Response<D, E> {
+    try {
+        const table_players_count = await page.$$eval(".table-player", (divs: any) => divs.length);
+        const table_player_status_count = await page.$$eval(".table-player-status-icon", (divs: any) => divs.length);
+        const num_players = table_players_count - table_player_status_count;
+        return {
+            code: "success",
+            data: num_players as D,
+            msg: `Successfully got number of players in table: ${num_players}`
+        }
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error("Failed to compute number of players in table.") as E
+        }
+    }
+
+}
+
 // wait for bot's turn or winner of hand has been determined
 export async function waitForBotTurnOrWinner<D, E=Error>(): Response<D, E> {
     try {
