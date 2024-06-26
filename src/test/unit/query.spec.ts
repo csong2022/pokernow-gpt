@@ -7,6 +7,8 @@ import { defineActions, defineStats, defineStacks, postProcessLogs, constructQue
 import { Game } from "../../app/models/game.ts";
 import { Hero, Player } from "../../app/models/player.ts";
 import { PlayerStats } from "../../app/models/player-stats.ts";
+import { queryGPT } from "../../app/services/openai-service.js";
+import { queryObjects } from "v8";
 
 describe('log service test', async () => {
     it("should properly get logs and filter through them", async() => {
@@ -46,7 +48,24 @@ describe('log service test', async () => {
             const name_to_id = t.getNameToID();
             console.log(name_to_id); */
 
-            console.log(constructQuery(g))
+            //let query = constructQuery(g)
+
+            let query = `Help me decide my action in No Limit Hold'em poker. I'm in the SB with a stack size of 100 BBs. 
+                My hole cards are: 4♣, 4♥
+                The current street is the preflop.
+                Here are the initial stack sizes of all players involved:
+                SB: 100 BBs, BB: 100 BBs
+                Here are the current actions that are relevant:
+                SB posts 1 BB, BB posts 2 BB
+                Stats of players in the pot:
+                SB: VPIP: 0, PFR: 0
+                BB: VPIP: 100, PFR: 0
+                Please limit response to only the action word and bet size (if betting)`;
+
+            console.log("query", query)
+            let resp = await queryGPT(query)
+            console.log("response", resp)
+            console.log("content", resp.message.content)
 
         }
         if (log.code === ERROR_RESPONSE) {
