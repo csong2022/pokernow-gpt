@@ -86,16 +86,16 @@ export class Table {
             let res = this.logs_queue.dequeue()!;
             return res;
         }
-        return undefined
+        return undefined;
     }
     public preProcessLogs(logs: Array<Array<string>>) {
-        this.logs_queue = new Queue();
         logs = logs.reverse();
+        let order = 1;
         logs.forEach((element) => {
             if (!(Object.values<string>(Street).includes(element[0]))) {
                 if (!(this.id_to_position.has(element[0]))) {
-                    this.num_players += 1;
-                    this.id_to_position.set(element[0], this.num_players.toString())
+                    order += 1;
+                    this.id_to_position.set(element[0], order.toString())
                 }
                 if (!(this.name_to_id.has(element[1]))) {
                     this.name_to_id.set(element[1], element[0])
@@ -260,7 +260,7 @@ export class Table {
         this.runout = "";
         this.street = "";
 
-        this.logs_queue = new Queue();
+        this.logs_queue = new Queue<string[]>();
         this.player_actions = new Array<PlayerAction>();
 
         this.id_to_action_num = new Map<string, number>();

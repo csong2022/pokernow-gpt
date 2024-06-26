@@ -1,5 +1,6 @@
 import { Hero } from "./player.ts";
 import { Player } from "./player.ts";
+import { PlayerStats } from "./player-stats.ts";
 import { Table } from "./table.ts";
 
 export class Game {
@@ -41,6 +42,10 @@ export class Game {
 
     public setHero(hero: Hero): void {
         this.hero = hero;
+    }
+
+    public createAndSetHero(bot_name: string, hand: string[]): void {
+        this.setHero(new Hero(bot_name, new PlayerStats(this.table.getIDFromName(bot_name)), hand));
     }
 
     public getTable(): Table {

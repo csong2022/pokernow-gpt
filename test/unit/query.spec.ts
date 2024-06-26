@@ -1,12 +1,12 @@
-import { fetchData, getCreatedAt } from "../../app/services/log-service.ts"
-import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-utils.ts';
-import { closeBrowser, getData, getMsg, getLast, getFirst } from '../../app/services/log-service.ts';
-import { getPlayer, getPlayerAction, getFirstWord, validateAllMsg, validateMsg, pruneStarting, pruneFlop, getPlayerStacksMsg } from "../../app/services/message-service.ts";
-import { Table } from "../../app/models/table.ts";
-import { defineActions, defineStats, defineStacks, postProcessLogs, constructQuery } from "../../app/services/query-service.ts";
-import { Game } from "../../app/models/game.ts";
-import { Hero, Player } from "../../app/models/player.ts";
-import { PlayerStats } from "../../app/models/player-stats.ts";
+import { fetchData, getCreatedAt } from "../../../app/services/log-service.ts"
+import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../../app/utils/error-handling-utils.ts';
+import { closeBrowser, getData, getMsg, getLast, getFirst } from '../../../app/services/log-service.ts';
+import { getPlayer, getPlayerAction, getFirstWord, validateAllMsg, validateMsg, pruneStarting, pruneFlop, getPlayerStacksMsg } from "../../../app/services/message-service.ts";
+import { Table } from "../../../app/models/table.ts";
+import { defineActions, defineStats, defineStacks, postProcessLogs, constructQuery } from "../../../app/services/query-service.ts";
+import { Game } from "../../../app/models/game.ts";
+import { Hero, Player } from "../../../app/models/player.ts";
+import { PlayerStats } from "../../../app/models/player-stats.ts";
 
 describe('log service test', async () => {
     it("should properly get logs and filter through them", async() => {

@@ -200,7 +200,7 @@ export async function waitForBotTurnOrWinner<D, E=Error>(): Response<D, E> {
 
 export async function waitForBotTurnEnd<D, E=Error>(): Response<D, E> {
     try {
-        await page.waitForSelector(".action-signal", {hidden: true, timeout: default_timeout * 10});
+        await page.waitForSelector(".action-signal", {hidden: true, timeout: default_timeout * 30});
     } catch (err) {
         return {
             code: "error",
