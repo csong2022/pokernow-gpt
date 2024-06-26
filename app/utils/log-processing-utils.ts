@@ -14,6 +14,11 @@ export enum Street {
     RIVER = "River",
 }
 
+export interface LogsInfo {
+    last_created: string,
+    first_fetch: boolean
+}
+
 export function convertToBB(bet_amount: number, stakes: number): number {
     return bet_amount / stakes;
 }
