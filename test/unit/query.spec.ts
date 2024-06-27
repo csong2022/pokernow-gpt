@@ -7,7 +7,7 @@ import { defineActions, defineStats, defineStacks, postProcessLogs, constructQue
 import { Game } from "../../app/models/game.ts";
 import { Hero, Player } from "../../app/models/player.ts";
 import { PlayerStats } from "../../app/models/player-stats.ts";
-import { queryGPT } from "../../app/services/openai-service.ts";
+import { queryGPT, parseResponse } from '../../app/services/openai-service.ts';
 import { queryObjects } from "v8";
 
 describe('log service test', async () => {
@@ -50,17 +50,18 @@ describe('log service test', async () => {
 
             //let query = constructQuery(g)
 
-            let query = `Help me decide my action in No Limit Hold'em poker. I'm in the SB with a stack size of 100 BBs. 
-                My hole cards are: 4♣, 4♥
-                The current street is the preflop.
-                Here are the initial stack sizes of all players involved:
-                SB: 100 BBs, BB: 100 BBs
-                Here are the current actions that are relevant:
-                SB posts 1 BB, BB posts 2 BB
-                Stats of players in the pot:
-                SB: VPIP: 0, PFR: 0
-                BB: VPIP: 100, PFR: 0
-                Please respond in this format: {action, bet size in BBs}`;
+            let query =  "Help me decide my action in No Limit Hold'em poker. I'm in the BB with a stack size of 49.5 BBs. \n" +
+      'My hole cards are: A♠, 3♣\n' +
+      'The current street is: flop and it is 2-handed.\n' +
+      'The current community cards are:  [7♦, A♦, 3♥]\n' +
+      'Here are the initial stack sizes of all players involved: \n' +
+      'SB: 76.7 BBs, BB: 49.5 BBs\n' +
+      'Here are the current actions that are relevant:\n' +
+      'SB posts 0.5 BB, BB posts 1 BB, SB calls 1 BB, BB checks\n' +
+      'Stats of players in the pot:\n' +
+      'SB: VPIP: 85.71428571428571, PFR: 0\n' +
+      'BB: VPIP: 0, PFR: 0\n' +
+      'Please respond in this format: {action,bet_size_in_BBs}';
             
             //let query = "hi my name is bob"
 
@@ -70,8 +71,12 @@ describe('log service test', async () => {
             const resp = GPTResponse.choices;
             const messages = GPTResponse.prevMessages;
             console.log("response", resp)
-            console.log("content", resp!.message.content)
+            const message_content = resp!.message.content;
+            console.log("content", message_content)
             console.log("messages", messages)
+            const bot_action = parseResponse(message_content!);
+            console.log("action str:", bot_action.action_str);
+            console.log("bet size:", bot_action.bet_size_in_BBs);
             /* messages.push(resp!.message)
             console.log("messages after push", messages)
             let query1 = "do you remember my name?"
