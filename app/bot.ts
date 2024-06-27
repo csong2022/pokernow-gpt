@@ -5,7 +5,7 @@ import { Table } from './models/table.ts';
 import { fetchData, getFirst, getCreatedAt, getData, getMsg } from './services/log-service.ts';
 import { getPlayerStacksFromMsg, pruneFlop, pruneStarting, validateAllMsg } from './services/message-service.ts';
 import { logResponse, DebugMode } from './utils/error-handling-utils.ts';
-import { converToDollars, type LogsInfo } from './utils/log-processing-utils.ts';
+import { convertToValue, type LogsInfo } from './utils/log-processing-utils.ts';
 import { constructQuery, postProcessLogs } from './services/query-service.ts';
 
 export class Bot {
@@ -108,21 +108,7 @@ export class Bot {
                     await postProcessLogs(this.table.getLogsQueue(), this.game);
                     console.log(constructQuery(this.game));
 
-                    const io = prompt();
-                    const action = io("What is your desired action? In format {action, bet size in BBs}");
-                    const split = action.split(', ');
-                    const act = split[0]
-                    if (act == 'fold') {
-                        logResponse(await puppeteer_service.fold(), this.debug_mode);
-                    } else if (act == 'call') {
-                        logResponse(await puppeteer_service.call(), this.debug_mode);
-                    } else if (act == 'check') {
-                        logResponse(await puppeteer_service.check(), this.debug_mode);
-                    } else if (act == 'bet' || act == 'raise') {
-                        const bet_amt = converToDollars(parseInt(split[1]), this.game.getStakes())
-                        logResponse(await puppeteer_service.bet(bet_amt), this.debug_mode);
-                    }
-
+                    // query chatGPT and make action
                     console.log("Waiting for bot's turn to end");
                     logResponse(await puppeteer_service.waitForBotTurnEnd(), this.debug_mode);
                 } else if (data.includes("winner")) {

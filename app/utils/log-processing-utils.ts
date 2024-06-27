@@ -23,7 +23,7 @@ export function convertToBB(bet_amount: number, stakes: number): number {
     return bet_amount / stakes;
 }
 
-export function converToDollars(bet_amount: number, stakes: number): number {
+export function convertToValue(bet_amount: number, stakes: number): number {
     return bet_amount * stakes
 }
 

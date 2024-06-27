@@ -37,11 +37,11 @@ export async function update(player_id: string, player_stats_JSON: any): Promise
             pfr_hands = ?
          WHERE id = ?`,
          [
-            player_stats_JSON.id, 
             player_stats_JSON.total_hands, 
             player_stats_JSON.walks, 
             player_stats_JSON.vpip_hands,
-            player_stats_JSON.pfr_hands
+            player_stats_JSON.pfr_hands,
+            player_id
         ]
     )
 }
