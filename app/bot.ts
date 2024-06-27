@@ -90,7 +90,11 @@ export class Bot {
             logResponse(res, this.debug_mode);
 
             if (res.code == "success") {
-                logs_info = await this.pullLogs(logs_info.last_created, logs_info.first_fetch);
+                try {
+                    logs_info = await this.pullLogs(logs_info.last_created, logs_info.first_fetch);
+                } catch (err) {
+                    console.log("Failed to pull logs.");
+                }
                 const data = res.data as string;
                 if (data.includes("action-signal")) {
                     console.log("Performing bot actions.");
@@ -114,7 +118,12 @@ export class Bot {
             }
         }
 
-        this.table.processPlayers();
+        try {
+            this.table.processPlayers();
+        } catch (err) {
+            console.log("Failed to process players.");
+        }
+        
         logResponse(await puppeteer_service.waitForHandEnd(), this.debug_mode);
         console.log("Completed a hand.");
     }
