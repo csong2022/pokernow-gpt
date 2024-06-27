@@ -7,14 +7,16 @@ export class Game {
     private game_id: string;
     private stakes: number;
     private game_type: string;
+    private max_turn_length: number;
     private players: Map<string, Player>;
     private hero?: Hero;
     private table: Table;
 
-    constructor(game_id: string, stakes: number, game_type: string) {
+    constructor(game_id: string, stakes: number, game_type: string, max_turn_length: number) {
         this.game_id = game_id;
         this.stakes = stakes;
         this.game_type = game_type;
+        this.max_turn_length = max_turn_length;
         this.players = new Map<string, Player>();
         this.hero = undefined;
         this.table = new Table();
@@ -30,6 +32,10 @@ export class Game {
 
     public getGameType(): string {
         return this.game_type;
+    }
+    
+    public getMaxTurnLength(): number {
+        return this.max_turn_length;
     }
     
     public getPlayers(): Map<string, Player> {
