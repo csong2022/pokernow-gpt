@@ -14,7 +14,8 @@ export enum Street {
     RIVER = "River",
 }
 
-export interface LogsInfo {
+export interface Logs {
+    log_data: Array<string>,
     last_created: string,
     first_fetch: boolean
 }

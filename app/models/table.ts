@@ -124,15 +124,14 @@ export class Table {
         // 0 means they didn't put in money, 1 means they put in money but didn't raise (CALL)
         // 2 means they put in money through a raise. 1 -> vpip, 2 -> vpip & pfr
         // higher numbers override lower numbers
-        const pfr = [Action.BET, Action.RAISE];
         logs.forEach((log_data) => {
             if (log_data.length > 3) {
                 let id = log_data[0];
                 let action = log_data[2];
                 let actionNum = 0;
-                if (action == Action.CALL) {
+                if (action === Action.CALL) {
                     actionNum = 1;
-                } else if (action in pfr) {
+                } else if (action === Action.BET || action === Action.RAISE) {
                     actionNum = 2;
                 }
                 if ((!(id in this.id_to_action_num)) || this.id_to_action_num.get(id)! < actionNum) {
