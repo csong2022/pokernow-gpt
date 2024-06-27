@@ -31,7 +31,7 @@ export function parseResponse(msg: string) {
     const msg_arr = msg.split(',');
     console.log("Message Array:", msg_arr);
     const bet_size_str = msg_arr[1];
-    const matches = bet_size_str.match(/(\d+)/);
+    const matches = bet_size_str.match(/[+]?([0-9]+(?:[\.][0-9]*)?|\.[0-9]+)/);
     let bet_size_in_BBs = 0;
     if (matches) {
         bet_size_in_BBs = parseFloat(matches[0]);
