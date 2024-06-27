@@ -27,6 +27,7 @@ export async function queryGPT(query: string, prevMessages: ChatCompletionMessag
 }
 
 export function parseResponse(msg: string) {
+    // use regex to detect action
     msg = msg.slice(1, -1);
     const msg_arr = msg.split(',');
     console.log("Message Array:", msg_arr);

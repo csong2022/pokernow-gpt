@@ -188,6 +188,8 @@ export class Bot {
     }
 
     private async queryBotAction(query: string): Promise<BotAction> {
+        // retry query up to N times if the action is invalid (action is not in valid bot actions)
+        // default to check, if I can't check fold
         try {
             const GPTResponse = await queryGPT(query, []);
             const choices = GPTResponse.choices;
@@ -233,6 +235,7 @@ export class Bot {
                 logResponse(await puppeteer_service.check(), this.debug_mode);
                 break;
             case "fold":
+                // check if the fold is unnecessary, if it is, perform check action instead
                 logResponse(await puppeteer_service.fold(), this.debug_mode);
                 break;
         }
