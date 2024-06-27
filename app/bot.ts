@@ -3,7 +3,7 @@ import * as puppeteer_service from './services/puppeteer-service.ts';
 import { Game } from './models/game.ts';
 import { Table } from './models/table.ts';
 import { fetchData, getFirst, getCreatedAt, getData, getMsg } from './services/log-service.ts';
-import { pruneStarting, validateAllMsg } from './services/message-service.ts';
+import { getPlayerStacksFromMsg, pruneFlop, pruneStarting, validateAllMsg } from './services/message-service.ts';
 import { logResponse, DebugMode } from './utils/error-handling-utils.ts';
 import type { LogsInfo } from './utils/log-processing-utils.ts';
 import { constructQuery, postProcessLogs } from './services/query-service.ts';
@@ -123,6 +123,7 @@ export class Bot {
             let msg = getMsg(res);
             if (first_fetch) {
                 msg = pruneStarting(msg);
+                this.table.setPlayerStacks(msg, this.game.getStakes());
                 first_fetch = false;
             }
             let onlyValid = validateAllMsg(msg);
