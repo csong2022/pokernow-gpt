@@ -1,4 +1,5 @@
 import { Action, Street } from "../utils/log-processing-utils.ts";
+import { convertToBB } from "../utils/log-processing-utils.ts";
 
 export function getPlayer(msg: string): Array<string> {
     const res = new Array<string>;
@@ -25,7 +26,7 @@ export function getFirstWord(msg: string): string {
     return res;
 }
 
-export function getPlayerStacksMsg(msgs: Array<string>): Map<string, number>{
+export function getPlayerStacksFromMsg(msgs: Array<string>, stakes: number): Map<string, number>{
     //starts from the bottom of logs
     const re = RegExp('\\@\\s([^"]*)\\"\\s\\((\\d+)\\)', 'g');
     let res = new Map<string, number>;
@@ -34,7 +35,7 @@ export function getPlayerStacksMsg(msgs: Array<string>): Map<string, number>{
         if (msgs[i].includes("Player stacks: ")) {
             let regExps = [...msgs[i].matchAll(re)];
             regExps.forEach((element) => {
-                res.set(element[1], Number(element[2]));
+                res.set(element[1], convertToBB(Number(element[2]), stakes));
             })
         }
     }
@@ -57,7 +58,7 @@ export function pruneFlop(msgs: Array<string>): Array<string> {
     //starts from the bottom of logs
     const res = new Array<string>;
     let i = msgs.length - 1;
-    while ((i >= 0) && !(msgs[i].includes("Flop: "))) {
+    while ((i > 0) && !(msgs[i].includes("Flop: "))) {
         res.push(msgs[i]);
         i -= 1;
     }

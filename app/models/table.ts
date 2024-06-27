@@ -4,7 +4,7 @@ import { Player } from "./player.ts"
 import { PlayerAction } from "./player-action.ts";
 import { PlayerStats } from "./player-stats.ts";
 import { Queue } from "../utils/data-structures.ts"
-import { pruneFlop, pruneStarting, getPlayerStacksMsg } from "../services/message-service.ts";
+import { pruneFlop, pruneStarting, getPlayerStacksFromMsg } from "../services/message-service.ts";
 import { Street } from "../utils/log-processing-utils.ts";
 
 export class Table {
@@ -245,8 +245,8 @@ export class Table {
     public getPlayerStacks(): Map<string, number> {
         return this.id_to_stacks;
     }
-    public setPlayerStacks(msgs: string[]): void {
-        this.id_to_stacks = getPlayerStacksMsg(pruneFlop(pruneStarting(msgs)));
+    public setPlayerStacks(msgs: string[], stakes: number): void {
+        this.id_to_stacks = getPlayerStacksFromMsg(msgs, stakes);
     }
 
     public getIDFromName(name: string): string {
