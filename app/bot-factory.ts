@@ -16,16 +16,17 @@ async function init(): Promise<Game> {
 
     logResponse(await puppeteer_service.waitForGameInfo(), debug_mode);
 
-    var res, game_info_data;
     console.log("Getting game info.");
-    res = await puppeteer_service.getGameInfo();
+    const res = await puppeteer_service.getGameInfo();
     logResponse(res, debug_mode);
     if (res.code == "success") {
-        game_info_data = res.data;
+        const game_info = puppeteer_service.convertGameInfo(res.data as string);
+        return new Game(game_id, game_info.stakes, game_info.game_type, 30);
+    } else {
+        throw new Error ("Failed to get game info.");
     }
-    const game_info_obj = puppeteer_service.convertGameInfo(String(game_info_data));
-    return new Game(game_id, game_info_obj.stakes, game_info_obj.game_type)
 }
+
 
 const bot_factory = async function() {
     const game = await init();
