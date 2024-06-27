@@ -6,25 +6,27 @@ import { Queue } from "../utils/data-structures.ts";
 import { Street, convertToBB } from "../utils/log-processing-utils.ts";
 
 export function constructQuery(game: Game): string{
-    let table = game.getTable();
-    let hero_name = game.getHero()!.getName();
-    let hero_id = table.getIDFromName(hero_name)!;
-    let hero_stack = table.getPlayerStacks().get(hero_id)!;
-    let hero_position = table.getPlayerPositions().get(hero_id)!;
-    let player_stacks = table.getPlayerStacks();
-    let player_positions = table.getPlayerPositions();
-    let player_actions = table.getPlayerActions();
-    let hero_cards = game.getHero()!.getHand();
+    const table = game.getTable();
+    const hero_name = game.getHero()!.getName();
+    const hero_id = table.getIDFromName(hero_name)!;
+    const hero_stack = table.getPlayerStacks().get(hero_id)!;
+    const hero_position = table.getPlayerPositions().get(hero_id)!;
+    const player_stacks = table.getPlayerStacks();
+    const player_positions = table.getPlayerPositions();
+    const player_actions = table.getPlayerActions();
+    const hero_cards = game.getHero()!.getHand();
+    const street = table.getStreet();
+    const runout = table.getRunout();
     let query = "";
 
     query = query.concat(defineObjective(hero_position, hero_stack), '\n');
     query = query.concat(defineHand(hero_cards), '\n');
-    query = query.concat(defineGameState(table.getStreet()), '\n');
+    query = query.concat(defineGameState(street), '\n');
+    query = query.concat(defineCommunityCards(street, runout), '\n')
     query = query.concat(defineStacks(player_stacks, player_positions), '\n');
-    
     query = query.concat(defineActions(player_actions, table), '\n');
     query = query.concat(defineStats(player_positions, table), '\n');
-    query = query.concat("Please limit response to only the action word and bet size (if betting)", '\n');
+    query = query.concat("Please respond in this format: {action, bet size in BBs}");
 
     return query
 }
@@ -69,15 +71,21 @@ function defineHand(cards: string[]) {
 }
 
 function defineGameState(street: string) {
-    return `The current street is the ${street}.`;
+    let query = "The current street is: ";
+    if (street) {
+        query = query.concat(street);
+    } else {
+        query = query.concat("preflop")
+    }
+    return query;
 }
 
 function defineCommunityCards(street: string, runout: string): string {
     let query;
-    if (street === "preflop") {
-        query = "There are currently no community cards showing."
-    } else {
+    if (street) {
         query = `The current community cards are: ${runout}`;
+    } else {
+        query = "There are currently no community cards showing."
     }
     return query;
 }

@@ -1,7 +1,7 @@
 import { fetchData, getCreatedAt } from "../../app/services/log-service.ts"
 import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-utils.ts';
 import { closeBrowser, getData, getMsg, getLast, getFirst } from '../../app/services/log-service.ts';
-import { getPlayer, getPlayerAction, getFirstWord, validateAllMsg, validateMsg, pruneStarting, pruneFlop, getPlayerStacksMsg } from "../../app/services/message-service.ts";
+import { getPlayer, getPlayerAction, getFirstWord, validateAllMsg, validateMsg, pruneStarting, pruneFlop, getPlayerStacksFromMsg } from "../../app/services/message-service.ts";
 import { Table } from "../../app/models/table.ts";
 import { defineActions, defineStats, defineStacks, postProcessLogs, constructQuery } from "../../app/services/query-service.ts";
 import { Game } from "../../app/models/game.ts";
@@ -20,7 +20,7 @@ describe('log service test', async () => {
             const prune_flop = pruneFlop(prune);
             const prune_flop_verify = validateAllMsg(prune_flop);
             const pruneres = validateAllMsg(prune);
-            const g = new Game("11", 10, "NLH");
+            const g = new Game("11", 10, "NLH", 30);
             const t = g.getTable()
             let hero_stats = new PlayerStats('aa')
             let hero = new Hero('xdd', hero_stats, ['4♣','4♥'])
@@ -28,7 +28,7 @@ describe('log service test', async () => {
             t.nextHand();
             t.preProcessLogs(pruneres);
             t.classifyAction(prune_flop_verify);
-            t.setPlayerStacks(res1);
+            t.setPlayerStacks(res1, 10);
             await t.cacheFromLogs(prune_flop_verify);
             t.processPlayers();
             t.convertAllOrdersToPosition();
