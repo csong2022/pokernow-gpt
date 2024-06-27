@@ -154,7 +154,7 @@ export class Table {
         }
         throw new Error("Could not retrieve player stats.");
     }
-    // take in a list of players and cache all the players into player_cache if not exists already
+
     public async cachePlayer(player_id: string, player_name: string): Promise<void> {
         if (!this.id_to_player.has(player_id)) {
             const player_stats_str = await player_service.get(player_id);
@@ -179,20 +179,31 @@ export class Table {
             }
         }
     }
-    public processPlayers() {
-        for (let playerID of this.id_to_action_num.keys()) {
-            let player = this.id_to_player.get(playerID);
-            let player_action = this.id_to_action_num.get(playerID);
-            let player_stats = player?.getPlayerStats()
-            if (player_action == 2) {
-                player_stats ?.setVPIPHands(player_stats?.getVPIPHands() + 1)
-                player_stats ?.setPFRHands(player_stats?.getPFRHands() + 1)
-            } else if (player_action == 1) {
-                player_stats?.setVPIPHands(player_stats?.getVPIPHands() + 1)
+    public async processPlayers() {
+        for (const player_id of this.id_to_action_num.keys()) {
+            const player = this.id_to_player.get(player_id);
+            const player_action = this.id_to_action_num.get(player_id);
+            if (player) {
+                const player_stats = player.getPlayerStats();
+                if (player_stats) {
+                    if (player_action == 2) {
+                        player_stats.setVPIPHands(player_stats.getVPIPHands() + 1);
+                        player_stats.setPFRHands(player_stats.getPFRHands() + 1);
+                    } else if (player_action == 1) {
+                        player_stats.setVPIPHands(player_stats.getVPIPHands() + 1);
+                    }
+                    player_stats.setTotalHands(player_stats.getTotalHands() + 1);
+                    player.updatePlayerStats(player_stats);
+                    // update player in-memory cache
+                    this.id_to_player.set(player_id, player);
+                    // update database
+                    await player_service.update(player_id, player_stats.toJSON());
+                } else {
+                    throw new Error("Player stats is undefined.");
+                }
+            } else {
+                throw new Error("Player is undefined.");
             }
-            player_stats?.setTotalHands(player_stats?.getTotalHands() + 1)
-            player?.updatePlayerStats(player_stats!)
-            this.id_to_player.set(playerID, player!)
         }
     }
 
