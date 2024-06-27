@@ -61,7 +61,7 @@ export async function getGameInfo<D, E=Error>(): Response<D, E> {
 }
 
 export function convertGameInfo(game_info: string): GameInfo {
-    const re = RegExp('([A-Z]+)\\s~\\s([0-9]+)\\s\/\\s[0-9]+');
+    const re = RegExp('([A-Z]+)\\s~\\s[0-9]+\\s\/\\s([0-9]+)');
     const matches = re.exec(game_info);
     if (matches && matches.length == 3) {
         return {game_type: matches[1], stakes: Number(matches[2])};
