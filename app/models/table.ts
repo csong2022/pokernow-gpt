@@ -90,7 +90,7 @@ export class Table {
     }
     public preProcessLogs(logs: Array<Array<string>>) {
         logs = logs.reverse();
-        let order = 1;
+        let order = 0;
         logs.forEach((element) => {
             if (!(Object.values<string>(Street).includes(element[0]))) {
                 if (!(this.id_to_position.has(element[0]))) {
