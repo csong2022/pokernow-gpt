@@ -9,7 +9,7 @@ const browser = await puppeteer.launch({
     headless: false
 });
 const page = await browser.newPage();
-const default_timeout = 500;
+const default_timeout = 1000;
 
 export async function init<D, E=Error>(game_id: string): Response<D, E> {
     if (!game_id) {
@@ -29,7 +29,7 @@ export async function init<D, E=Error>(game_id: string): Response<D, E> {
 
 export async function waitForGameInfo<D, E=Error>(): Response<D, E> {
     try {
-        await page.waitForSelector('.game-infos > .blind-value-ctn > .blind-value > span', {timeout: 60000});
+        await page.waitForSelector('.game-infos > .blind-value-ctn > .blind-value > span', {timeout: default_timeout * 60});
     } catch (err) {
         return {
             code: "error",
@@ -162,8 +162,9 @@ export async function waitForNextHand<D, E=Error>(num_players: number, max_turn_
 
 export async function getNumPlayers<D, E=Error>(): Response<D, E> {
     try {
-        const table_players_count = await page.$$eval(".table-player", (divs: any) => divs.length);
-        const table_player_status_count = await page.$$eval(".table-player-status-icon", (divs: any) => divs.length);
+        await page.waitForSelector(".table-player", {timeout: default_timeout});
+        const table_players_count = await page.$$eval(".table-player", (divs: any) => divs.length) as number;
+        const table_player_status_count = await page.$$eval(".table-player-status-icon", (divs: any) => divs.length) as number;
         const num_players = table_players_count - table_player_status_count;
         return {
             code: "success",
@@ -200,7 +201,7 @@ export async function waitForBotTurnOrWinner<D, E=Error>(num_players: number, ma
 
 export async function waitForBotTurnEnd<D, E=Error>(): Response<D, E> {
     try {
-        await page.waitForSelector(".action-signal", {hidden: true, timeout: default_timeout * 30});
+        await page.waitForSelector(".action-signal", {hidden: true, timeout: default_timeout * 15});
     } catch (err) {
         return {
             code: "error",
@@ -244,7 +245,7 @@ export async function getHand<D, E=Error>(): Response<D, E> {
 // wait for the current hand to finish after a winner has been decided (when the "winner" elem is no longer present)
 export async function waitForHandEnd<D, E=Error>(): Response<D, E> {
     try {
-        await page.waitForSelector('.table-player.winner', {hidden: true, timeout: default_timeout * 20});
+        await page.waitForSelector('.table-player.winner', {hidden: true, timeout: default_timeout * 10});
     } catch (err) {
         return {
             code: "error",
