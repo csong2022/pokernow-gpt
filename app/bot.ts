@@ -23,16 +23,22 @@ export class Bot {
 
     public async run() {
         await this.enterTableInProgress();
+        // retieve initial num players
+        await this.updateNumPlayers();
         //TODO: implement loop until STOP SIGNAL (perhaps from UI?)
         while (true) {
-            await this.waitForHand();
-            const res = await puppeteer_service.getNumPlayers();
-            if (res.code === "success") {
-                this.table.setNumPlayers(res.data as number);
-            }
+            await this.waitForNextHand();
+            await this.updateNumPlayers();
             console.log("Number of players in game:", this.table.getNumPlayers());
             await this.playOneHand();
             this.table.nextHand();
+        }
+    }
+
+    private async updateNumPlayers() {
+        const res = await puppeteer_service.getNumPlayers();
+        if (res.code === "success") {
+            this.table.setNumPlayers(Number(res.data));
         }
     }
 
@@ -58,9 +64,9 @@ export class Bot {
         logResponse(await puppeteer_service.waitForTableEntry(), this.debug_mode);
     }
 
-    private async waitForHand() {
+    private async waitForNextHand() {
         console.log("Waiting for next hand to start.")
-        logResponse(await puppeteer_service.waitForNextHand(this.table.getNumPlayers(), this.game.getMaxTurnLength()), this.debug_mode);
+        await puppeteer_service.waitForNextHand(this.table.getNumPlayers(), this.game.getMaxTurnLength());
     }
 
     // pull logs
@@ -89,21 +95,9 @@ export class Bot {
                     console.log("Performing bot actions.");
 
                     // get hand
-                    var hand: string[] = [];
-                    res = await puppeteer_service.getHand();
-                    logResponse(res, this.debug_mode);
-                    if (res.code == "success") {
-                        hand = res.data as string[];
-                    }
+                    const hand = await this.getHand();
 
-                    // create hero if not exists
-                    // update hand
-                    const hero = this.game.getHero();
-                    if (!hero) {
-                        this.game.createAndSetHero(this.bot_name, hand);
-                    } else {
-                        hero.setHand(hand);
-                    }
+                    await this.updateHero(hand);
 
                     // post process logs and construct query
                     await postProcessLogs(this.table.getLogsQueue(), this.game);
@@ -145,6 +139,25 @@ export class Bot {
             }
         } else {
             throw new Error("Failed to pull logs.");
+        }
+    }
+
+    private async getHand(): Promise<string[]> {
+        var hand: string[] = [];
+        const res = await puppeteer_service.getHand();
+        logResponse(res, this.debug_mode);
+        if (res.code == "success") {
+            hand = res.data as string[];
+        }
+        return hand;
+    }
+
+    private async updateHero(hand: string[]): Promise<void> {
+        const hero = this.game.getHero();
+        if (!hero) {
+            this.game.createAndSetHero(this.bot_name, hand);
+        } else {
+            hero.setHand(hand);
         }
     }
 }
