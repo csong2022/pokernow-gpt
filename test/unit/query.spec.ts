@@ -9,6 +9,7 @@ import { Hero, Player } from "../../app/models/player.ts";
 import { PlayerStats } from "../../app/models/player-stats.ts";
 import { queryGPT, parseResponse } from '../../app/services/openai-service.ts';
 import { queryObjects } from "v8";
+import { convertToValue } from "../../app/utils/log-processing-utils.ts";
 
 describe('log service test', async () => {
     it("should properly get logs and filter through them", async() => {
