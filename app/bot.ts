@@ -5,7 +5,7 @@ import { Table } from './models/table.ts';
 import { fetchData, getFirst, getCreatedAt, getData, getMsg } from './services/log-service.ts';
 import { getPlayerStacksFromMsg, pruneFlop, pruneStarting, validateAllMsg } from './services/message-service.ts';
 import { logResponse, DebugMode } from './utils/error-handling-utils.ts';
-import { convertToValue, type LogsInfo } from './utils/log-processing-utils.ts';
+import { convertToValue, type Logs } from './utils/log-processing-utils.ts';
 import { constructQuery, postProcessLogs } from './services/query-service.ts';
 
 export class Bot {
@@ -13,12 +13,14 @@ export class Bot {
     private game: Game;
     private table: Table;
     private debug_mode: DebugMode;
+    private first_created: string;
 
     constructor(debug_mode: DebugMode, game: Game) {
         this.bot_name = "";
         this.game = game;
         this.debug_mode = debug_mode;
         this.table = game.getTable();
+        this.first_created = ""
     }
 
     public async run() {
@@ -76,8 +78,9 @@ export class Bot {
     // check if there is a winner -> perform end of hand actions
     private async playOneHand() {
 
-        let logs_info = {
-            last_created: "",
+        let logs = {
+            log_data: new Array<string>,
+            last_created: this.first_created,
             first_fetch: true
         }
         while (true) {
@@ -91,7 +94,7 @@ export class Bot {
 
             if (res.code == "success") {
                 try {
-                    logs_info = await this.pullLogs(logs_info.last_created, logs_info.first_fetch);
+                    logs = await this.pullLogs(logs.last_created, logs.first_fetch);
                 } catch (err) {
                     console.log("Failed to pull logs.");
                 }
@@ -118,6 +121,8 @@ export class Bot {
         }
 
         try {
+            logs = await this.pullLogs(this.first_created, logs.first_fetch);
+            this.table.classifyAction(validateAllMsg(pruneFlop(logs.log_data)))
             this.table.processPlayers();
         } catch (err) {
             console.log("Failed to process players.");
@@ -127,7 +132,7 @@ export class Bot {
         console.log("Completed a hand.");
     }
 
-    private async pullLogs(last_created: string, first_fetch: boolean): Promise<LogsInfo> {
+    private async pullLogs(last_created: string, first_fetch: boolean): Promise<Logs> {
         const log = await fetchData(this.game.getGameId(), "", last_created);
         if (log.code === "success") {
             let res = getData(log);
@@ -136,6 +141,7 @@ export class Bot {
                 msg = pruneStarting(msg);
                 this.table.setPlayerStacks(msg, this.game.getStakes());
                 first_fetch = false;
+                this.first_created = getFirst(getCreatedAt(res))
             }
             let onlyValid = validateAllMsg(msg);
     
@@ -144,6 +150,7 @@ export class Bot {
 
             last_created = getFirst(getCreatedAt(res));
             return {
+                log_data: msg,
                 last_created: last_created,
                 first_fetch: first_fetch
             }
