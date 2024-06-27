@@ -5,7 +5,7 @@ import { Table } from './models/table.ts';
 import { fetchData, getFirst, getCreatedAt, getData, getMsg } from './services/log-service.ts';
 import { getPlayerStacksFromMsg, pruneFlop, pruneStarting, validateAllMsg } from './services/message-service.ts';
 import { logResponse, DebugMode } from './utils/error-handling-utils.ts';
-import type { LogsInfo } from './utils/log-processing-utils.ts';
+import { converToDollars, type LogsInfo } from './utils/log-processing-utils.ts';
 import { constructQuery, postProcessLogs } from './services/query-service.ts';
 
 export class Bot {
@@ -115,7 +115,8 @@ export class Bot {
                     } else if (act == 'check') {
                         logResponse(await puppeteer_service.check(), this.debug_mode);
                     } else if (act == 'bet' || act == 'raise') {
-                        logResponse(await puppeteer_service.bet(parseInt(split[1])), this.debug_mode);
+                        const bet_amt = converToDollars(parseInt(split[1]), this.game.getStakes())
+                        logResponse(await puppeteer_service.bet(bet_amt), this.debug_mode);
                     }
 
                     // await puppeteer_service.fold();
