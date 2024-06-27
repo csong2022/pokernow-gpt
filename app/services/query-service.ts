@@ -31,9 +31,7 @@ export function constructQuery(game: Game): string{
 
 export async function postProcessLogs(logs_queue: Queue<Array<string>>, game: Game) {
     const table = game.getTable();
-    //console.log("Logs Queue: ", logs_queue);
     while (!logs_queue.isEmpty()) {
-        //console.log(logs_queue);
         const log = logs_queue.dequeue();
         //process player action
         if (log != null) {
@@ -53,7 +51,6 @@ export async function postProcessLogs(logs_queue: Queue<Array<string>>, game: Ga
             }
         }
     }
-    //console.log("Player Cache: ", table.getPlayerCache());
 }
 
 function defineObjective(position: string, stack_size: number) {
