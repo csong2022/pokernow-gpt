@@ -5,8 +5,10 @@ import { Table } from './models/table.ts';
 import { fetchData, getFirst, getCreatedAt, getData, getMsg } from './services/log-service.ts';
 import { getPlayerStacksFromMsg, pruneFlop, pruneStarting, validateAllMsg } from './services/message-service.ts';
 import { logResponse, DebugMode } from './utils/error-handling-utils.ts';
-import { convertToValue, type Logs } from './utils/log-processing-utils.ts';
+import { Action, convertToValue, type Logs } from './utils/log-processing-utils.ts';
 import { constructQuery, postProcessLogs } from './services/query-service.ts';
+import { BotAction, queryGPT, parseResponse } from './services/openai-service.ts'
+import { log } from 'console';
 
 export class Bot {
     private bot_name: string;
@@ -109,9 +111,16 @@ export class Bot {
 
                     // post process logs and construct query
                     await postProcessLogs(this.table.getLogsQueue(), this.game);
-                    console.log(constructQuery(this.game));
+                    const query = constructQuery(this.game);
 
                     // query chatGPT and make action
+                    try {
+                        const bot_action = await this.queryBotAction(query);
+                        await this.performBotAction(bot_action);
+                    } catch (err) {
+                        console.log("Failed to query and perform bot action.")
+                    }
+
                     console.log("Waiting for bot's turn to end");
                     logResponse(await puppeteer_service.waitForBotTurnEnd(), this.debug_mode);
                 } else if (data.includes("winner")) {
@@ -175,6 +184,57 @@ export class Bot {
             this.game.createAndSetHero(this.bot_name, hand);
         } else {
             hero.setHand(hand);
+        }
+    }
+
+    private async queryBotAction(query: string): Promise<BotAction> {
+        try {
+            const GPTResponse = await queryGPT(query, []);
+            const choices = GPTResponse.choices;
+            let bot_action: BotAction = {
+                action_str: "fold",
+                bet_size_in_BBs: 0
+            }
+            if (choices && choices.message.content) {
+                bot_action = parseResponse(choices.message.content);
+            } else {
+                console.log("Invalid ChatGPT response, defaulting to fold.")
+            }
+            return bot_action;
+        } catch (err) {
+            throw new Error("Failed to query bot action.");
+        }
+    }
+
+    private async performBotAction(bot_action: BotAction): Promise<void> {
+        console.log("Bot Action:", bot_action.action_str);
+        
+        const bet_size = convertToValue(bot_action.bet_size_in_BBs, this.game.getStakes());
+        console.log("Bet Size:", bet_size);
+        switch (bot_action.action_str) {
+            case "bet":
+                if (bot_action.bet_size_in_BBs) {
+                    logResponse(await puppeteer_service.bet(bet_size), this.debug_mode);
+                } else {
+                    throw new Error("Invalid bet size.");
+                }
+                break;
+            case "raise":
+                if (bot_action.bet_size_in_BBs) {
+                    logResponse(await puppeteer_service.bet(bet_size), this.debug_mode);
+                } else {
+                    throw new Error("Invalid bet size.");
+                }
+                break;
+            case "call":
+                logResponse(await puppeteer_service.call(), this.debug_mode);
+                break;
+            case "check":
+                logResponse(await puppeteer_service.check(), this.debug_mode);
+                break;
+            case "fold":
+                logResponse(await puppeteer_service.fold(), this.debug_mode);
+                break;
         }
     }
 }
