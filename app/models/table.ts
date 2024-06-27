@@ -52,6 +52,9 @@ export class Table {
     }
     public setPlayersInPot(players_in_pot: number): void {
         this.players_in_pot = players_in_pot;
+    }
+    public decrementPlayersInPot(): void {
+        this.players_in_pot -= 1;
     } 
 
     public getPot(): number {

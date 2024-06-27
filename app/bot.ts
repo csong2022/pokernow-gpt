@@ -23,13 +23,14 @@ export class Bot {
 
     public async run() {
         await this.enterTableInProgress();
-        // retieve initial num players
+        // retrieve initial num players
         await this.updateNumPlayers();
         //TODO: implement loop until STOP SIGNAL (perhaps from UI?)
         while (true) {
             await this.waitForNextHand();
             await this.updateNumPlayers();
             console.log("Number of players in game:", this.table.getNumPlayers());
+            this.table.setPlayersInPot(this.table.getNumPlayers());
             await this.playOneHand();
             this.table.nextHand();
         }
@@ -103,7 +104,7 @@ export class Bot {
                     await postProcessLogs(this.table.getLogsQueue(), this.game);
                     console.log(constructQuery(this.game));
 
-                    // make action  
+                    // query chatGPT and make action  
                     // await puppeteer_service.fold();
                     console.log("Waiting for bot's turn to end");
                     logResponse(await puppeteer_service.waitForBotTurnEnd(), this.debug_mode);
@@ -132,8 +133,6 @@ export class Bot {
             this.table.convertAllOrdersToPosition();
 
             last_created = getFirst(getCreatedAt(res));
-            //console.log("updated lastCreated");
-            //console.log(lastCreated);
             return {
                 last_created: last_created,
                 first_fetch: first_fetch
