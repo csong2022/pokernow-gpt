@@ -35,8 +35,7 @@ export async function query(sql: string, params: Array<any>): Promise<Array<stri
     var rows : string[] = [];
     const result = await db.each(sql, params, (err: any, row: string) => {
         if (err) {
-            console.log("Getting error", err.message);
-            return;
+            throw new Error(err.message);
         }
         rows.push(row);
     });

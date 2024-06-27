@@ -11,17 +11,20 @@ export function constructQuery(game: Game): string{
     const hero_id = table.getIDFromName(hero_name)!;
     const hero_stack = table.getPlayerStacks().get(hero_id)!;
     const hero_position = table.getPlayerPositions().get(hero_id)!;
-    const player_stacks = table.getPlayerStacks();
-    const player_positions = table.getPlayerPositions();
-    const player_actions = table.getPlayerActions();
     const hero_cards = game.getHero()!.getHand();
+
     const street = table.getStreet();
+    const players_in_pot = table.getPlayersInPot();
     const runout = table.getRunout();
+    const player_stacks = table.getPlayerStacks();
+    const player_actions = table.getPlayerActions();
+    const player_positions = table.getPlayerPositions();
+
     let query = "";
 
     query = query.concat(defineObjective(hero_position, hero_stack), '\n');
     query = query.concat(defineHand(hero_cards), '\n');
-    query = query.concat(defineGameState(street), '\n');
+    query = query.concat(defineGameState(street, players_in_pot), '\n');
     query = query.concat(defineCommunityCards(street, runout), '\n')
     query = query.concat(defineStacks(player_stacks, player_positions), '\n');
     query = query.concat(defineActions(player_actions, table), '\n');
@@ -42,6 +45,9 @@ export async function postProcessLogs(logs_queue: Queue<Array<string>>, game: Ga
                 const player_name = log[1];
                 const action = log[2];
                 const bet_size = log[4];
+                if (action === "folds") {
+                    table.decrementPlayersInPot();
+                }
                 let player_action = new PlayerAction(player_id, action, convertToBB(Number(bet_size), game.getStakes()));
                 table.updatePlayerActions(player_action);
                 await table.cachePlayer(player_id, player_name);
@@ -70,14 +76,8 @@ function defineHand(cards: string[]) {
     return query;
 }
 
-function defineGameState(street: string) {
-    let query = "The current street is: ";
-    if (street) {
-        query = query.concat(street);
-    } else {
-        query = query.concat("preflop")
-    }
-    return query;
+function defineGameState(street: string, players_in_pot: number) {
+    return `The current street is: ${street ? street : "preflop"} and it is ${players_in_pot}-handed.`
 }
 
 function defineCommunityCards(street: string, runout: string): string {

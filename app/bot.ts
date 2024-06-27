@@ -23,13 +23,14 @@ export class Bot {
 
     public async run() {
         await this.enterTableInProgress();
-        // retieve initial num players
+        // retrieve initial num players
         await this.updateNumPlayers();
         //TODO: implement loop until STOP SIGNAL (perhaps from UI?)
         while (true) {
             await this.waitForNextHand();
             await this.updateNumPlayers();
             console.log("Number of players in game:", this.table.getNumPlayers());
+            this.table.setPlayersInPot(this.table.getNumPlayers());
             await this.playOneHand();
             this.table.nextHand();
         }
@@ -103,7 +104,6 @@ export class Bot {
                     await postProcessLogs(this.table.getLogsQueue(), this.game);
                     console.log(constructQuery(this.game));
 
-                    // make action
                     const io = prompt();
                     const action = io("What is your desired action? In format {action, bet size in BBs}");
                     const split = action.split(', ');
@@ -118,7 +118,6 @@ export class Bot {
                         logResponse(await puppeteer_service.bet(parseInt(split[1])), this.debug_mode);
                     }
 
-                    // await puppeteer_service.fold();
                     console.log("Waiting for bot's turn to end");
                     logResponse(await puppeteer_service.waitForBotTurnEnd(), this.debug_mode);
                 } else if (data.includes("winner")) {
@@ -126,6 +125,8 @@ export class Bot {
                 }
             }
         }
+
+        this.table.processPlayers();
         logResponse(await puppeteer_service.waitForHandEnd(), this.debug_mode);
         console.log("Completed a hand.");
     }
@@ -146,8 +147,6 @@ export class Bot {
             this.table.convertAllOrdersToPosition();
 
             last_created = getFirst(getCreatedAt(res));
-            //console.log("updated lastCreated");
-            //console.log(lastCreated);
             return {
                 last_created: last_created,
                 first_fetch: first_fetch
