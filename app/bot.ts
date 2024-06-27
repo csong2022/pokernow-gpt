@@ -113,6 +113,8 @@ export class Bot {
                 }
             }
         }
+
+        this.table.processPlayers();
         logResponse(await puppeteer_service.waitForHandEnd(), this.debug_mode);
         console.log("Completed a hand.");
     }

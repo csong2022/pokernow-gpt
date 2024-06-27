@@ -45,7 +45,7 @@ export async function postProcessLogs(logs_queue: Queue<Array<string>>, game: Ga
                 const player_name = log[1];
                 const action = log[2];
                 const bet_size = log[4];
-                if (action === "fold") {
+                if (action === "folds") {
                     table.decrementPlayersInPot();
                 }
                 let player_action = new PlayerAction(player_id, action, convertToBB(Number(bet_size), game.getStakes()));
