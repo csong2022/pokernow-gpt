@@ -307,7 +307,7 @@ export async function check<D, E=Error>(): Response<D, E> {
     }
 }
 
-export async function bet<D, E=Error>(bet_amount: number) {
+export async function bet<D, E=Error>(bet_amount: number): Response<D, E> {
     try {
         await page.$eval('.game-decisions-ctn > .action-buttons > .raise', (button: any) => button.click());
         await page.focus('.game-decisions-ctn > form > .raise-bet-value > div > input')
