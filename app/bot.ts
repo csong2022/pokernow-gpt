@@ -104,8 +104,20 @@ export class Bot {
                     await postProcessLogs(this.table.getLogsQueue(), this.game);
                     console.log(constructQuery(this.game));
 
-                    // query chatGPT and make action  
-                    // await puppeteer_service.fold();
+                    const io = prompt();
+                    const action = io("What is your desired action? In format {action, bet size in BBs}");
+                    const split = action.split(', ');
+                    const act = split[0]
+                    if (act == 'fold') {
+                        logResponse(await puppeteer_service.fold(), this.debug_mode);
+                    } else if (act == 'call') {
+                        logResponse(await puppeteer_service.call(), this.debug_mode);
+                    } else if (act == 'check') {
+                        logResponse(await puppeteer_service.check(), this.debug_mode);
+                    } else if (act == 'bet' || act == 'raise') {
+                        logResponse(await puppeteer_service.bet(parseInt(split[1])), this.debug_mode);
+                    }
+
                     console.log("Waiting for bot's turn to end");
                     logResponse(await puppeteer_service.waitForBotTurnEnd(), this.debug_mode);
                 } else if (data.includes("winner")) {
