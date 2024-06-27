@@ -60,7 +60,7 @@ export class Bot {
 
     private async waitForHand() {
         console.log("Waiting for next hand to start.")
-        logResponse(await puppeteer_service.waitForNextHand(10, 30), this.debug_mode);
+        logResponse(await puppeteer_service.waitForNextHand(this.table.getNumPlayers(), this.game.getMaxTurnLength()), this.debug_mode);
     }
 
     // pull logs
@@ -79,7 +79,7 @@ export class Bot {
             // OR winner is detected -> pull all the logs
             console.log("Checking for bot's turn or winner of hand.");
 
-            res = await puppeteer_service.waitForBotTurnOrWinner();
+            res = await puppeteer_service.waitForBotTurnOrWinner(this.table.getNumPlayers(), this.game.getMaxTurnLength());
             logResponse(res, this.debug_mode);
 
             if (res.code == "success") {
