@@ -258,12 +258,23 @@ export class Table {
     public getPlayerStacks(): Map<string, number> {
         return this.id_to_stacks;
     }
-    public setPlayerStacks(msgs: string[], stakes: number): void {
+    public getPlayerStackFromID(player_id: string): number {
+        const player_stack = this.id_to_stacks.get(player_id);
+        if (player_stack) {
+            return player_stack;
+        }
+        throw new Error(`Could not retrieve stack for player with id: ${player_id}.`)
+    }
+    public setPlayerStacksFromMsg(msgs: string[], stakes: number): void {
         this.id_to_stacks = getPlayerStacksFromMsg(msgs, stakes);
     }
 
     public getIDFromName(name: string): string {
-        return this.name_to_id.get(name)!;
+        const player_id = this.name_to_id.get(name);
+        if (player_id) {
+            return player_id;
+        }
+        throw new Error(`Could not retrieve id for player with name: ${name}.`)
     }
 
     public nextHand(): void {
