@@ -24,7 +24,7 @@ describe('log service test', async () => {
             const g = new Game("11", 10, "NLH", 30);
             const t = g.getTable()
             let hero_stats = new PlayerStats('aa')
-            let hero = new Hero('xdd', hero_stats, ['4♣','4♥'])
+            let hero = new Hero('xdd', hero_stats, ['4♣','4♥'], 10)
             g.setHero(hero)
             t.nextHand();
             t.preProcessLogs(pruneres);
