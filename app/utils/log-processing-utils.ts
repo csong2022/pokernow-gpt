@@ -20,7 +20,7 @@ export interface Logs {
     first_fetch: boolean
 }
 
-export function convertToBB(bet_amount: number, stakes: number): number {
+export function convertToBBs(bet_amount: number, stakes: number): number {
     return bet_amount / stakes;
 }
 

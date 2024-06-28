@@ -1,31 +1,36 @@
 import prompt from 'prompt-sync';
-import * as puppeteer_service from './services/puppeteer-service.ts';
 import { Game } from './models/game.ts';
 import { Table } from './models/table.ts';
 import { fetchData, getFirst, getCreatedAt, getData, getMsg } from './services/log-service.ts';
-import { getPlayerStacksFromMsg, pruneFlop, pruneStarting, validateAllMsg } from './services/message-service.ts';
-import { logResponse, DebugMode } from './utils/error-handling-utils.ts';
-import { Action, convertToValue, type Logs } from './utils/log-processing-utils.ts';
+
+import { pruneFlop, pruneStarting, validateAllMsg } from './services/message-service.ts';
+import { BotAction, queryGPT, parseResponse } from './services/openai-service.ts'
+import * as puppeteer_service from './services/puppeteer-service.ts';
 import { constructQuery, postProcessLogs } from './services/query-service.ts';
-import { BotAction, queryGPT, parseResponse} from './services/openai-service.ts'
+import { sleep } from './utils/bot-utils.ts';
+import { logResponse, DebugMode } from './utils/error-handling-utils.ts';
+import { convertToBBs, convertToValue, type Logs } from './utils/log-processing-utils.ts';
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
-import { log } from 'console';
 
 export class Bot {
     private bot_name: string;
     private game: Game;
     private table: Table;
-    private debug_mode: DebugMode;
+    
     private first_created: string;
     private history_for_one_hand: ChatCompletionMessageParam | any;
 
-    constructor(debug_mode: DebugMode, game: Game) {
+    private debug_mode: DebugMode;
+    private query_retries: number;
+
+    constructor(game: Game, debug_mode: DebugMode, query_retries: number = 0) {
         this.bot_name = "";
         this.game = game;
-        this.debug_mode = debug_mode;
         this.table = game.getTable();
-        this.first_created = "";
         this.history_for_one_hand = [];
+        this.first_created = ""
+        this.debug_mode = debug_mode;
+        this.query_retries = query_retries;
     }
 
     public async run() {
@@ -109,10 +114,11 @@ export class Bot {
                 if (data.includes("action-signal")) {
                     console.log("Performing bot actions.");
 
-                    // get hand
+                    // get hand and stack size
                     const hand = await this.getHand();
+                    const stack_size = await this.getStackSize();
 
-                    await this.updateHero(hand);
+                    await this.updateHero(hand, convertToBBs(stack_size, this.game.getStakes()));
 
                     // post process logs and construct query
                     await postProcessLogs(this.table.getLogsQueue(), this.game);
@@ -120,7 +126,7 @@ export class Bot {
 
                     // query chatGPT and make action
                     try {
-                        const bot_action = await this.queryBotAction(query);
+                        const bot_action = await this.queryBotAction(query, this.query_retries);
                         await this.performBotAction(bot_action);
                     } catch (err) {
                         console.log("Failed to query and perform bot action.")
@@ -153,7 +159,7 @@ export class Bot {
             let msg = getMsg(res);
             if (first_fetch) {
                 msg = pruneStarting(msg);
-                this.table.setPlayerStacks(msg, this.game.getStakes());
+                this.table.setPlayerInitialStacksFromMsg(msg, this.game.getStakes());
                 first_fetch = false;
                 this.first_created = getFirst(getCreatedAt(res))
             }
@@ -177,64 +183,121 @@ export class Bot {
         var hand: string[] = [];
         const res = await puppeteer_service.getHand();
         logResponse(res, this.debug_mode);
-        if (res.code == "success") {
+        if (res.code === "success") {
             hand = res.data as string[];
         }
         return hand;
     }
 
-    private async updateHero(hand: string[]): Promise<void> {
+    private async getStackSize(): Promise<number> {
+        var stack_size: number = 0;
+        const res = await puppeteer_service.getStackSize();
+        logResponse(res, this.debug_mode);
+        if (res.code === "success") {
+            stack_size = res.data as number;
+        }
+        return stack_size;
+    }
+
+    private async updateHero(hand: string[], stack_size: number): Promise<void> {
         const hero = this.game.getHero();
         if (!hero) {
-            this.game.createAndSetHero(this.bot_name, hand);
+            this.game.createAndSetHero(this.bot_name, hand, stack_size);
         } else {
             hero.setHand(hand);
+            hero.setStackSize(stack_size);
         }
     }
 
-    private async queryBotAction(query: string): Promise<BotAction> {
-        // retry query up to N times if the action is invalid (action is not in valid bot actions)
-        // default to check, if I can't check fold
+    private async queryBotAction(query: string, retries: number, retry_counter: number = 0): Promise<BotAction> {
+        if (retry_counter > retries) {
+            // default to check if available, else fold
+            const res = await puppeteer_service.check();
+            if (res.code === "success") {
+                throw new Error(`Failed to query bot action, exceeded the retry limit after ${retries} attempts. Defaulted to checking.`);
+            } else {
+                await puppeteer_service.fold();
+                throw new Error(`Failed to query bot action, exceeded the retry limit after ${retries} attempts. Defaulted to folding.`);
+            }
+        }
         try {
+            await sleep(2000);
             const GPTResponse = await queryGPT(query, this.history_for_one_hand);
             this.history_for_one_hand = GPTResponse.prevMessages;
             const choices = GPTResponse.choices;
             this.history_for_one_hand.push(choices.message);
             this.table.resetPlayerActions();
             let bot_action: BotAction = {
-                action_str: "fold",
+                action_str: "",
                 bet_size_in_BBs: 0
-            }
+            };
+
             if (choices && choices.message.content) {
                 bot_action = parseResponse(choices.message.content);
             } else {
-                console.log("Invalid ChatGPT response, defaulting to fold.")
+                console.log("Empty ChatGPT response, retrying query.");
+                return await this.queryBotAction(query, retries, retry_counter + 1);
             }
-            return bot_action;
+
+            if (this.isValidBotAction(bot_action)) {
+                return bot_action;
+            }
+            console.log("Invalid bot action, retrying query.");
+            return await this.queryBotAction(query, retries, retry_counter + 1);
         } catch (err) {
-            throw new Error("Failed to query bot action.");
+            console.log("Error while querying ChatGPT:", err, "retrying query.");
+            return await this.queryBotAction(query, retries, retry_counter + 1);
         }
+    }
+
+    private isValidBotAction(bot_action: BotAction): boolean {
+        console.log("Attempted Bot Action:", bot_action);
+        const valid_actions: string[] = ["bet", "raise", "call", "check", "fold"];
+        const curr_stack_size_in_BBs = this.game.getHero()!.getStackSize();
+        console.log("Bot Stack in BBs", curr_stack_size_in_BBs);
+        let is_valid = false;
+        if (bot_action.action_str && valid_actions.includes(bot_action.action_str)) {
+            switch (bot_action.action_str) {
+                case "bet":
+                    if (bot_action.bet_size_in_BBs > 0 && bot_action.bet_size_in_BBs <= curr_stack_size_in_BBs) {
+                        is_valid = true;
+                    }
+                    break;
+                case "raise":
+                    if (bot_action.bet_size_in_BBs > 0 && bot_action.bet_size_in_BBs <= curr_stack_size_in_BBs) {
+                        is_valid = true;
+                    }
+                    break;
+                case "call":
+                    if (bot_action.bet_size_in_BBs > 0 && bot_action.bet_size_in_BBs <= curr_stack_size_in_BBs) {
+                        is_valid = true;
+                    }
+                    break;
+                case "check":
+                    if (bot_action.bet_size_in_BBs == 0) {
+                        is_valid = true;
+                    }
+                    break;
+                case "fold":
+                    if (bot_action.bet_size_in_BBs == 0) {
+                        is_valid = true;
+                    }
+                    break;
+            }
+        }
+        return is_valid;
     }
 
     private async performBotAction(bot_action: BotAction): Promise<void> {
         console.log("Bot Action:", bot_action.action_str);
-        
         const bet_size = convertToValue(bot_action.bet_size_in_BBs, this.game.getStakes());
-        console.log("Bet Size:", bet_size);
+        console.log("Bet Size:", convertToBBs(bet_size, this.game.getStakes()));
         switch (bot_action.action_str) {
             case "bet":
-                if (bot_action.bet_size_in_BBs) {
-                    logResponse(await puppeteer_service.bet(bet_size), this.debug_mode);
-                } else {
-                    throw new Error("Invalid bet size.");
-                }
+                logResponse(await puppeteer_service.bet(bet_size), this.debug_mode);
                 break;
             case "raise":
-                if (bot_action.bet_size_in_BBs) {
-                    logResponse(await puppeteer_service.bet(bet_size), this.debug_mode);
-                } else {
-                    throw new Error("Invalid bet size.");
-                }
+                logResponse(await puppeteer_service.bet(bet_size), this.debug_mode);
                 break;
             case "call":
                 logResponse(await puppeteer_service.call(), this.debug_mode);
@@ -243,8 +306,13 @@ export class Bot {
                 logResponse(await puppeteer_service.check(), this.debug_mode);
                 break;
             case "fold":
-                // check if the fold is unnecessary, if it is, perform check action instead
                 logResponse(await puppeteer_service.fold(), this.debug_mode);
+                // check if the fold is unnecessary
+                const res = await puppeteer_service.cancelUnnecessaryFold();
+                // check instead if above is true
+                if (res.code === "success") {
+                    logResponse(await puppeteer_service.check(), this.debug_mode);
+                }
                 break;
         }
     }
