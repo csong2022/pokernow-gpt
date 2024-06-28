@@ -5,7 +5,8 @@ import { PlayerAction } from "./player-action.ts";
 import { PlayerStats } from "./player-stats.ts";
 import { Queue } from "../utils/data-structures.ts"
 import { pruneFlop, pruneStarting, getPlayerStacksFromMsg as getPlayerInitialStacksFromMsg } from "../services/message-service.ts";
-import { Street } from "../utils/log-processing-utils.ts";
+import { Street, convertToBBs } from "../utils/log-processing-utils.ts";
+import { Game } from "./game.ts";
 
 export class Table {
     private num_players: number;
@@ -109,6 +110,33 @@ export class Table {
         })
     }
 
+    public async postProcessLogs(logs_queue: Queue<Array<string>>, game: Game) {
+        const table = game.getTable();
+        while (!logs_queue.isEmpty()) {
+            const log = logs_queue.dequeue();
+            //process player action
+            if (log != null) {
+                if (!Object.values<string>(Street).includes(log[0])) {
+                    const player_id = log[0];
+                    const player_name = log[1];
+                    const action = log[2];
+                    const bet_size = log[4];
+                    if (action === "folds") {
+                        table.decrementPlayersInPot();
+                    }
+                    let player_action = new PlayerAction(player_id, action, convertToBBs(Number(bet_size), game.getStakes()));
+                    table.updatePlayerActions(player_action);
+                    await table.cachePlayer(player_id, player_name);
+                } else {
+                    const street = log[0];
+                    const runout = log[1];
+                    table.setStreet(street.toLowerCase());
+                    table.setRunout(runout);
+                }
+            }
+        }
+    }
+
     public getPlayerActions(): Array<PlayerAction> {
         return this.player_actions;
     }
@@ -127,8 +155,10 @@ export class Table {
         logs.forEach((log_data) => {
             if (log_data.length > 3) {
                 let id = log_data[0];
+                let player_name = log_data[1]
                 let action = log_data[2];
                 let actionNum = 0;
+                this.cachePlayer(id,  player_name);
                 if (action === Action.CALL) {
                     actionNum = 1;
                 } else if (action === Action.BET || action === Action.RAISE) {

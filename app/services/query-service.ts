@@ -34,33 +34,6 @@ export function constructQuery(game: Game): string{
     return query
 }
 
-export async function postProcessLogs(logs_queue: Queue<Array<string>>, game: Game) {
-    const table = game.getTable();
-    while (!logs_queue.isEmpty()) {
-        const log = logs_queue.dequeue();
-        //process player action
-        if (log != null) {
-            if (!Object.values<string>(Street).includes(log[0])) {
-                const player_id = log[0];
-                const player_name = log[1];
-                const action = log[2];
-                const bet_size = log[4];
-                if (action === "folds") {
-                    table.decrementPlayersInPot();
-                }
-                let player_action = new PlayerAction(player_id, action, convertToBBs(Number(bet_size), game.getStakes()));
-                table.updatePlayerActions(player_action);
-                await table.cachePlayer(player_id, player_name);
-            } else {
-                const street = log[0];
-                const runout = log[1];
-                table.setStreet(street.toLowerCase());
-                table.setRunout(runout);
-            }
-        }
-    }
-}
-
 function defineObjective(position: string, stack_size: number) {
     return `Help me decide my action in No Limit Hold'em poker. I'm in the ${position} with a stack size of ${stack_size} BBs. `;
 }
