@@ -28,7 +28,7 @@ describe('log service test', async () => {
             t.nextHand();
             t.preProcessLogs(pruneres);
             t.classifyAction(prune_flop_verify);
-            t.setPlayerStacks(res1, 20);
+            t.setPlayerStacksFromMsg(res1, 20);
             console.log("stacks", t.getPlayerStacks());
             console.log("player_actions", t.getActionNumFromId());
             await t.cacheFromLogs(prune_flop_verify)
