@@ -244,7 +244,7 @@ export async function getHand<D, E=Error>(): Response<D, E> {
 // wait for the current hand to finish after a winner has been decided (when the "winner" elem is no longer present)
 export async function waitForHandEnd<D, E=Error>(): Response<D, E> {
     try {
-        await page.waitForSelector('.table-player.winner', {hidden: true, timeout: default_timeout * 10});
+        await page.waitForSelector(".table-player.winner", {hidden: true, timeout: default_timeout * 10});
     } catch (err) {
         return {
             code: "error",
@@ -255,6 +255,23 @@ export async function waitForHandEnd<D, E=Error>(): Response<D, E> {
         code: "success",
         data: null as D,
         msg: "Waited for hand to finish."
+    }
+}
+
+export async function getStackSize<D, E=Error>(): Response<D, E> {
+    try {
+        await page.waitForSelector(".you-player > .table-player-infos-ctn > div > .table-player-stack");
+        const stack_size_str = await page.$eval(".you-player > .table-player-infos-ctn > div > .table-player-stack", (p: any) => p.textContent);
+        return {
+            code: "success",
+            data: stack_size_str as D,
+            msg: "Successfully retrieved bot's stack size."
+        }
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error("Failed to retrieve bot's stack size.") as E
+        }
     }
 }
 
