@@ -210,8 +210,12 @@ export class Table {
     public getPlayerPositions(): Map<string, string> {
         return this.id_to_position;
     }
-    public getPositionFromID(id: string): string {
-        return this.id_to_position.get(id)!;
+    public getPlayerPositionFromID(player_id: string): string {
+        const player_position = this.id_to_position.get(player_id);
+        if (player_position) {
+            return player_position;
+        }
+        throw new Error(`Could not retrieve position for player with id: ${player_id}.`);
     }
     public convertAllOrdersToPosition() {
         for (let key of this.id_to_position.keys()) {
@@ -259,12 +263,21 @@ export class Table {
         return this.id_to_stacks;
     }
     public getPlayerStackFromID(player_id: string): number {
-        const player_stack = this.id_to_stacks.get(player_id);
-        if (player_stack) {
-            return player_stack;
+        const player_stack_in_BBs = this.id_to_stacks.get(player_id);
+        if (player_stack_in_BBs) {
+            return player_stack_in_BBs;
         }
-        throw new Error(`Could not retrieve stack for player with id: ${player_id}.`)
+        throw new Error(`Could not retrieve stack for player with id: ${player_id}.`);
     }
+    public decrementPlayerStack(player_id: string, bet_size_in_BBs: number): void {
+        const player_stack_in_BBs = this.id_to_stacks.get(player_id);
+        if (player_stack_in_BBs) {
+            this.id_to_stacks.set(player_id, player_stack_in_BBs - bet_size_in_BBs);
+            return;
+        }
+        throw new Error(`Could not decrement stack for player with id: ${player_id}.`);
+    }
+    
     public setPlayerStacksFromMsg(msgs: string[], stakes: number): void {
         this.id_to_stacks = getPlayerStacksFromMsg(msgs, stakes);
     }

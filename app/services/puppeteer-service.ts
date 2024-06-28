@@ -223,7 +223,6 @@ export async function getHand<D, E=Error>(): Response<D, E> {
             const card_value = await card_div.$eval(".value", (span: any) => span.textContent);
             const sub_suit_letter = await card_div.$eval(".sub-suit", (span: any) => span.textContent);
             if (card_value && sub_suit_letter && letterToSuit.has(sub_suit_letter)) {
-                console.log("Card: ", card_value + letterToSuit.get(sub_suit_letter)!);
                 cards.push(card_value + letterToSuit.get(sub_suit_letter)!);
             } else {
                 throw "Invalid card.";
