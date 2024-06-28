@@ -4,7 +4,7 @@ import { Player } from "./player.ts"
 import { PlayerAction } from "./player-action.ts";
 import { PlayerStats } from "./player-stats.ts";
 import { Queue } from "../utils/data-structures.ts"
-import { pruneFlop, pruneStarting, getPlayerStacksFromMsg } from "../services/message-service.ts";
+import { pruneFlop, pruneStarting, getPlayerStacksFromMsg as getPlayerInitialStacksFromMsg } from "../services/message-service.ts";
 import { Street } from "../utils/log-processing-utils.ts";
 
 export class Table {
@@ -20,7 +20,7 @@ export class Table {
     private id_to_action_num: Map<string, number>;
     private id_to_player: Map<string, Player>;
     private id_to_position: Map<string, string>;
-    private id_to_stacks: Map<string, number>;
+    private id_to_initial_stacks: Map<string, number>;
     private name_to_id: Map<string, string>;
 
     constructor() {
@@ -36,7 +36,7 @@ export class Table {
         this.id_to_action_num = new Map<string, number>();
         this.id_to_player = new Map<string, Player>();
         this.id_to_position = new Map<string, string>();
-        this.id_to_stacks = new Map<string, number>();
+        this.id_to_initial_stacks = new Map<string, number>();
         this.name_to_id = new Map<string, string>();
     }
 
@@ -259,27 +259,18 @@ export class Table {
         return "";
     }
 
-    public getPlayerStacks(): Map<string, number> {
-        return this.id_to_stacks;
+    public getPlayerInitialStacks(): Map<string, number> {
+        return this.id_to_initial_stacks;
     }
-    public getPlayerStackFromID(player_id: string): number {
-        const player_stack_in_BBs = this.id_to_stacks.get(player_id);
+    public getPlayerInitialStackFromID(player_id: string): number {
+        const player_stack_in_BBs = this.id_to_initial_stacks.get(player_id);
         if (player_stack_in_BBs) {
             return player_stack_in_BBs;
         }
         throw new Error(`Could not retrieve stack for player with id: ${player_id}.`);
     }
-    public decrementPlayerStack(player_id: string, bet_size_in_BBs: number): void {
-        const player_stack_in_BBs = this.id_to_stacks.get(player_id);
-        if (player_stack_in_BBs) {
-            this.id_to_stacks.set(player_id, player_stack_in_BBs - bet_size_in_BBs);
-            return;
-        }
-        throw new Error(`Could not decrement stack for player with id: ${player_id}.`);
-    }
-    
-    public setPlayerStacksFromMsg(msgs: string[], stakes: number): void {
-        this.id_to_stacks = getPlayerStacksFromMsg(msgs, stakes);
+    public setPlayerInitialStacksFromMsg(msgs: string[], stakes: number): void {
+        this.id_to_initial_stacks = getPlayerInitialStacksFromMsg(msgs, stakes);
     }
 
     public getIDFromName(name: string): string {
@@ -302,6 +293,6 @@ export class Table {
 
         this.id_to_action_num = new Map<string, number>();
         this.id_to_position = new Map<string, string>();
-        this.id_to_stacks = new Map<string, number>();
+        this.id_to_initial_stacks = new Map<string, number>();
     }
 }
