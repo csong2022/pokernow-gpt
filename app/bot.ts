@@ -142,7 +142,7 @@ export class Bot {
 
         try {
             logs = await this.pullLogs(this.first_created, logs.first_fetch);
-            this.table.classifyAction(validateAllMsg(pruneFlop(logs.log_data)))
+            this.table.postProcessLogsAfterHand(validateAllMsg(pruneFlop(logs.log_data)))
             this.table.processPlayers();
         } catch (err) {
             console.log("Failed to process players.");

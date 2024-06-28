@@ -4,9 +4,9 @@ export class Player {
     private name: string;
     private player_stats: PlayerStats;
 
-    constructor(name: string, player_data: PlayerStats) {
+    constructor(name: string, player_stats: PlayerStats) {
         this.name = name;
-        this.player_stats = player_data;
+        this.player_stats = player_stats;
     }
 
     public getName(): string {
@@ -17,8 +17,8 @@ export class Player {
         return this.player_stats;
     }
 
-    public updatePlayerStats(player_data: PlayerStats): void {
-        this.player_stats = player_data;
+    public updatePlayerStats(player_stats: PlayerStats): void {
+        this.player_stats = player_stats;
     }
 }
 
@@ -26,8 +26,8 @@ export class Hero extends Player {
     private hand: string[];
     private stack_size: number;
 
-    constructor(name: string, player_data: PlayerStats, hand: string[], stack_size: number) {
-        super(name, player_data);
+    constructor(name: string, player_stats: PlayerStats, hand: string[], stack_size: number) {
+        super(name, player_stats);
         this.hand = hand;
         this.stack_size = stack_size;
     }
