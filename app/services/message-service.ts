@@ -1,5 +1,5 @@
 import { Action, Street } from "../utils/log-processing-utils.ts";
-import { convertToBB } from "../utils/log-processing-utils.ts";
+import { convertToBBs } from "../utils/log-processing-utils.ts";
 
 export function getPlayer(msg: string): Array<string> {
     const res = new Array<string>;
@@ -35,7 +35,7 @@ export function getPlayerStacksFromMsg(msgs: Array<string>, stakes: number): Map
         if (msgs[i].includes("Player stacks: ")) {
             let regExps = [...msgs[i].matchAll(re)];
             regExps.forEach((element) => {
-                res.set(element[1], convertToBB(Number(element[2]), stakes));
+                res.set(element[1], convertToBBs(Number(element[2]), stakes));
             })
         }
     }

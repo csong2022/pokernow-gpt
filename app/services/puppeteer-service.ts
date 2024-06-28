@@ -46,7 +46,7 @@ export async function waitForGameInfo<D, E=Error>(): Response<D, E> {
 export async function getGameInfo<D, E=Error>(): Response<D, E> {
     var game_info;
     try {
-        game_info = await page.$eval('.game-infos > .blind-value-ctn > .blind-value > span', (span: any) => span.textContent);
+        game_info = await page.$eval(".game-infos > .blind-value-ctn > .blind-value > span", (span: any) => span.textContent);
     } catch (err) {
         return {
             code: "error",
@@ -61,7 +61,7 @@ export async function getGameInfo<D, E=Error>(): Response<D, E> {
 }
 
 export function convertGameInfo(game_info: string): GameInfo {
-    const re = RegExp('([A-Z]+)\\s~\\s[0-9]+\\s\/\\s([0-9]+)');
+    const re = RegExp("([A-Z]+)\\s~\\s[0-9]+\\s\/\\s([0-9]+)");
     const matches = re.exec(game_info);
     if (matches && matches.length == 3) {
         return {game_type: matches[1], stakes: Number(matches[2])};
@@ -223,7 +223,6 @@ export async function getHand<D, E=Error>(): Response<D, E> {
             const card_value = await card_div.$eval(".value", (span: any) => span.textContent);
             const sub_suit_letter = await card_div.$eval(".sub-suit", (span: any) => span.textContent);
             if (card_value && sub_suit_letter && letterToSuit.has(sub_suit_letter)) {
-                console.log("Card: ", card_value + letterToSuit.get(sub_suit_letter)!);
                 cards.push(card_value + letterToSuit.get(sub_suit_letter)!);
             } else {
                 throw "Invalid card.";
@@ -261,8 +260,8 @@ export async function waitForHandEnd<D, E=Error>(): Response<D, E> {
 
 export async function call<D, E=Error>(): Response<D, E> {
     try {
-        await page.waitForSelector('.game-decisions-ctn > .action-buttons > .call', {timeout: default_timeout});
-        await page.$eval('.game-decisions-ctn > .action-buttons > .call', (button: any) => button.click());
+        await page.waitForSelector(".game-decisions-ctn > .action-buttons > .call", {timeout: default_timeout});
+        await page.$eval(".game-decisions-ctn > .action-buttons > .call", (button: any) => button.click());
     } catch (err) {
         return {
             code: "error",
@@ -278,8 +277,8 @@ export async function call<D, E=Error>(): Response<D, E> {
 
 export async function fold<D, E=Error>(): Response<D, E> {
     try {
-        await page.waitForSelector('.game-decisions-ctn > .action-buttons > .fold', {timeout: default_timeout});
-        await page.$eval('.game-decisions-ctn > .action-buttons > .fold', (button: any) => button.click());
+        await page.waitForSelector(".game-decisions-ctn > .action-buttons > .fold", {timeout: default_timeout});
+        await page.$eval(".game-decisions-ctn > .action-buttons > .fold", (button: any) => button.click());
     } catch (err) {
         return {
             code: "error",
@@ -293,10 +292,31 @@ export async function fold<D, E=Error>(): Response<D, E> {
     }
 }
 
+export async function cancelUnnecessaryFold<D, E=Error>(): Response<D, E> {
+    const fold_alert_text = "Are you sure that you want do an unnecessary fold?Do not show this again in this session? "
+    try {
+        await page.waitForSelector(".alert-1", {timeout: default_timeout});
+        const text = await page.$eval(".alert-1 > .content", (div: any) => div.textContent);
+        if (text === fold_alert_text) {
+            await page.$eval(".alert-1 > .alert-1-buttons > .button-1.red", (button: any) => button.click());
+        }
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error("No option to cancel unnecessary fold available.") as E
+        }
+    }
+    return {
+        code: "success",
+        data: null as D,
+        msg: "Successfully cancelled unnecessary fold."
+    }
+}
+
 export async function check<D, E=Error>(): Response<D, E> {
     try {
-        await page.waitForSelector('.game-decisions-ctn > .action-buttons > .check', {timeout: default_timeout});
-        await page.$eval('.game-decisions-ctn > .action-buttons > .check', (button: any) => button.click());
+        await page.waitForSelector(".game-decisions-ctn > .action-buttons > .check", {timeout: default_timeout});
+        await page.$eval(".game-decisions-ctn > .action-buttons > .check", (button: any) => button.click());
     } catch (err) {
         return {
             code: "error",
@@ -312,13 +332,13 @@ export async function check<D, E=Error>(): Response<D, E> {
 
 export async function bet<D, E=Error>(bet_amount: number): Response<D, E> {
     try {
-        await page.waitForSelector('.game-decisions-ctn > .action-buttons > .raise', {timeout: default_timeout});
-        await page.$eval('.game-decisions-ctn > .action-buttons > .raise', (button: any) => button.click());
-        await page.waitForSelector('.game-decisions-ctn > form > .raise-bet-value > div > input', {timeout: default_timeout});
-        await page.focus('.game-decisions-ctn > form > .raise-bet-value > div > input')
+        await page.waitForSelector(".game-decisions-ctn > .action-buttons > .raise", {timeout: default_timeout});
+        await page.$eval(".game-decisions-ctn > .action-buttons > .raise", (button: any) => button.click());
+        await page.waitForSelector(".game-decisions-ctn > form > .raise-bet-value > div > input", {timeout: default_timeout});
+        await page.focus(".game-decisions-ctn > form > .raise-bet-value > div > input")
         await page.keyboard.type(bet_amount.toString());
-        await page.waitForSelector('.game-decisions-ctn > form > .action-buttons > .bet', {timeout: default_timeout});
-        await page.$eval('.game-decisions-ctn > form > .action-buttons > .bet', (input: any) => input.click());
+        await page.waitForSelector(".game-decisions-ctn > form > .action-buttons > .bet", {timeout: default_timeout});
+        await page.$eval(".game-decisions-ctn > form > .action-buttons > .bet", (input: any) => input.click());
     } catch (err) {
         return {
             code: "error",
