@@ -109,10 +109,11 @@ export class Bot {
                 if (data.includes("action-signal")) {
                     console.log("Performing bot actions.");
 
-                    // get hand
+                    // get hand and stack size
                     const hand = await this.getHand();
+                    const stack_size = await this.getStackSize();
 
-                    await this.updateHero(hand);
+                    await this.updateHero(hand, convertToBBs(stack_size, this.game.getStakes()));
 
                     // post process logs and construct query
                     await postProcessLogs(this.table.getLogsQueue(), this.game);
@@ -153,7 +154,7 @@ export class Bot {
             let msg = getMsg(res);
             if (first_fetch) {
                 msg = pruneStarting(msg);
-                this.table.setPlayerStacksFromMsg(msg, this.game.getStakes());
+                this.table.setPlayerInitialStacksFromMsg(msg, this.game.getStakes());
                 first_fetch = false;
                 this.first_created = getFirst(getCreatedAt(res))
             }
@@ -177,18 +178,29 @@ export class Bot {
         var hand: string[] = [];
         const res = await puppeteer_service.getHand();
         logResponse(res, this.debug_mode);
-        if (res.code == "success") {
+        if (res.code === "success") {
             hand = res.data as string[];
         }
         return hand;
     }
 
-    private async updateHero(hand: string[]): Promise<void> {
+    private async getStackSize(): Promise<number> {
+        var stack_size: number = 0;
+        const res = await puppeteer_service.getStackSize();
+        logResponse(res, this.debug_mode);
+        if (res.code === "success") {
+            stack_size = res.data as number;
+        }
+        return stack_size;
+    }
+
+    private async updateHero(hand: string[], stack_size: number): Promise<void> {
         const hero = this.game.getHero();
         if (!hero) {
-            this.game.createAndSetHero(this.bot_name, hand);
+            this.game.createAndSetHero(this.bot_name, hand, stack_size);
         } else {
             hero.setHand(hand);
+            hero.setStackSize(stack_size);
         }
     }
 
@@ -233,7 +245,7 @@ export class Bot {
     private isValidBotAction(bot_action: BotAction): boolean {
         console.log("Attempted Bot Action:", bot_action);
         const valid_actions: string[] = ["bet", "raise", "call", "check", "fold"];
-        const curr_stack_size_in_BBs = this.table.getPlayerStackFromID(this.table.getIDFromName(this.bot_name));
+        const curr_stack_size_in_BBs = this.game.getHero()!.getStackSize();
         console.log("Bot Stack in BBs", curr_stack_size_in_BBs);
         let is_valid = false;
         if (bot_action.action_str && valid_actions.includes(bot_action.action_str)) {
@@ -270,22 +282,17 @@ export class Bot {
 
     private async performBotAction(bot_action: BotAction): Promise<void> {
         console.log("Bot Action:", bot_action.action_str);
-        
         const bet_size = convertToValue(bot_action.bet_size_in_BBs, this.game.getStakes());
-        //const bot_id = this.table.getIDFromName(this.bot_name);
         console.log("Bet Size:", convertToBBs(bet_size, this.game.getStakes()));
         switch (bot_action.action_str) {
             case "bet":
                 logResponse(await puppeteer_service.bet(bet_size), this.debug_mode);
-                //this.table.decrementPlayerStack(bot_id, bot_action.bet_size_in_BBs);
                 break;
             case "raise":
                 logResponse(await puppeteer_service.bet(bet_size), this.debug_mode);
-                //this.table.decrementPlayerStack(bot_id, bot_action.bet_size_in_BBs);
                 break;
             case "call":
                 logResponse(await puppeteer_service.call(), this.debug_mode);
-                //this.table.decrementPlayerStack(bot_id, bot_action.bet_size_in_BBs);
                 break;
             case "check":
                 logResponse(await puppeteer_service.check(), this.debug_mode);
