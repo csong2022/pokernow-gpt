@@ -27,7 +27,7 @@ describe('log service test', async () => {
             const t = new Table();
             t.nextHand();
             t.preProcessLogs(pruneres);
-            t.classifyAction(prune_flop_verify);
+            t.postProcessLogsAfterHand(prune_flop_verify);
             t.setPlayerInitialStacksFromMsg(res1, 20);
             console.log("stacks", t.getPlayerInitialStacks());
             console.log("player_actions", t.getActionNumFromId());

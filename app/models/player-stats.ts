@@ -36,6 +36,10 @@ export class PlayerStats {
         return this.walks;
     }
 
+    public incrementWalks(): void {
+        this.walks += 1;
+    }
+
     public getVPIPHands(): number {
         return this.vpip_hands;
     }
