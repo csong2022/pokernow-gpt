@@ -24,9 +24,12 @@ export class Player {
 
 export class Hero extends Player {
     private hand: string[];
-    constructor(name: string, player_data: PlayerStats, hand: string[]) {
+    private stack_size: number;
+
+    constructor(name: string, player_data: PlayerStats, hand: string[], stack_size: number) {
         super(name, player_data);
         this.hand = hand;
+        this.stack_size = stack_size;
     }
 
     public getHand(): string[] {
@@ -35,5 +38,12 @@ export class Hero extends Player {
 
     public setHand(hand: string[]): void {
         this.hand = hand;
+    }
+
+    public getStackSize(): number {
+        return this.stack_size;
+    }
+    public setStackSize(stack_size: number): void {
+        this.stack_size = stack_size;
     }
 }

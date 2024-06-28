@@ -9,14 +9,14 @@ export function constructQuery(game: Game): string{
     const table = game.getTable();
     const hero_name = game.getHero()!.getName();
     const hero_id = table.getIDFromName(hero_name);
-    const hero_stack = table.getPlayerStackFromID(hero_id);
+    const hero_stack = game.getHero()!.getStackSize();
     const hero_position = table.getPlayerPositionFromID(hero_id);
     const hero_cards = game.getHero()!.getHand();
 
     const street = table.getStreet();
     const players_in_pot = table.getPlayersInPot();
     const runout = table.getRunout();
-    const player_stacks = table.getPlayerStacks();
+    const player_stacks = table.getPlayerInitialStacks();
     const player_actions = table.getPlayerActions();
     const player_positions = table.getPlayerPositions();
 

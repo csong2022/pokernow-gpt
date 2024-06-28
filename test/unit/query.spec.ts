@@ -29,7 +29,7 @@ describe('log service test', async () => {
             t.nextHand();
             t.preProcessLogs(pruneres);
             t.classifyAction(prune_flop_verify);
-            t.setPlayerStacksFromMsg(res1, 10);
+            t.setPlayerInitialStacksFromMsg(res1, 10);
             await t.cacheFromLogs(prune_flop_verify);
             t.processPlayers();
             t.convertAllOrdersToPosition();

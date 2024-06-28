@@ -28,8 +28,8 @@ describe('log service test', async () => {
             t.nextHand();
             t.preProcessLogs(pruneres);
             t.classifyAction(prune_flop_verify);
-            t.setPlayerStacksFromMsg(res1, 20);
-            console.log("stacks", t.getPlayerStacks());
+            t.setPlayerInitialStacksFromMsg(res1, 20);
+            console.log("stacks", t.getPlayerInitialStacks());
             console.log("player_actions", t.getActionNumFromId());
             await t.cacheFromLogs(prune_flop_verify)
             console.log("player cache", t.getPlayerCache());

@@ -50,8 +50,8 @@ export class Game {
         this.hero = hero;
     }
 
-    public createAndSetHero(bot_name: string, hand: string[]): void {
-        this.setHero(new Hero(bot_name, new PlayerStats(this.table.getIDFromName(bot_name)), hand));
+    public createAndSetHero(bot_name: string, hand: string[], stack_size: number): void {
+        this.setHero(new Hero(bot_name, new PlayerStats(this.table.getIDFromName(bot_name)), hand, stack_size));
     }
 
     public getTable(): Table {
