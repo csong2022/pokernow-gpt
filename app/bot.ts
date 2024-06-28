@@ -235,8 +235,13 @@ export class Bot {
                 logResponse(await puppeteer_service.check(), this.debug_mode);
                 break;
             case "fold":
-                // check if the fold is unnecessary, if it is, perform check action instead
                 logResponse(await puppeteer_service.fold(), this.debug_mode);
+                // check if the fold is unnecessary
+                const res = logResponse(await puppeteer_service.cancelUnnecessaryFold(), this.debug_mode);
+                // check instead if above is true
+                if (res === "success") {
+                    logResponse(await puppeteer_service.check(), this.debug_mode);
+                }
                 break;
         }
     }
