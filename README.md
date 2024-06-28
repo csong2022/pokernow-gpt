@@ -7,3 +7,5 @@ WIP: A poker bot designed for [PokerNow](https://www.pokernow.club) using ChatGP
 install node packages on initial run -> npm install
 
 start express app -> npx tsx app/index.ts
+
+create .env file and set the OPENAI_API_KEY variable
