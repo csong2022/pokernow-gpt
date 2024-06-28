@@ -84,7 +84,6 @@ export function defineActions(player_actions: Array<PlayerAction>, table: Table)
         let player_pos = table.getPlayerPositionFromID(player_actions[i].getPlayerId());
         let player_action_string = player_actions[i].toString();
         let curr = `${player_pos} ${player_action_string}`;
-        //console.log("current action", curr);
         if (i != player_actions.length - 1) {
             curr = curr.concat(", ");
         }
