@@ -148,29 +148,40 @@ export class Table {
     public getActionNumFromId(): Map<string, number> {
         return this.id_to_action_num;
     }
-    public classifyAction(logs: Array<Array<string>>) {
+
+    // TODO: this needs to take in the blinds or else total_hands isn't updated correctly
+    public postProcessLogsAfterHand(logs: Array<Array<string>>) {
         // 0 means they didn't put in money, 1 means they put in money but didn't raise (CALL)
         // 2 means they put in money through a raise. 1 -> vpip, 2 -> vpip & pfr
         // higher numbers override lower numbers
-        logs.forEach((log_data) => {
+        let action_count = 0;
+        logs.forEach(log_data => {
             if (log_data.length > 3) {
-                let id = log_data[0];
-                let player_name = log_data[1]
-                let action = log_data[2];
+                const player_id = log_data[0];
+                const player_name = log_data[1]
+                const action = log_data[2];
                 let actionNum = 0;
-                this.cachePlayer(id,  player_name);
+                this.cachePlayer(player_id,  player_name);
                 if (action === Action.CALL) {
                     actionNum = 1;
+                    action_count += 1;
                 } else if (action === Action.BET || action === Action.RAISE) {
                     actionNum = 2;
+                    action_count += 1;
                 }
-                if ((!(id in this.id_to_action_num)) || this.id_to_action_num.get(id)! < actionNum) {
-                    this.id_to_action_num.set(id, actionNum);
+                if ((!(player_id in this.id_to_action_num)) || this.id_to_action_num.get(player_id)! < actionNum) {
+                    this.id_to_action_num.set(player_id, actionNum);
                 }
             }
         })
+        if (action_count == 0) {
+            const player_ids_arr = Array.from(this.id_to_action_num.keys());
+            player_ids_arr.forEach(player_id => {
+                const player_stats = this.getPlayerStatsFromId(player_id);
+                player_stats.incrementWalks();
+            })
+        }
     }
-
 
     public getPlayerCache(): Map<string, Player> {
         return this.id_to_player;

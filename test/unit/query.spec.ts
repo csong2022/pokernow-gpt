@@ -3,13 +3,14 @@ import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-
 import { closeBrowser, getData, getMsg, getLast, getFirst } from '../../app/services/log-service.ts';
 import { getPlayer, getPlayerAction, getFirstWord, validateAllMsg, validateMsg, pruneStarting, pruneFlop, getPlayerStacksFromMsg } from "../../app/services/message-service.ts";
 import { Table } from "../../app/models/table.ts";
-import { defineActions, defineStats, defineStacks, postProcessLogs, constructQuery } from "../../app/services/query-service.ts";
+import { defineActions, defineStats, defineStacks, constructQuery } from "../../app/services/query-service.ts";
 import { Game } from "../../app/models/game.ts";
 import { Hero, Player } from "../../app/models/player.ts";
 import { PlayerStats } from "../../app/models/player-stats.ts";
 import { queryGPT, parseResponse } from '../../app/services/openai-service.ts';
 import { queryObjects } from "v8";
 import { convertToValue } from "../../app/utils/log-processing-utils.ts";
+import { Queue } from "../../app/utils/data-structures.ts";
 
 describe('log service test', async () => {
     it("should properly get logs and filter through them", async() => {
@@ -24,17 +25,17 @@ describe('log service test', async () => {
             const g = new Game("11", 10, "NLH", 30);
             const t = g.getTable()
             let hero_stats = new PlayerStats('aa')
-            let hero = new Hero('xdd', hero_stats, ['4♣','4♥'])
+            let hero = new Hero('xdd', hero_stats, ['4♣','4♥'], 10)
             g.setHero(hero)
             t.nextHand();
             t.preProcessLogs(pruneres);
-            t.classifyAction(prune_flop_verify);
+            t.postProcessLogsAfterHand(prune_flop_verify);
             t.setPlayerInitialStacksFromMsg(res1, 10);
             await t.cacheFromLogs(prune_flop_verify);
             t.processPlayers();
             t.convertAllOrdersToPosition();
 
-            postProcessLogs(t.getLogsQueue(), g);
+            t.postProcessLogs(t.getLogsQueue(), g);
             //console.log("player_actions", t.getPlayerActions());
             
             /* const stacks_msg = defineStacks(t);
