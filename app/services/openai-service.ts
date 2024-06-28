@@ -27,18 +27,21 @@ export async function queryGPT(query: string, prevMessages: ChatCompletionMessag
 }
 
 export function parseResponse(msg: string) {
-    // use regex to detect action
-    msg = msg.slice(1, -1);
-    const msg_arr = msg.split(',');
-    console.log("Message Array:", msg_arr);
-    const bet_size_str = msg_arr[1];
-    const matches = bet_size_str.match(/[+]?([0-9]+(?:[\.][0-9]*)?|\.[0-9]+)/);
+    msg = msg.toLowerCase();
+
+    const action_matches = msg.match(/(bet|raise|call|check|fold)/);
+    let action_str = "";
+    if (action_matches) {
+        action_str = action_matches[0];
+    }
+
+    const bet_size_matches = msg.match(/[+]?([0-9]+(?:[\.][0-9]*)?|\.[0-9]+)/);
     let bet_size_in_BBs = 0;
-    if (matches) {
-        bet_size_in_BBs = parseFloat(matches[0]);
+    if (bet_size_matches) {
+        bet_size_in_BBs = parseFloat(bet_size_matches[0]);
     }
     return {
-        action_str: msg_arr[0].toLowerCase(),
+        action_str: action_str,
         bet_size_in_BBs: bet_size_in_BBs
     }
 }

@@ -14,15 +14,20 @@ export class Bot {
     private bot_name: string;
     private game: Game;
     private table: Table;
-    private debug_mode: DebugMode;
+    
     private first_created: string;
 
-    constructor(debug_mode: DebugMode, game: Game) {
+    private debug_mode: DebugMode;
+    private query_retries: number;
+
+    constructor(game: Game, debug_mode: DebugMode, query_retries: number = 0) {
         this.bot_name = "";
         this.game = game;
-        this.debug_mode = debug_mode;
         this.table = game.getTable();
+
         this.first_created = ""
+        this.debug_mode = debug_mode;
+        this.query_retries = query_retries;
     }
 
     public async run() {
@@ -115,7 +120,7 @@ export class Bot {
 
                     // query chatGPT and make action
                     try {
-                        const bot_action = await this.queryBotAction(query);
+                        const bot_action = await this.queryBotAction(query, this.query_retries);
                         await this.performBotAction(bot_action);
                     } catch (err) {
                         console.log("Failed to query and perform bot action.")
@@ -148,7 +153,7 @@ export class Bot {
             let msg = getMsg(res);
             if (first_fetch) {
                 msg = pruneStarting(msg);
-                this.table.setPlayerStacks(msg, this.game.getStakes());
+                this.table.setPlayerStacksFromMsg(msg, this.game.getStakes());
                 first_fetch = false;
                 this.first_created = getFirst(getCreatedAt(res))
             }
@@ -187,25 +192,71 @@ export class Bot {
         }
     }
 
-    private async queryBotAction(query: string): Promise<BotAction> {
+    private async queryBotAction(query: string, retries: number, retry_counter: number = 0): Promise<BotAction> {
         // retry query up to N times if the action is invalid (action is not in valid bot actions)
         // default to check, if I can't check fold
+        if (retry_counter > retries) {
+            throw new Error(`Failed to query bot action, exceeded the retry limit after ${retries} attempts.`);
+        }
         try {
             const GPTResponse = await queryGPT(query, []);
             const choices = GPTResponse.choices;
             let bot_action: BotAction = {
-                action_str: "fold",
+                action_str: "",
                 bet_size_in_BBs: 0
-            }
+            };
+
             if (choices && choices.message.content) {
                 bot_action = parseResponse(choices.message.content);
             } else {
-                console.log("Invalid ChatGPT response, defaulting to fold.")
+                console.log("Empty ChatGPT response, retrying query.");
+                return await this.queryBotAction(query, retries, retry_counter + 1);
             }
-            return bot_action;
+
+            if (this.isValidBotAction(bot_action)) {
+                return bot_action;
+            }
+
+            console.log("Invalid bot action, retrying query.");
+            return await this.queryBotAction(query, retries, retry_counter + 1);
         } catch (err) {
-            throw new Error("Failed to query bot action.");
+            console.log("Error while querying ChatGPT, retrying query.");
+            return await this.queryBotAction(query, retries, retry_counter + 1);
         }
+    }
+
+    private isValidBotAction(bot_action: BotAction): boolean {
+        const valid_actions: string[] = ["bet", "raise", "call", "check", "fold"];
+        const curr_stack_size = this.table.getPlayerStackFromID(this.table.getIDFromName("bot_name"));
+        let is_valid = false;
+        if (bot_action.action_str && valid_actions.includes(bot_action.action_str)) {
+            switch (bot_action.action_str) {
+                case "bet":
+                    if (bot_action.bet_size_in_BBs > 0 && bot_action.bet_size_in_BBs <= curr_stack_size) {
+                        is_valid = true;
+                    }
+                    break;
+                case "raise":
+                    if (bot_action.bet_size_in_BBs > 0 && bot_action.bet_size_in_BBs <= curr_stack_size) {
+                        is_valid = true;
+                    }
+                    break;
+                case "call":
+                    is_valid = true;
+                    break;
+                case "check":
+                    if (bot_action.bet_size_in_BBs == 0) {
+                        is_valid = true;
+                    }
+                    break;
+                case "fold":
+                    if (bot_action.bet_size_in_BBs == 0) {
+                        is_valid = true;
+                    }
+                    break;
+            }
+        }
+        return is_valid;
     }
 
     private async performBotAction(bot_action: BotAction): Promise<void> {
