@@ -266,6 +266,10 @@ export class Table {
         return this.name_to_id.get(name)!;
     }
 
+    public resetPlayerActions(): void {
+        this.player_actions = new Array<PlayerAction>();
+    }
+
     public nextHand(): void {
         this.num_players = 0;
         this.players_in_pot = 0;
