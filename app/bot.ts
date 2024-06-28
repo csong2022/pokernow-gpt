@@ -6,7 +6,7 @@ import { fetchData, getFirst, getCreatedAt, getData, getMsg } from './services/l
 import { pruneFlop, pruneStarting, validateAllMsg } from './services/message-service.ts';
 import { BotAction, queryGPT, parseResponse } from './services/openai-service.ts'
 import * as puppeteer_service from './services/puppeteer-service.ts';
-import { constructQuery, postProcessLogs } from './services/query-service.ts';
+import { constructQuery } from './services/query-service.ts';
 import { sleep } from './utils/bot-utils.ts';
 import { logResponse, DebugMode } from './utils/error-handling-utils.ts';
 import { convertToBBs, convertToValue, type Logs } from './utils/log-processing-utils.ts';
@@ -105,13 +105,13 @@ export class Bot {
             logResponse(res, this.debug_mode);
 
             if (res.code == "success") {
-                try {
-                    logs = await this.pullLogs(logs.last_created, logs.first_fetch);
-                } catch (err) {
-                    console.log("Failed to pull logs.");
-                }
                 const data = res.data as string;
                 if (data.includes("action-signal")) {
+                    try {
+                        logs = await this.pullLogs(logs.last_created, logs.first_fetch);
+                    } catch (err) {
+                        console.log("Failed to pull logs.");
+                    }
                     console.log("Performing bot actions.");
 
                     // get hand and stack size
@@ -121,7 +121,7 @@ export class Bot {
                     await this.updateHero(hand, convertToBBs(stack_size, this.game.getStakes()));
 
                     // post process logs and construct query
-                    await postProcessLogs(this.table.getLogsQueue(), this.game);
+                    await this.table.postProcessLogs(this.table.getLogsQueue(), this.game);
                     const query = constructQuery(this.game);
 
                     // query chatGPT and make action
