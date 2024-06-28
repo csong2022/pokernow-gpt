@@ -7,7 +7,8 @@ import { getPlayerStacksFromMsg, pruneFlop, pruneStarting, validateAllMsg } from
 import { logResponse, DebugMode } from './utils/error-handling-utils.ts';
 import { Action, convertToValue, type Logs } from './utils/log-processing-utils.ts';
 import { constructQuery, postProcessLogs } from './services/query-service.ts';
-import { BotAction, queryGPT, parseResponse } from './services/openai-service.ts'
+import { BotAction, queryGPT, parseResponse} from './services/openai-service.ts'
+import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
 import { log } from 'console';
 
 export class Bot {
@@ -16,13 +17,15 @@ export class Bot {
     private table: Table;
     private debug_mode: DebugMode;
     private first_created: string;
+    private history_for_one_hand: ChatCompletionMessageParam | any;
 
     constructor(debug_mode: DebugMode, game: Game) {
         this.bot_name = "";
         this.game = game;
         this.debug_mode = debug_mode;
         this.table = game.getTable();
-        this.first_created = ""
+        this.first_created = "";
+        this.history_for_one_hand = [];
     }
 
     public async run() {
@@ -36,6 +39,8 @@ export class Bot {
             console.log("Number of players in game:", this.table.getNumPlayers());
             this.table.setPlayersInPot(this.table.getNumPlayers());
             await this.playOneHand();
+            this.history_for_one_hand = [];
+            //this.table.updatePlayerActions()
             this.table.nextHand();
         }
     }
@@ -191,8 +196,11 @@ export class Bot {
         // retry query up to N times if the action is invalid (action is not in valid bot actions)
         // default to check, if I can't check fold
         try {
-            const GPTResponse = await queryGPT(query, []);
+            const GPTResponse = await queryGPT(query, this.history_for_one_hand);
+            this.history_for_one_hand = GPTResponse.prevMessages;
             const choices = GPTResponse.choices;
+            this.history_for_one_hand.push(choices.message);
+            this.table.resetPlayerActions();
             let bot_action: BotAction = {
                 action_str: "fold",
                 bet_size_in_BBs: 0
