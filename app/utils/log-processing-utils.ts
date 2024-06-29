@@ -15,7 +15,7 @@ export enum Street {
 }
 
 export interface Logs {
-    log_data: Array<string>,
+    log_data: Array<Array<string>>,
     last_created: string,
     first_fetch: boolean
 }
