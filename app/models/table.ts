@@ -169,7 +169,7 @@ export class Table {
                     actionNum = 2;
                     action_count += 1;
                 }
-                if ((!(player_id in this.id_to_action_num)) || this.id_to_action_num.get(player_id)! < actionNum) {
+                if (!this.id_to_action_num.has(player_id) || this.id_to_action_num.get(player_id)! < actionNum) {
                     this.id_to_action_num.set(player_id, actionNum);
                 }
             }

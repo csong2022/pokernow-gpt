@@ -1,7 +1,7 @@
 import prompt from 'prompt-sync';
 import { Game } from './models/game.ts';
 import { Table } from './models/table.ts';
-import { fetchData, getFirst, getCreatedAt, getData, getMsg } from './services/log-service.ts';
+import { fetchData, getFirst, getCreatedAt, getData, getMsg, getLast } from './services/log-service.ts';
 
 import { pruneFlop, pruneStarting, validateAllMsg } from './services/message-service.ts';
 import { BotAction, queryGPT, parseResponse } from './services/openai-service.ts'
@@ -161,7 +161,7 @@ export class Bot {
                 msg = pruneStarting(msg);
                 this.table.setPlayerInitialStacksFromMsg(msg, this.game.getStakes());
                 first_fetch = false;
-                this.first_created = getFirst(getCreatedAt(res))
+                this.first_created = getLast(getCreatedAt(res));
             }
             let only_valid = validateAllMsg(msg);
     
