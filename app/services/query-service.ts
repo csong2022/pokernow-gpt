@@ -29,7 +29,7 @@ export function constructQuery(game: Game): string{
     query = query.concat(defineStacks(player_stacks, player_positions), '\n');
     query = query.concat(defineActions(player_actions, table), '\n');
     query = query.concat(defineStats(player_positions, table), '\n');
-    query = query.concat("Please respond in this format: {action,bet_size_in_BBs}");
+    query = query.concat("Do not give any explanations, respond in this format only: {action,bet_size_in_BBs}");
 
     return query
 }

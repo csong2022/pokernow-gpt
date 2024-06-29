@@ -1,7 +1,7 @@
 import { fetchData, getCreatedAt } from "../../app/services/log-service.ts"
 import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-utils.ts';
 import { closeBrowser, getData, getMsg, getLast, getFirst } from '../../app/services/log-service.ts';
-import { getPlayer, getPlayerAction, getFirstWord, validateAllMsg, validateMsg, pruneStarting, pruneFlop, getPlayerStacksFromMsg } from "../../app/services/message-service.ts";
+import { getPlayer, getPlayerAction, getFirstWord, validateAllMsg, validateMsg, pruneFlop, getPlayerStacksFromMsg, pruneLogsBeforeCurrentHand } from "../../app/services/message-service.ts";
 import { Table } from "../../app/models/table.ts";
 import { defineActions, defineStats, defineStacks, constructQuery } from "../../app/services/query-service.ts";
 import { Game } from "../../app/models/game.ts";
@@ -19,7 +19,7 @@ describe('log service test', async () => {
         if (log.code === SUCCESS_RESPONSE) {
             //console.log('success', log.data)
             const res1 = getMsg(getData(log));
-            const prune = pruneStarting(res1);
+            const prune = getMsg(pruneLogsBeforeCurrentHand(getData(log)));
             const prune_flop = pruneFlop(prune);
             const prune_flop_verify = validateAllMsg(prune_flop);
             const pruneres = validateAllMsg(prune);
