@@ -4,7 +4,7 @@ import { Player } from "./player.ts"
 import { PlayerAction } from "./player-action.ts";
 import { PlayerStats } from "./player-stats.ts";
 import { Queue } from "../utils/data-structures.ts"
-import { pruneFlop, pruneStarting, getPlayerStacksFromMsg as getPlayerInitialStacksFromMsg } from "../services/message-service.ts";
+import { pruneFlop, getPlayerStacksFromMsg as getPlayerInitialStacksFromMsg } from "../services/message-service.ts";
 import { Street, convertToBBs } from "../utils/log-processing-utils.ts";
 import { Game } from "./game.ts";
 
@@ -235,7 +235,7 @@ export class Table {
                     player_stats.setTotalHands(player_stats.getTotalHands() + 1);
                     player.updatePlayerStats(player_stats);
                     // update player in-memory cache
-                    this.id_to_player.set(player_id, player);
+                    // ßthis.id_to_player.set(player_id, player);
                     // update database
                     await player_service.update(player_id, player_stats.toJSON());
                 } else {

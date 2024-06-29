@@ -352,7 +352,31 @@ export async function bet<D, E=Error>(bet_amount: number): Response<D, E> {
         await page.waitForSelector(".game-decisions-ctn > .action-buttons > .raise", {timeout: default_timeout});
         await page.$eval(".game-decisions-ctn > .action-buttons > .raise", (button: any) => button.click());
         await page.waitForSelector(".game-decisions-ctn > form > .raise-bet-value > div > input", {timeout: default_timeout});
-        await page.focus(".game-decisions-ctn > form > .raise-bet-value > div > input")
+        await page.focus(".game-decisions-ctn > form > .raise-bet-value > div > input");
+        await page.keyboard.type(bet_amount.toString());
+        await page.waitForSelector(".game-decisions-ctn > form > .action-buttons > .bet", {timeout: default_timeout});
+        await page.$eval(".game-decisions-ctn > form > .action-buttons > .bet", (input: any) => input.click());
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error(`Failed to bet with amount ${bet_amount}.`) as E
+        }
+    }
+    return {
+        code: "success",
+        data: null as D,
+        msg: `Successfully executed bet action with amount ${bet_amount}.`
+    }
+}
+
+// raise without existing bet => same as betting
+// raise with existing bet => need to add current_bet_amount + bet_amount
+export async function raise<D, E=Error>(bet_amount: number): Response<D, E> {
+    try {
+        await page.waitForSelector(".game-decisions-ctn > .action-buttons > .raise", {timeout: default_timeout});
+        await page.$eval(".game-decisions-ctn > .action-buttons > .raise", (button: any) => button.click());
+        await page.waitForSelector(".game-decisions-ctn > form > .raise-bet-value > div > input", {timeout: default_timeout});
+        await page.focus(".game-decisions-ctn > form > .raise-bet-value > div > input");
         await page.keyboard.type(bet_amount.toString());
         await page.waitForSelector(".game-decisions-ctn > form > .action-buttons > .bet", {timeout: default_timeout});
         await page.$eval(".game-decisions-ctn > form > .action-buttons > .bet", (input: any) => input.click());
