@@ -1,5 +1,6 @@
 import puppeteer from 'puppeteer';
 import type { Response } from '../utils/error-handling-utils.ts';
+import { Data } from '../utils/log-processing-utils.ts';
 
 const browser = await puppeteer.launch({
     defaultViewport: null,
@@ -30,15 +31,6 @@ export const fetchData = async <D, E=Error>(
     }
 
 };
-interface Data {
-    logs: Array<Log>
-}
-
-interface Log {
-    at: string,
-    created_at: string,
-    msg: string
-}
 
 export function closeBrowser(): void {
     browser.close();

@@ -3,13 +3,13 @@ import { Game } from './models/game.ts';
 import { Table } from './models/table.ts';
 import { fetchData, getFirst, getCreatedAt, getData, getMsg, getLast } from './services/log-service.ts';
 
-import { pruneFlop, pruneStarting, validateAllMsg } from './services/message-service.ts';
+import { pruneFlop, pruneLogsBeforeCurrentHand, validateAllMsg } from './services/message-service.ts';
 import { BotAction, queryGPT, parseResponse } from './services/openai-service.ts'
 import * as puppeteer_service from './services/puppeteer-service.ts';
 import { constructQuery } from './services/query-service.ts';
 import { sleep } from './utils/bot-utils.ts';
 import { logResponse, DebugMode } from './utils/error-handling-utils.ts';
-import { convertToBBs, convertToValue, type Logs } from './utils/log-processing-utils.ts';
+import { convertToBBs, convertToValue, type ProcessedLogs } from './utils/log-processing-utils.ts';
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
 
 export class Bot {
@@ -90,8 +90,8 @@ export class Bot {
     // check if there is a winner -> perform end of hand actions
     private async playOneHand() {
 
-        let logs = {
-            log_data: new Array<Array<string>>,
+        let processed_logs = {
+            valid_msgs: new Array<Array<string>>,
             last_created: this.first_created,
             first_fetch: true
         }
@@ -108,7 +108,7 @@ export class Bot {
                 const data = res.data as string;
                 if (data.includes("action-signal")) {
                     try {
-                        logs = await this.pullLogs(logs.last_created, logs.first_fetch);
+                        processed_logs = await this.pullAndProcessLogs(processed_logs.last_created, processed_logs.first_fetch);
                     } catch (err) {
                         console.log("Failed to pull logs.");
                     }
@@ -141,8 +141,8 @@ export class Bot {
         }
 
         try {
-            logs = await this.pullLogs(this.first_created, logs.first_fetch);
-            await this.table.postProcessLogsAfterHand(logs.log_data);
+            processed_logs = await this.pullAndProcessLogs(this.first_created, processed_logs.first_fetch);
+            await this.table.postProcessLogsAfterHand(processed_logs.valid_msgs);
             await this.table.processPlayers();
         } catch (err) {
             console.log("Failed to process players.");
@@ -152,25 +152,27 @@ export class Bot {
         console.log("Completed a hand.");
     }
 
-    private async pullLogs(last_created: string, first_fetch: boolean): Promise<Logs> {
+    private async pullAndProcessLogs(last_created: string, first_fetch: boolean): Promise<ProcessedLogs> {
         const log = await fetchData(this.game.getGameId(), "", last_created);
         if (log.code === "success") {
-            let res = getData(log);
-            let msg = getMsg(res);
+            let data = getData(log);
+            let msg = getMsg(data);
             if (first_fetch) {
-                msg = pruneStarting(msg);
+                data = pruneLogsBeforeCurrentHand(data);
+                msg = getMsg(data);
                 this.table.setPlayerInitialStacksFromMsg(msg, this.game.getStakes());
                 first_fetch = false;
-                this.first_created = getLast(getCreatedAt(res));
+                // TODO: this getCreatedAt needs to be processed post log pruning (original logs need to be pruned, not msg)
+                this.first_created = getLast(getCreatedAt(data));
             }
             let only_valid = validateAllMsg(msg);
     
             this.table.preProcessLogs(only_valid);
             this.table.convertAllOrdersToPosition();
 
-            last_created = getFirst(getCreatedAt(res));
+            last_created = getFirst(getCreatedAt(data));
             return {
-                log_data: only_valid,
+                valid_msgs: only_valid,
                 last_created: last_created,
                 first_fetch: first_fetch
             }
@@ -264,6 +266,7 @@ export class Bot {
                     }
                     break;
                 case "raise":
+                    // should also check that the raise >= min raise
                     if (bot_action.bet_size_in_BBs > 0 && bot_action.bet_size_in_BBs <= curr_stack_size_in_BBs) {
                         is_valid = true;
                     }
@@ -297,7 +300,7 @@ export class Bot {
                 logResponse(await puppeteer_service.bet(bet_size), this.debug_mode);
                 break;
             case "raise":
-                logResponse(await puppeteer_service.bet(bet_size), this.debug_mode);
+                logResponse(await puppeteer_service.raise(bet_size), this.debug_mode);
                 break;
             case "call":
                 logResponse(await puppeteer_service.call(), this.debug_mode);

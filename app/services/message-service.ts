@@ -1,4 +1,4 @@
-import { Action, Street } from "../utils/log-processing-utils.ts";
+import { Action, Data, Log, Street } from "../utils/log-processing-utils.ts";
 import { convertToBBs } from "../utils/log-processing-utils.ts";
 
 export function getPlayer(msg: string): Array<string> {
@@ -39,21 +39,24 @@ export function getPlayerStacksFromMsg(msgs: Array<string>, stakes: number): Map
             })
         }
     }
-    return res
-}
-
-export function pruneStarting(msgs: Array<string>): Array<string> {
-    //starts from the top of logs
-    const res = new Array<string>;
-    let i = 0;
-    while ((i < msgs.length) && !(msgs[i].includes("starting hand #"))) {
-        res.push(msgs[i]);
-        i += 1;
-    }
-    res.push(msgs[i]);
     return res;
 }
 
+export function pruneLogsBeforeCurrentHand(data: Data): Data {
+    //starts from the top of logs
+    const log_arr = new Array<Log>;
+    let i = 0;
+    while ((i < data.logs.length) && !(data.logs[i].msg.includes("starting hand #"))) {
+        log_arr.push(data.logs[i]);
+        i += 1;
+    }
+    log_arr.push(data.logs[i]);
+    return {
+        logs: log_arr
+    }
+}
+
+// currently not used anywhere, maybe can be removed
 export function pruneFlop(msgs: Array<string>): Array<string> {
     //starts from the bottom of logs
     const res = new Array<string>;
