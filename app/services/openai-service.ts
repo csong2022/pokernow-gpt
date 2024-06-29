@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
+import { processOutput } from "../utils/ai-query-utils.ts";
 
 dotenv.config();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -27,7 +28,7 @@ export async function queryGPT(query: string, prevMessages: ChatCompletionMessag
 }
 
 export function parseResponse(msg: string) {
-    msg = msg.toLowerCase();
+    msg = processOutput(msg);
 
     const action_matches = msg.match(/(bet|raise|call|check|fold)/);
     let action_str = "";

@@ -18,7 +18,7 @@ export class Bot {
     private table: Table;
     
     private first_created: string;
-    private history_for_one_hand: ChatCompletionMessageParam | any;
+    private hand_history: ChatCompletionMessageParam | any;
 
     private debug_mode: DebugMode;
     private query_retries: number;
@@ -27,8 +27,8 @@ export class Bot {
         this.bot_name = "";
         this.game = game;
         this.table = game.getTable();
-        this.history_for_one_hand = [];
-        this.first_created = ""
+        this.hand_history = [];
+        this.first_created = "";
         this.debug_mode = debug_mode;
         this.query_retries = query_retries;
     }
@@ -44,7 +44,7 @@ export class Bot {
             console.log("Number of players in game:", this.table.getNumPlayers());
             this.table.setPlayersInPot(this.table.getNumPlayers());
             await this.playOneHand();
-            this.history_for_one_hand = [];
+            this.hand_history = [];
             //this.table.updatePlayerActions()
             this.table.nextHand();
         }
@@ -91,7 +91,7 @@ export class Bot {
     private async playOneHand() {
 
         let logs = {
-            log_data: new Array<string>,
+            log_data: new Array<Array<string>>,
             last_created: this.first_created,
             first_fetch: true
         }
@@ -142,8 +142,8 @@ export class Bot {
 
         try {
             logs = await this.pullLogs(this.first_created, logs.first_fetch);
-            this.table.postProcessLogsAfterHand(validateAllMsg(pruneFlop(logs.log_data)))
-            this.table.processPlayers();
+            await this.table.postProcessLogsAfterHand(logs.log_data);
+            await this.table.processPlayers();
         } catch (err) {
             console.log("Failed to process players.");
         }
@@ -163,14 +163,14 @@ export class Bot {
                 first_fetch = false;
                 this.first_created = getFirst(getCreatedAt(res))
             }
-            let onlyValid = validateAllMsg(msg);
+            let only_valid = validateAllMsg(msg);
     
-            this.table.preProcessLogs(onlyValid);
+            this.table.preProcessLogs(only_valid);
             this.table.convertAllOrdersToPosition();
 
             last_created = getFirst(getCreatedAt(res));
             return {
-                log_data: msg,
+                log_data: only_valid,
                 last_created: last_created,
                 first_fetch: first_fetch
             }
@@ -214,18 +214,18 @@ export class Bot {
             // default to check if available, else fold
             const res = await puppeteer_service.check();
             if (res.code === "success") {
-                throw new Error(`Failed to query bot action, exceeded the retry limit after ${retries} attempts. Defaulted to checking.`);
+                console.log(`Failed to query bot action, exceeded the retry limit after ${retries} attempts. Defaulted to checking.`);
             } else {
                 await puppeteer_service.fold();
-                throw new Error(`Failed to query bot action, exceeded the retry limit after ${retries} attempts. Defaulted to folding.`);
+                console.log(`Failed to query bot action, exceeded the retry limit after ${retries} attempts. Defaulted to folding.`);
             }
         }
         try {
             await sleep(2000);
-            const GPTResponse = await queryGPT(query, this.history_for_one_hand);
-            this.history_for_one_hand = GPTResponse.prevMessages;
+            const GPTResponse = await queryGPT(query, this.hand_history);
+            this.hand_history = GPTResponse.prevMessages;
             const choices = GPTResponse.choices;
-            this.history_for_one_hand.push(choices.message);
+            this.hand_history.push(choices.message);
             this.table.resetPlayerActions();
             let bot_action: BotAction = {
                 action_str: "",
