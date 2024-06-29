@@ -260,6 +260,7 @@ export class Bot {
         let is_valid = false;
         if (bot_action.action_str && valid_actions.includes(bot_action.action_str)) {
             switch (bot_action.action_str) {
+                // TODO: check if the action is present on the page
                 case "bet":
                     if (bot_action.bet_size_in_BBs > 0 && bot_action.bet_size_in_BBs <= curr_stack_size_in_BBs) {
                         is_valid = true;
@@ -297,10 +298,10 @@ export class Bot {
         console.log("Bet Size:", convertToBBs(bet_size, this.game.getStakes()));
         switch (bot_action.action_str) {
             case "bet":
-                logResponse(await puppeteer_service.bet(bet_size), this.debug_mode);
+                logResponse(await puppeteer_service.betOrRaise(bet_size), this.debug_mode);
                 break;
             case "raise":
-                logResponse(await puppeteer_service.raise(bet_size), this.debug_mode);
+                logResponse(await puppeteer_service.betOrRaise(bet_size), this.debug_mode);
                 break;
             case "call":
                 logResponse(await puppeteer_service.call(), this.debug_mode);

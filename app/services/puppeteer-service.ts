@@ -185,11 +185,11 @@ export async function waitForBotTurnOrWinner<D, E=Error>(num_players: number, ma
     try {
         //await page.waitForSelector('.table-player.winner', {timeout: default_timeout});
         const el = await page.waitForSelector([".action-signal", ".table-player.winner"].join(','), {timeout: computeTimeout(num_players, max_turn_length, 4) + default_timeout});
-        const className = await page.evaluate(el => el!.className, el);
+        const class_name = await page.evaluate(el => el!.className, el);
         return {
             code: "success",
-            data: className as D,
-            msg: `Waited for ${className}`
+            data: class_name as D,
+            msg: `Waited for ${class_name}`
         }
     } catch (err) {
         return {
@@ -347,10 +347,21 @@ export async function check<D, E=Error>(): Response<D, E> {
     }
 }
 
-export async function bet<D, E=Error>(bet_amount: number): Response<D, E> {
+export async function betOrRaise<D, E=Error>(bet_amount: number): Response<D, E> {
     try {
-        await page.waitForSelector(".game-decisions-ctn > .action-buttons > .raise", {timeout: default_timeout});
+        const el = await page.waitForSelector(".game-decisions-ctn > .action-buttons > .raise", {timeout: default_timeout});
+        const bet_action = await page.evaluate(el => el!.textContent, el);
+
         await page.$eval(".game-decisions-ctn > .action-buttons > .raise", (button: any) => button.click());
+
+        if (bet_action === "Raise") {
+            const res = await getCurrentBet();
+            if (res.code === "success") {
+                const current_bet = res.data as number;
+                bet_amount += current_bet;
+            }
+        }
+        
         await page.waitForSelector(".game-decisions-ctn > form > .raise-bet-value > div > input", {timeout: default_timeout});
         await page.focus(".game-decisions-ctn > form > .raise-bet-value > div > input");
         await page.keyboard.type(bet_amount.toString());
@@ -369,26 +380,22 @@ export async function bet<D, E=Error>(bet_amount: number): Response<D, E> {
     }
 }
 
-// raise without existing bet => same as betting
-// raise with existing bet => need to add current_bet_amount + bet_amount
-export async function raise<D, E=Error>(bet_amount: number): Response<D, E> {
+export async function getCurrentBet<D, E=Error>(): Response<D, E> {
     try {
-        await page.waitForSelector(".game-decisions-ctn > .action-buttons > .raise", {timeout: default_timeout});
-        await page.$eval(".game-decisions-ctn > .action-buttons > .raise", (button: any) => button.click());
-        await page.waitForSelector(".game-decisions-ctn > form > .raise-bet-value > div > input", {timeout: default_timeout});
-        await page.focus(".game-decisions-ctn > form > .raise-bet-value > div > input");
-        await page.keyboard.type(bet_amount.toString());
-        await page.waitForSelector(".game-decisions-ctn > form > .action-buttons > .bet", {timeout: default_timeout});
-        await page.$eval(".game-decisions-ctn > form > .action-buttons > .bet", (input: any) => input.click());
+        const el = await page.waitForSelector(".you-player > .table-player-bet-value", {timeout: default_timeout});
+        const current_bet = await page.evaluate(el => el!.textContent, el);
+        return {
+            code: "success",
+            data: parseFloat(current_bet!) as D,
+            msg: `Successfully retrieved current bet amount: ${current_bet}`
+        }
     } catch (err) {
         return {
             code: "error",
-            error: new Error(`Failed to bet with amount ${bet_amount}.`) as E
+            error: new Error("No existing bet amount found.") as E
         }
     }
-    return {
-        code: "success",
-        data: null as D,
-        msg: `Successfully executed bet action with amount ${bet_amount}.`
-    }
+
+    
+
 }
