@@ -1,9 +1,8 @@
 import prompt from 'prompt-sync';
 import { Game } from './models/game.ts';
 import { Table } from './models/table.ts';
-import { fetchData, getFirst, getCreatedAt, getData, getMsg, getLast } from './services/log-service.ts';
-
-import { getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, pruneLogsBeforeCurrentHand, validateAllMsg } from './services/message-service.ts';
+import { LogService } from './services/log-service.ts';
+import { getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './services/message-service.ts';
 import { BotAction, queryGPT, parseResponse } from './services/openai-service.ts'
 import { PuppeteerService } from './services/puppeteer-service.ts';
 import { constructQuery } from './services/query-service.ts';
@@ -13,6 +12,7 @@ import { convertToBBs, convertToValue, type ProcessedLogs } from './utils/log-pr
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
 
 export class Bot {
+    private log_service: LogService;
     private puppeteer_service: PuppeteerService;
 
     private bot_name: string;
@@ -25,7 +25,8 @@ export class Bot {
     private debug_mode: DebugMode;
     private query_retries: number;
 
-    constructor(puppeteer_service: PuppeteerService, game: Game, debug_mode: DebugMode, query_retries: number = 0) {
+    constructor(log_service: LogService, puppeteer_service: PuppeteerService, game: Game, debug_mode: DebugMode, query_retries: number = 0) {
+        this.log_service = log_service;
         this.puppeteer_service = puppeteer_service;
 
         this.bot_name = "";
@@ -159,16 +160,17 @@ export class Bot {
     }
 
     private async pullAndProcessLogs(last_created: string, first_fetch: boolean): Promise<ProcessedLogs> {
-        const log = await fetchData(this.game.getGameId(), "", last_created);
+        const log = await this.log_service.fetchData("", last_created);
         if (log.code === "success") {
-            let data = getData(log);
-            let msg = getMsg(data);
+            let data = this.log_service.getData(log);
+            let msg = this.log_service.getMsg(data);
             if (first_fetch) {
-                data = pruneLogsBeforeCurrentHand(data);
-                msg = getMsg(data);
+                data = this.log_service.pruneLogsBeforeCurrentHand(data);
+                msg = this.log_service.getMsg(data);
                 this.table.setPlayerInitialStacksFromMsg(msg, this.game.getBigBlind());
+
                 first_fetch = false;
-                this.first_created = getLast(getCreatedAt(data));
+                this.first_created = this.log_service.getLast(this.log_service.getCreatedAt(data));
 
                 let stack_msg = getPlayerStacksMsg(msg);
 
@@ -192,7 +194,7 @@ export class Bot {
             this.table.setIdToPosition(first_seat_number)
             this.table.convertAllOrdersToPosition();
 
-            last_created = getFirst(getCreatedAt(data));
+            last_created = this.log_service.getFirst(this.log_service.getCreatedAt(data));
             return {
                 valid_msgs: only_valid,
                 last_created: last_created,

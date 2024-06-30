@@ -5,6 +5,7 @@ import { computeTimeout, GameInfo } from '../utils/bot-utils.ts';
 
 export class PuppeteerService {
     private default_timeout: number;
+    private browser!: puppeteer.Browser;
     private page!: puppeteer.Page;
 
     constructor(default_timeout: number) {
@@ -12,11 +13,15 @@ export class PuppeteerService {
     }
 
     async init(): Promise<void> {
-        const browser = await puppeteer.launch({
+        this.browser = await puppeteer.launch({
             defaultViewport: null,
             headless: false
         });
-        this.page = await browser.newPage();
+        this.page = await this.browser.newPage();
+    }
+
+    async closeBrowser(): Promise<void> {
+        await this.browser.close();
     }
     
     async navigateToGame<D, E=Error>(game_id: string): Response<D, E> {
