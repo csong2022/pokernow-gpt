@@ -46,13 +46,24 @@ export function getPlayerStacksFromMsg(msg: string, stakes: number): Map<string,
     return res;
     }
 
-export function getTableSeatFromMsg(msg: string): Map<number, string>{
+export function getTableSeatToIdFromMsg(msg: string): Map<number, string>{
     //starts from the bottom of logs
     const re = RegExp('\\#(\\d+)\\s\\"[^@]+\\@\\s([^"]*)', 'g');
     let res = new Map<number, string>;
     let regExps = [...msg.matchAll(re)];
     regExps.forEach((element) => {
         res.set(parseInt(element[1]), element[2]);
+        })
+    return res;
+    }
+
+export function getIdToTableSeatFromMsg(msg: string): Map<string, number>{
+    //starts from the bottom of logs
+    const re = RegExp('\\#(\\d+)\\s\\"[^@]+\\@\\s([^"]*)', 'g');
+    let res = new Map<string, number>;
+    let regExps = [...msg.matchAll(re)];
+    regExps.forEach((element) => {
+        res.set(element[2], parseInt(element[1]));
         })
     return res;
     }

@@ -3,7 +3,7 @@ import { Game } from './models/game.ts';
 import { Table } from './models/table.ts';
 import { fetchData, getFirst, getCreatedAt, getData, getMsg, getLast } from './services/log-service.ts';
 
-import { pruneLogsBeforeCurrentHand, validateAllMsg } from './services/message-service.ts';
+import { getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, pruneLogsBeforeCurrentHand, validateAllMsg } from './services/message-service.ts';
 import { BotAction, queryGPT, parseResponse } from './services/openai-service.ts'
 import * as puppeteer_service from './services/puppeteer-service.ts';
 import { constructQuery } from './services/query-service.ts';
@@ -163,10 +163,27 @@ export class Bot {
                 this.table.setPlayerInitialStacksFromMsg(msg, this.game.getStakes());
                 first_fetch = false;
                 this.first_created = getLast(getCreatedAt(data));
+
+                let stack_msg = getPlayerStacksMsg(msg);
+
+                let id_to_stack_map = getPlayerStacksFromMsg(stack_msg, this.game.getStakes());
+                this.table.setIdToStack(id_to_stack_map);
+
+                let seat_to_id_map = getTableSeatToIdFromMsg(stack_msg);
+                this.table.setTableSeatToId(seat_to_id_map);
+
+                let id_to_seat_map = getIdToTableSeatFromMsg(stack_msg);
+                this.table.setIdToTableSeat(id_to_seat_map);
+                
+                let name_to_id_map = getNameToIdFromMsg(stack_msg);
+                this.table.setNameToId(name_to_id_map)
             }
+
             let only_valid = validateAllMsg(msg);
     
-            this.table.preProcessLogs(only_valid);
+            this.table.preProcessLogs(only_valid, this.game.getStakes());
+            let first_seat_number = this.table.getIdToSeatNumber()!.get(this.table.getFirstSeatOrderId())!;
+            this.table.setIdToPosition(first_seat_number)
             this.table.convertAllOrdersToPosition();
 
             last_created = getFirst(getCreatedAt(data));

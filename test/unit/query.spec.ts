@@ -29,7 +29,7 @@ describe('query service test', async () => {
             let hero = new Hero('xdd', hero_stats, ['4♣','4♥'], 10)
             g.setHero(hero)
             t.nextHand();
-            t.preProcessLogs(pruneres);
+            t.preProcessLogs(pruneres, g.getStakes());
             t.postProcessLogsAfterHand(prune_flop_verify);
             t.setPlayerInitialStacksFromMsg(res1, 10);
             await t.cacheFromLogs(prune_flop_verify);

@@ -1,7 +1,7 @@
 import { fetchData, getCreatedAt } from "../../app/services/log-service.ts"
 import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-utils.ts';
 import { getData, getMsg, getLast, getFirst } from '../../app/services/log-service.ts';
-import { validateAllMsg, validateMsg, pruneFlop, getPlayerStacksFromMsg, pruneLogsBeforeCurrentHand, getPlayerStacksMsg, getTableSeatFromMsg, getNameToIdFromMsg } from "../../app/services/message-service.ts";
+import { validateAllMsg, validateMsg, pruneFlop, getPlayerStacksFromMsg, pruneLogsBeforeCurrentHand, getPlayerStacksMsg, getTableSeatToIdFromMsg, getNameToIdFromMsg, getIdToTableSeatFromMsg } from "../../app/services/message-service.ts";
 import { Table } from "../../app/models/table.ts";
 import { table } from "console";
 
@@ -29,14 +29,21 @@ describe('log service test', async () => {
             console.log("player_stack_msg", player_stack_msg)
             const player_stacks_from_msg = getPlayerStacksFromMsg(player_stack_msg, 20)
             console.log("player_stacks_from_msg", player_stacks_from_msg)
-            const table_seats = getTableSeatFromMsg(player_stack_msg)
+            const table_seats = getTableSeatToIdFromMsg(player_stack_msg)
             console.log("table_seats", table_seats)
+            const id_to_table_seat = getIdToTableSeatFromMsg(player_stack_msg);
+            console.log("id_to_table_seat", id_to_table_seat)
 
             const t = new Table();
             t.nextHand();
-            t.setTableSeatToPosition(table_seats);
-            t.preProcessLogs(pruneres);
-            t.setIdToPosition(1);
+            t.setTableSeatToId(table_seats);
+            t.preProcessLogs(pruneres, 20);
+            const get_first = t.getFirstSeatOrderId();
+            console.log("get_first", get_first)
+            const first_pos = id_to_table_seat.get(get_first)!;
+            console.log("first_pos", first_pos)
+
+            t.setIdToPosition(first_pos);
 
             t.postProcessLogsAfterHand(prune_flop_verify);
             t.setPlayerInitialStacksFromMsg(res1, 20);
