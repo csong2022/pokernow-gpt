@@ -49,7 +49,6 @@ describe('log service test', async () => {
             t.setPlayerInitialStacksFromMsg(res1, 20);
             console.log("stacks", t.getPlayerInitialStacks());
             console.log("player_actions", t.getActionNumFromId());
-            await t.cacheFromLogs(prune_flop_verify)
             console.log("player cache", t.getPlayerCache());
             t.processPlayers();
             console.log("player cache after processing", t.getPlayerCache());
