@@ -57,6 +57,17 @@ export function getTableSeatFromMsg(msg: string): Map<number, string>{
     return res;
     }
 
+export function getNameToIdFromMsg(msg: string): Map<string, string>{
+    //starts from the bottom of logs
+    const re = RegExp('\\#\\d+\\s\\"([^@]+)\\s\\@\\s([^"]*)', 'g');
+    let res = new Map<string, string>;
+    let regExps = [...msg.matchAll(re)];
+    regExps.forEach((element) => {
+        res.set(element[1], element[2]);
+        })
+    return res;
+    }
+
 export function pruneLogsBeforeCurrentHand(data: Data): Data {
     //starts from the top of logs
     const log_arr = new Array<Log>;

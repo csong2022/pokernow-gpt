@@ -121,8 +121,6 @@ export class Table {
         let i = first_seat
         let order = 0
         const player_positions = Array.from(this.table_seat_to_id.keys());
-        console.log(player_positions)
-        console.log(this.table_seat_to_id)
         while (!(visited.has(i))) {
             visited.add(i)
             if (player_positions.includes(i)) {

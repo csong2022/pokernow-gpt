@@ -1,7 +1,7 @@
 import { fetchData, getCreatedAt } from "../../app/services/log-service.ts"
 import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-utils.ts';
 import { getData, getMsg, getLast, getFirst } from '../../app/services/log-service.ts';
-import { validateAllMsg, validateMsg, pruneFlop, getPlayerStacksFromMsg, pruneLogsBeforeCurrentHand, getPlayerStacksMsg, getTableSeatFromMsg } from "../../app/services/message-service.ts";
+import { validateAllMsg, validateMsg, pruneFlop, getPlayerStacksFromMsg, pruneLogsBeforeCurrentHand, getPlayerStacksMsg, getTableSeatFromMsg, getNameToIdFromMsg } from "../../app/services/message-service.ts";
 import { Table } from "../../app/models/table.ts";
 import { table } from "console";
 
@@ -50,6 +50,8 @@ describe('log service test', async () => {
             console.log(t.getLogsQueue());
             console.log("player positions", t.getPlayerPositions());
 
+            const name_to_id = getNameToIdFromMsg(player_stack_msg)
+            console.log("name_to_id", name_to_id)
 
             //console.log(t.getPlayerPositions.)
         }
