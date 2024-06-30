@@ -5,7 +5,7 @@ import { fetchData, getFirst, getCreatedAt, getData, getMsg, getLast } from './s
 
 import { getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, pruneLogsBeforeCurrentHand, validateAllMsg } from './services/message-service.ts';
 import { BotAction, queryGPT, parseResponse } from './services/openai-service.ts'
-import * as puppeteer_service from './services/puppeteer-service.ts';
+import { PuppeteerService } from './services/puppeteer-service.ts';
 import { constructQuery } from './services/query-service.ts';
 import { sleep } from './utils/bot-utils.ts';
 import { logResponse, DebugMode } from './utils/error-handling-utils.ts';
@@ -13,6 +13,8 @@ import { convertToBBs, convertToValue, type ProcessedLogs } from './utils/log-pr
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
 
 export class Bot {
+    private puppeteer_service: PuppeteerService;
+
     private bot_name: string;
     private game: Game;
     private table: Table;
@@ -23,12 +25,16 @@ export class Bot {
     private debug_mode: DebugMode;
     private query_retries: number;
 
-    constructor(game: Game, debug_mode: DebugMode, query_retries: number = 0) {
+    constructor(puppeteer_service: PuppeteerService, game: Game, debug_mode: DebugMode, query_retries: number = 0) {
+        this.puppeteer_service = puppeteer_service;
+
         this.bot_name = "";
         this.game = game;
         this.table = game.getTable();
-        this.hand_history = [];
+
         this.first_created = "";
+        this.hand_history = [];
+        
         this.debug_mode = debug_mode;
         this.query_retries = query_retries;
     }
@@ -51,7 +57,7 @@ export class Bot {
     }
 
     private async updateNumPlayers() {
-        const res = await puppeteer_service.getNumPlayers();
+        const res = await this.puppeteer_service.getNumPlayers();
         if (res.code === "success") {
             this.table.setNumPlayers(Number(res.data));
         }
@@ -68,7 +74,7 @@ export class Bot {
             console.log(`Your initial stack size will be ${stack_size}.`)
     
             console.log(`Attempting to enter table with name: ${name} and stack size: ${stack_size}.`);
-            const code = logResponse(await puppeteer_service.sendEnterTableRequest(name, Number(stack_size)), this.debug_mode);
+            const code = logResponse(await this.puppeteer_service.sendEnterTableRequest(name, Number(stack_size)), this.debug_mode);
     
             if (code === "success") {
                 break;
@@ -76,12 +82,12 @@ export class Bot {
             console.log("Please try again.");
         }
         console.log("Waiting for table host to accept ingress request.");
-        logResponse(await puppeteer_service.waitForTableEntry(), this.debug_mode);
+        logResponse(await this.puppeteer_service.waitForTableEntry(), this.debug_mode);
     }
 
     private async waitForNextHand() {
         console.log("Waiting for next hand to start.")
-        await puppeteer_service.waitForNextHand(this.table.getNumPlayers(), this.game.getMaxTurnLength());
+        await this.puppeteer_service.waitForNextHand(this.table.getNumPlayers(), this.game.getMaxTurnLength());
     }
 
     // pull logs
@@ -101,7 +107,7 @@ export class Bot {
             // OR winner is detected -> pull all the logs
             console.log("Checking for bot's turn or winner of hand.");
 
-            res = await puppeteer_service.waitForBotTurnOrWinner(this.table.getNumPlayers(), this.game.getMaxTurnLength());
+            res = await this.puppeteer_service.waitForBotTurnOrWinner(this.table.getNumPlayers(), this.game.getMaxTurnLength());
 
             if (res.code == "success") {
                 const data = res.data as string;
@@ -132,7 +138,7 @@ export class Bot {
                     }
 
                     console.log("Waiting for bot's turn to end");
-                    logResponse(await puppeteer_service.waitForBotTurnEnd(), this.debug_mode);
+                    logResponse(await this.puppeteer_service.waitForBotTurnEnd(), this.debug_mode);
                 } else if (data.includes("winner")) {
                     console.log("Detected winner in hand.")
                     break;
@@ -148,7 +154,7 @@ export class Bot {
             console.log("Failed to process players.");
         }
         
-        logResponse(await puppeteer_service.waitForHandEnd(), this.debug_mode);
+        logResponse(await this.puppeteer_service.waitForHandEnd(), this.debug_mode);
         console.log("Completed a hand.");
     }
 
@@ -199,7 +205,7 @@ export class Bot {
 
     private async getHand(): Promise<string[]> {
         var hand: string[] = [];
-        const res = await puppeteer_service.getHand();
+        const res = await this.puppeteer_service.getHand();
         logResponse(res, this.debug_mode);
         if (res.code === "success") {
             hand = res.data as string[];
@@ -209,7 +215,7 @@ export class Bot {
 
     private async getStackSize(): Promise<number> {
         var stack_size: number = 0;
-        const res = await puppeteer_service.getStackSize();
+        const res = await this.puppeteer_service.getStackSize();
         logResponse(res, this.debug_mode);
         if (res.code === "success") {
             stack_size = res.data as number;
@@ -229,11 +235,11 @@ export class Bot {
 
     private async queryBotAction(query: string, retries: number, retry_counter: number = 0): Promise<BotAction> {
         if (retry_counter > retries) {
-            const res = await puppeteer_service.check();
+            const res = await this.puppeteer_service.check();
             if (res.code === "success") {
                 console.log(`Failed to query bot action, exceeded the retry limit after ${retries} attempts. Defaulted to checking.`);
             } else {
-                await puppeteer_service.fold();
+                await this.puppeteer_service.fold();
                 console.log(`Failed to query bot action, exceeded the retry limit after ${retries} attempts. Defaulted to folding.`);
             }
         }
@@ -277,7 +283,7 @@ export class Bot {
             let res;
             switch (bot_action.action_str) {
                 case "bet":
-                    res = await puppeteer_service.waitForBetOption();
+                    res = await this.puppeteer_service.waitForBetOption();
                     if (res.code === "success") {
                         is_valid = true;
                     }
@@ -287,7 +293,7 @@ export class Bot {
                     break;
                 case "raise":
                     // should also check that the raise >= min raise
-                    res = await puppeteer_service.waitForBetOption();
+                    res = await this.puppeteer_service.waitForBetOption();
                     if (res.code === "success") {
                         is_valid = true;
                     }
@@ -296,7 +302,7 @@ export class Bot {
                     }
                     break;
                 case "call":
-                    res = await puppeteer_service.waitForCallOption();
+                    res = await this.puppeteer_service.waitForCallOption();
                     if (res.code === "success") {
                         is_valid = true;
                     }
@@ -305,7 +311,7 @@ export class Bot {
                     }
                     break;
                 case "check":
-                    res = await puppeteer_service.waitForCheckOption();
+                    res = await this.puppeteer_service.waitForCheckOption();
                     if (res.code === "success") {
                         is_valid = true;
                     }
@@ -329,22 +335,22 @@ export class Bot {
         console.log("Bet Size:", convertToBBs(bet_size, this.game.getStakes()));
         switch (bot_action.action_str) {
             case "bet":
-                logResponse(await puppeteer_service.betOrRaise(bet_size), this.debug_mode);
+                logResponse(await this.puppeteer_service.betOrRaise(bet_size), this.debug_mode);
                 break;
             case "raise":
-                logResponse(await puppeteer_service.betOrRaise(bet_size), this.debug_mode);
+                logResponse(await this.puppeteer_service.betOrRaise(bet_size), this.debug_mode);
                 break;
             case "call":
-                logResponse(await puppeteer_service.call(), this.debug_mode);
+                logResponse(await this.puppeteer_service.call(), this.debug_mode);
                 break;
             case "check":
-                logResponse(await puppeteer_service.check(), this.debug_mode);
+                logResponse(await this.puppeteer_service.check(), this.debug_mode);
                 break;
             case "fold":
-                logResponse(await puppeteer_service.fold(), this.debug_mode);
-                const res = await puppeteer_service.cancelUnnecessaryFold();
+                logResponse(await this.puppeteer_service.fold(), this.debug_mode);
+                const res = await this.puppeteer_service.cancelUnnecessaryFold();
                 if (res.code === "success") {
-                    logResponse(await puppeteer_service.check(), this.debug_mode);
+                    logResponse(await this.puppeteer_service.check(), this.debug_mode);
                 }
                 break;
         }
