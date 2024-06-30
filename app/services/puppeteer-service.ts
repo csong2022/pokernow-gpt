@@ -274,15 +274,29 @@ export async function getStackSize<D, E=Error>(): Response<D, E> {
         }
     }
 }
-
-export async function call<D, E=Error>(): Response<D, E> {
+export async function waitForCallOption<D, E=Error>(): Response<D, E> {
     try {
         await page.waitForSelector(".game-decisions-ctn > .action-buttons > .call", {timeout: default_timeout});
-        await page.$eval(".game-decisions-ctn > .action-buttons > .call", (button: any) => button.click());
     } catch (err) {
         return {
             code: "error",
             error: new Error("No option to call available.") as E
+        }
+    }
+    return {
+        code: "success",
+        data: null as D,
+        msg: "Successfully waited for call option."
+    }
+}
+
+export async function call<D, E=Error>(): Response<D, E> {
+    try {
+        await page.$eval(".game-decisions-ctn > .action-buttons > .call", (button: any) => button.click());
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error("Failed to execute call action.") as E
         }
     }
     return {
@@ -330,6 +344,22 @@ export async function cancelUnnecessaryFold<D, E=Error>(): Response<D, E> {
     }
 }
 
+export async function waitForCheckOption<D, E=Error>(): Response<D, E> {
+    try {
+        await page.waitForSelector(".game-decisions-ctn > .action-buttons > .check", {timeout: default_timeout});
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error("No option to check available.") as E
+        }
+    }
+    return {
+        code: "success",
+        data: null as D,
+        msg: "Successfully waited for check option."
+    }
+}
+
 export async function check<D, E=Error>(): Response<D, E> {
     try {
         await page.waitForSelector(".game-decisions-ctn > .action-buttons > .check", {timeout: default_timeout});
@@ -347,11 +377,25 @@ export async function check<D, E=Error>(): Response<D, E> {
     }
 }
 
+export async function waitForBetOption<D, E=Error>(): Response<D ,E> {
+    try {
+        await page.waitForSelector(".game-decisions-ctn > .action-buttons > .raise", {timeout: default_timeout});
+    } catch (err) {
+        return {
+            code: "error",
+            error: new Error("No option to bet or raise available.") as E
+        }
+    }
+    return {
+        code: "success",
+        data: null as D,
+        msg: "Successfully waited for bet or raise option."
+    }
+}
+
 export async function betOrRaise<D, E=Error>(bet_amount: number): Response<D, E> {
     try {
-        const el = await page.waitForSelector(".game-decisions-ctn > .action-buttons > .raise", {timeout: default_timeout});
-        const bet_action = await page.evaluate(el => el!.textContent, el);
-
+        const bet_action = await page.$eval(".game-decisions-ctn > .action-buttons > .raise", (button: any) => button.textContent);
         await page.$eval(".game-decisions-ctn > .action-buttons > .raise", (button: any) => button.click());
 
         if (bet_action === "Raise") {
@@ -361,7 +405,6 @@ export async function betOrRaise<D, E=Error>(bet_amount: number): Response<D, E>
                 bet_amount += current_bet;
             }
         }
-        
         await page.waitForSelector(".game-decisions-ctn > form > .raise-bet-value > div > input", {timeout: default_timeout});
         await page.focus(".game-decisions-ctn > form > .raise-bet-value > div > input");
         await page.keyboard.type(bet_amount.toString());
@@ -395,7 +438,4 @@ export async function getCurrentBet<D, E=Error>(): Response<D, E> {
             error: new Error("No existing bet amount found.") as E
         }
     }
-
-    
-
 }
