@@ -29,13 +29,13 @@ export function constructQuery(game: Game): string{
     query = query.concat(defineStacks(player_stacks, player_positions), '\n');
     query = query.concat(defineActions(player_actions, table), '\n');
     query = query.concat(defineStats(player_positions, table), '\n');
-    query = query.concat("Do not give any explanations, respond in this format only: {action,bet_size_in_BBs}");
+    query = query.concat("Do not provide an explanation, respond in this format only: {action,bet_size_in_BBs}");
 
     return query
 }
 
 function defineObjective(position: string, stack_size: number) {
-    return `Help me decide my action in No Limit Hold'em poker. I'm in the ${position} with a stack size of ${stack_size} BBs. `;
+    return `Help me decide my action in No Limit Hold'em poker. I'm in the ${position} with a stack size of ${stack_size} BBs.`;
 }
 
 function defineHand(cards: string[]) {
@@ -50,7 +50,7 @@ function defineHand(cards: string[]) {
 }
 
 function defineGameState(street: string, players_in_pot: number) {
-    return `The current street is: ${street ? street : "preflop"} and it is ${players_in_pot}-handed.`
+    return ` It is ${players_in_pot}-handed and the current street is: ${street ? street : "preflop"}.`
 }
 
 function defineCommunityCards(street: string, runout: string): string {
@@ -64,7 +64,7 @@ function defineCommunityCards(street: string, runout: string): string {
 }
 
 export function defineStacks(player_stacks: Map<string, number>, player_positions: Map<string, string>): string {
-    let query = "Here are the initial stack sizes of all players involved: \n";
+    let query = "Here are the initial stack sizes of all players involved:\n";
     const player_ids = Array.from(player_positions.keys());
     for (var i = 0; i < player_ids.length; i++)  {
         let curr_id = player_ids[i]

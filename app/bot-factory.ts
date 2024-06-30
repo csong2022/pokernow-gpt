@@ -28,7 +28,6 @@ async function init(): Promise<Game> {
     }
 }
 
-
 const bot_factory = async function() {
     const game = await init();
     const bot = new Bot(game, bot_config.debug_mode, bot_config.query_retries);
