@@ -101,7 +101,7 @@ export class Table {
     public preProcessLogs(logs: Array<Array<string>>, stakes: number) {
         logs = logs.reverse();
         logs.forEach((element) => {
-            if (element[2] == 'posts' && element[4] == stakes.toString()) {
+            if (element[2] === 'posts' && element[4] === stakes.toString()) {
                 this.first_seat_order_id = element[0]
             }
             this.logs_queue.enqueue(element);
