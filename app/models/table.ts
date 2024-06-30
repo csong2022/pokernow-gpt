@@ -23,7 +23,9 @@ export class Table {
     private id_to_position: Map<string, string>;
     private id_to_initial_stacks: Map<string, number>;
     private name_to_id: Map<string, string>;
-    private table_seat_to_id: Map<number, string>
+    private table_seat_to_id: Map<number, string>;
+    private first_seat_order_id: string;
+    private id_to_table_seat: Map<string, number>;
 
     constructor() {
         this.num_players = 0;
@@ -41,6 +43,8 @@ export class Table {
         this.id_to_initial_stacks = new Map<string, number>();
         this.name_to_id = new Map<string, string>();
         this.table_seat_to_id = new Map<number, string>();
+        this.first_seat_order_id = "";
+        this.id_to_table_seat = new Map<string, number>();
     }
 
     public getNumPlayers(): number {
@@ -94,29 +98,38 @@ export class Table {
         }
         return undefined;
     }
-    public preProcessLogs(logs: Array<Array<string>>) {
+    public preProcessLogs(logs: Array<Array<string>>, stakes: number) {
         logs = logs.reverse();
-        let order = 0;
         logs.forEach((element) => {
-            if (!(Object.values<string>(Street).includes(element[0]))) {
-                /* if (!(this.id_to_position.has(element[0]))) {
-                    order += 1;
-                    this.id_to_position.set(element[0], order.toString())
-                } */
-                if (!(this.name_to_id.has(element[1]))) {
-                    this.name_to_id.set(element[1], element[0])
-                }
-
+            if (element[2] == 'posts' && element[4] == stakes.toString()) {
+                this.first_seat_order_id = element[0]
             }
             this.logs_queue.enqueue(element);
         })
     }
 
-    public setTableSeatToPosition(map: Map<number, string>): void {
-        this.table_seat_to_id = map
+    public getFirstSeatOrderId(): string {
+        return this.first_seat_order_id;
     }
 
-    public setIdToPosition(first_seat: number): void {
+    public setTableSeatToId(map: Map<number, string>): void {
+        this.table_seat_to_id = map;
+    }
+
+    public setIdToTableSeat(map: Map<string, number>): void {
+        this.id_to_table_seat = map;
+    }
+
+
+    public setIdToStack(map: Map<string, number>): void {
+        this.id_to_initial_stacks = map;
+    }
+
+    public setNameToId(map: Map<string, string>): void {
+        this.name_to_id = map;
+    }
+
+    public setIdToPosition(first_seat = 1): void {
         let visited = new Set<number>();
         let i = first_seat
         let order = 0
@@ -168,8 +181,11 @@ export class Table {
     public updatePlayerActions(player_action: PlayerAction): void {
         this.player_actions.push(player_action);
     }
-    public get IdToSeatNumber(): Map<number, string> {
+    public getSeatNumberToId(): Map<number, string> {
         return this.table_seat_to_id
+    }
+    public getIdToSeatNumber(): Map<string, number> {
+        return this.id_to_table_seat
     }
 
     public getActionNumFromId(): Map<string, number> {
