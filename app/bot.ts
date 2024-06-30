@@ -3,7 +3,7 @@ import { Game } from './models/game.ts';
 import { Table } from './models/table.ts';
 import { fetchData, getFirst, getCreatedAt, getData, getMsg, getLast } from './services/log-service.ts';
 
-import { pruneFlop, pruneLogsBeforeCurrentHand, validateAllMsg } from './services/message-service.ts';
+import { pruneLogsBeforeCurrentHand, validateAllMsg } from './services/message-service.ts';
 import { BotAction, queryGPT, parseResponse } from './services/openai-service.ts'
 import * as puppeteer_service from './services/puppeteer-service.ts';
 import { constructQuery } from './services/query-service.ts';
@@ -102,7 +102,6 @@ export class Bot {
             console.log("Checking for bot's turn or winner of hand.");
 
             res = await puppeteer_service.waitForBotTurnOrWinner(this.table.getNumPlayers(), this.game.getMaxTurnLength());
-            logResponse(res, this.debug_mode);
 
             if (res.code == "success") {
                 const data = res.data as string;
@@ -112,7 +111,7 @@ export class Bot {
                     } catch (err) {
                         console.log("Failed to pull logs.");
                     }
-                    console.log("Performing bot actions.");
+                    console.log("Performing bot's turn.");
 
                     // get hand and stack size
                     const hand = await this.getHand();
@@ -135,6 +134,7 @@ export class Bot {
                     console.log("Waiting for bot's turn to end");
                     logResponse(await puppeteer_service.waitForBotTurnEnd(), this.debug_mode);
                 } else if (data.includes("winner")) {
+                    console.log("Detected winner in hand.")
                     break;
                 }
             }
@@ -162,7 +162,6 @@ export class Bot {
                 msg = getMsg(data);
                 this.table.setPlayerInitialStacksFromMsg(msg, this.game.getStakes());
                 first_fetch = false;
-                // TODO: this getCreatedAt needs to be processed post log pruning (original logs need to be pruned, not msg)
                 this.first_created = getLast(getCreatedAt(data));
             }
             let only_valid = validateAllMsg(msg);
@@ -213,7 +212,6 @@ export class Bot {
 
     private async queryBotAction(query: string, retries: number, retry_counter: number = 0): Promise<BotAction> {
         if (retry_counter > retries) {
-            // default to check if available, else fold
             const res = await puppeteer_service.check();
             if (res.code === "success") {
                 console.log(`Failed to query bot action, exceeded the retry limit after ${retries} attempts. Defaulted to checking.`);
@@ -261,7 +259,6 @@ export class Bot {
         if (bot_action.action_str && valid_actions.includes(bot_action.action_str)) {
             let res;
             switch (bot_action.action_str) {
-                // TODO: check if the action is present on the page
                 case "bet":
                     res = await puppeteer_service.waitForBetOption();
                     if (res.code === "success") {
@@ -328,9 +325,7 @@ export class Bot {
                 break;
             case "fold":
                 logResponse(await puppeteer_service.fold(), this.debug_mode);
-                // check if the fold is unnecessary
                 const res = await puppeteer_service.cancelUnnecessaryFold();
-                // check instead if above is true
                 if (res.code === "success") {
                     logResponse(await puppeteer_service.check(), this.debug_mode);
                 }
