@@ -6,6 +6,7 @@ import { Game } from './models/game.ts';
 import { BotConfig } from './utils/config-utils.ts';
 import bot_config_json from "./configs/bot-config.json"
 import { LogService } from './services/log-service.ts';
+import { OpenAIService } from './services/openai-service.ts';
 
 const io = prompt();
 const bot_config: BotConfig = bot_config_json;
@@ -37,8 +38,11 @@ const bot_factory = async function() {
     
     const log_service = new LogService(game_id);
     await log_service.init();
-    
-    const bot = new Bot(log_service, puppeteer_service, game, bot_config.debug_mode, bot_config.query_retries);
+
+    const openai_service = new OpenAIService();
+    await openai_service.init();
+
+    const bot = new Bot(log_service, openai_service, puppeteer_service, game, bot_config.debug_mode, bot_config.query_retries);
     await bot.run();
 }
 

@@ -3,7 +3,7 @@ import { Game } from './models/game.ts';
 import { Table } from './models/table.ts';
 import { LogService } from './services/log-service.ts';
 import { getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './services/message-service.ts';
-import { BotAction, queryGPT, parseResponse } from './services/openai-service.ts'
+import { BotAction, OpenAIService } from './services/openai-service.ts'
 import { PuppeteerService } from './services/puppeteer-service.ts';
 import { constructQuery } from './services/query-service.ts';
 import { sleep } from './utils/bot-utils.ts';
@@ -13,6 +13,7 @@ import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mj
 
 export class Bot {
     private log_service: LogService;
+    private openai_service: OpenAIService;
     private puppeteer_service: PuppeteerService;
 
     private bot_name: string;
@@ -25,8 +26,9 @@ export class Bot {
     private debug_mode: DebugMode;
     private query_retries: number;
 
-    constructor(log_service: LogService, puppeteer_service: PuppeteerService, game: Game, debug_mode: DebugMode, query_retries: number = 0) {
+    constructor(log_service: LogService, openai_service: OpenAIService, puppeteer_service: PuppeteerService, game: Game, debug_mode: DebugMode, query_retries: number = 0) {
         this.log_service = log_service;
+        this.openai_service = openai_service;
         this.puppeteer_service = puppeteer_service;
 
         this.bot_name = "";
@@ -249,7 +251,7 @@ export class Bot {
         }
         try {
             await sleep(2000);
-            const GPTResponse = await queryGPT(query, this.hand_history);
+            const GPTResponse = await this.openai_service.queryGPT(query, this.hand_history);
             this.hand_history = GPTResponse.prevMessages;
             const choices = GPTResponse.choices;
             this.hand_history.push(choices.message);
@@ -260,7 +262,7 @@ export class Bot {
             };
 
             if (choices && choices.message.content) {
-                bot_action = parseResponse(choices.message.content);
+                bot_action = this.openai_service.parseResponse(choices.message.content);
             } else {
                 console.log("Empty ChatGPT response, retrying query.");
                 return await this.queryBotAction(query, retries, retry_counter + 1);
