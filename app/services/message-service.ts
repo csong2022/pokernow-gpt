@@ -26,7 +26,15 @@ export function getFirstWord(msg: string): string {
     return res;
 }
 
-//TODO: populate a new players_in_hand array here as a byproduct 
+export function getPlayerStacksMsg(msgs: Array<string>): string {
+    for (let i = 0; i < msgs.length; i++) {
+        if (msgs[i].includes("Player stacks: ")) {
+            return msgs[i]
+            }
+        }
+    return ""
+}
+
 export function getPlayerStacksFromMsg(msg: string, stakes: number): Map<string, number>{
     //starts from the bottom of logs
     const re = RegExp('\\@\\s([^"]*)\\"\\s\\((\\d+)\\)', 'g');
