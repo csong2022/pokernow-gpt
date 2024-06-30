@@ -7,7 +7,6 @@ export class LogService {
     private browser!: puppeteer.Browser;
     private page!: puppeteer.Page;
     
-
     constructor(game_id: string) {
         this.game_id = game_id;
     }
