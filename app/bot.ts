@@ -184,7 +184,9 @@ export class Bot {
                 this.table.setIdToTableSeat(id_to_seat_map);
                 
                 let name_to_id_map = getNameToIdFromMsg(stack_msg);
-                this.table.setNameToId(name_to_id_map)
+                this.table.setNameToId(name_to_id_map);
+
+                await this.table.updateCache();
             }
 
             let only_valid = validateAllMsg(msg);
