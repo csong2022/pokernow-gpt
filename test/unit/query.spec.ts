@@ -13,7 +13,7 @@ import { convertToValue } from "../../app/utils/log-processing-utils.ts";
 import { Queue } from "../../app/utils/data-structures.ts";
 import { processOutput } from "../../app/utils/ai-query-utils.ts";
 
-describe('log service test', async () => {
+describe('query service test', async () => {
     it("should properly get logs and filter through them", async() => {
         const log = await fetchData("pglrRhwA65bP08G-KFoygFwoC", "", "");
         if (log.code === SUCCESS_RESPONSE) {
@@ -94,10 +94,10 @@ describe('log service test', async () => {
             console.log('error', log.error);
         }
     })
-    it.only("test query out processing", () => {
+    /* it("test query out processing", () => {
         const msg = 'To play this hand from the small blind with 8♦ 4♦, a fold is the recommended strategy given the weak hand and the lack of aggression from both players. The best move is to fold and wait for a better opportunity. \n' +
       '{fold, 0}';
         console.log(processOutput(msg));
     })
-    closeBrowser();
+    closeBrowser(); */
 })

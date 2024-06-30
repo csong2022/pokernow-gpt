@@ -4,7 +4,7 @@ import { Player } from "./player.ts"
 import { PlayerAction } from "./player-action.ts";
 import { PlayerStats } from "./player-stats.ts";
 import { Queue } from "../utils/data-structures.ts"
-import { pruneFlop, getPlayerStacksFromMsg as getPlayerInitialStacksFromMsg } from "../services/message-service.ts";
+import { pruneFlop, getPlayerStacksMsg, getPlayerStacksFromMsg as getPlayerInitialStacksFromMsg } from "../services/message-service.ts";
 import { Street, convertToBBs } from "../utils/log-processing-utils.ts";
 import { Game } from "./game.ts";
 
@@ -23,6 +23,7 @@ export class Table {
     private id_to_position: Map<string, string>;
     private id_to_initial_stacks: Map<string, number>;
     private name_to_id: Map<string, string>;
+    private table_seat_to_id: Map<number, string>
 
     constructor() {
         this.num_players = 0;
@@ -39,6 +40,7 @@ export class Table {
         this.id_to_position = new Map<string, string>();
         this.id_to_initial_stacks = new Map<string, number>();
         this.name_to_id = new Map<string, string>();
+        this.table_seat_to_id = new Map<number, string>();
     }
 
     public getNumPlayers(): number {
@@ -97,10 +99,10 @@ export class Table {
         let order = 0;
         logs.forEach((element) => {
             if (!(Object.values<string>(Street).includes(element[0]))) {
-                if (!(this.id_to_position.has(element[0]))) {
+                /* if (!(this.id_to_position.has(element[0]))) {
                     order += 1;
                     this.id_to_position.set(element[0], order.toString())
-                }
+                } */
                 if (!(this.name_to_id.has(element[1]))) {
                     this.name_to_id.set(element[1], element[0])
                 }
@@ -108,6 +110,31 @@ export class Table {
             }
             this.logs_queue.enqueue(element);
         })
+    }
+
+    public setTableSeatToPosition(map: Map<number, string>): void {
+        this.table_seat_to_id = map
+    }
+
+    public setIdToPosition(first_seat: number): void {
+        let visited = new Set<number>();
+        let i = first_seat
+        let order = 0
+        const player_positions = Array.from(this.table_seat_to_id.keys());
+        console.log(player_positions)
+        console.log(this.table_seat_to_id)
+        while (!(visited.has(i))) {
+            visited.add(i)
+            if (player_positions.includes(i)) {
+                order += 1
+                let id = this.table_seat_to_id.get(i)!
+                this.id_to_position.set(id, order.toString())
+            }
+            i += 1
+            if (i >= 11) {
+                i = 1
+            }
+        }
     }
 
     public async postProcessLogs(logs_queue: Queue<Array<string>>, game: Game) {
@@ -143,7 +170,9 @@ export class Table {
     public updatePlayerActions(player_action: PlayerAction): void {
         this.player_actions.push(player_action);
     }
-
+    public get IdToSeatNumber(): Map<number, string> {
+        return this.table_seat_to_id
+    }
 
     public getActionNumFromId(): Map<string, number> {
         return this.id_to_action_num;
@@ -311,7 +340,7 @@ export class Table {
         throw new Error(`Could not retrieve stack for player with id: ${player_id}.`);
     }
     public setPlayerInitialStacksFromMsg(msgs: string[], stakes: number): void {
-        this.id_to_initial_stacks = getPlayerInitialStacksFromMsg(msgs, stakes);
+        this.id_to_initial_stacks = getPlayerInitialStacksFromMsg(getPlayerStacksMsg(msgs), stakes);
     }
 
     public getIDFromName(name: string): string {

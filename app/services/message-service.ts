@@ -26,21 +26,36 @@ export function getFirstWord(msg: string): string {
     return res;
 }
 
-export function getPlayerStacksFromMsg(msgs: Array<string>, stakes: number): Map<string, number>{
+export function getPlayerStacksMsg(msgs: Array<string>): string {
+    for (let i = 0; i < msgs.length; i++) {
+        if (msgs[i].includes("Player stacks: ")) {
+            return msgs[i]
+            }
+        }
+    return ""
+}
+
+export function getPlayerStacksFromMsg(msg: string, stakes: number): Map<string, number>{
     //starts from the bottom of logs
     const re = RegExp('\\@\\s([^"]*)\\"\\s\\((\\d+)\\)', 'g');
     let res = new Map<string, number>;
-
-    for (let i = 0; i < msgs.length; i++) {
-        if (msgs[i].includes("Player stacks: ")) {
-            let regExps = [...msgs[i].matchAll(re)];
-            regExps.forEach((element) => {
-                res.set(element[1], convertToBBs(Number(element[2]), stakes));
-            })
-        }
-    }
+    let regExps = [...msg.matchAll(re)];
+    regExps.forEach((element) => {
+        res.set(element[1], convertToBBs(Number(element[2]), stakes));
+        })
     return res;
-}
+    }
+
+export function getTableSeatFromMsg(msg: string): Map<number, string>{
+    //starts from the bottom of logs
+    const re = RegExp('\\#(\\d+)\\s\\"[^@]+\\@\\s([^"]*)', 'g');
+    let res = new Map<number, string>;
+    let regExps = [...msg.matchAll(re)];
+    regExps.forEach((element) => {
+        res.set(parseInt(element[1]), element[2]);
+        })
+    return res;
+    }
 
 export function pruneLogsBeforeCurrentHand(data: Data): Data {
     //starts from the top of logs
