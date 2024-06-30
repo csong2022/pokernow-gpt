@@ -276,6 +276,10 @@ export async function getStackSize<D, E=Error>(): Response<D, E> {
 }
 export async function waitForCallOption<D, E=Error>(): Response<D, E> {
     try {
+        const is_disabled = await page.$eval(".game-decisions-ctn > .action-buttons > .call", (button: any) => button.disabled);
+        if (is_disabled) {
+            throw new Error("Call option is disabled.")
+        }
         await page.waitForSelector(".game-decisions-ctn > .action-buttons > .call", {timeout: default_timeout});
     } catch (err) {
         return {
@@ -346,6 +350,10 @@ export async function cancelUnnecessaryFold<D, E=Error>(): Response<D, E> {
 
 export async function waitForCheckOption<D, E=Error>(): Response<D, E> {
     try {
+        const is_disabled = await page.$eval(".game-decisions-ctn > .action-buttons > .check", (button: any) => button.disabled);
+        if (is_disabled) {
+            throw new Error("Check option is disabled.")
+        }
         await page.waitForSelector(".game-decisions-ctn > .action-buttons > .check", {timeout: default_timeout});
     } catch (err) {
         return {
@@ -379,6 +387,10 @@ export async function check<D, E=Error>(): Response<D, E> {
 
 export async function waitForBetOption<D, E=Error>(): Response<D ,E> {
     try {
+        const is_disabled = await page.$eval(".game-decisions-ctn > .action-buttons > .raise", (button: any) => button.disabled);
+        if (is_disabled) {
+            throw new Error("Bet or raise option is disabled.")
+        }
         await page.waitForSelector(".game-decisions-ctn > .action-buttons > .raise", {timeout: default_timeout});
     } catch (err) {
         return {
