@@ -4,7 +4,7 @@ import { Player } from "./player.ts"
 import { PlayerAction } from "./player-action.ts";
 import { PlayerStats } from "./player-stats.ts";
 import { Queue } from "../utils/data-structures.ts"
-import { pruneFlop, getPlayerStacksMsg, getPlayerStacksFromMsg as getPlayerInitialStacksFromMsg } from "../services/message-service.ts";
+import { getPlayerStacksMsg, getPlayerStacksFromMsg as getPlayerInitialStacksFromMsg } from "../services/message-service.ts";
 import { Street, convertToBBs } from "../utils/log-processing-utils.ts";
 import { Game } from "./game.ts";
 
