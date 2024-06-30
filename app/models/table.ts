@@ -148,6 +148,13 @@ export class Table {
         }
     }
 
+    public async updateCache(): Promise<void> {
+        for (const name of this.name_to_id.keys()) {
+            const id = this.name_to_id.get(name)!
+            await this.cachePlayer(id, name)
+        }
+    }
+
     public async postProcessLogs(logs_queue: Queue<Array<string>>, game: Game) {
         const table = game.getTable();
         while (!logs_queue.isEmpty()) {
@@ -164,7 +171,6 @@ export class Table {
                     }
                     let player_action = new PlayerAction(player_id, action, convertToBBs(Number(bet_size), game.getBigBlind()));
                     table.updatePlayerActions(player_action);
-                    await table.cachePlayer(player_id, player_name);
                 } else {
                     const street = log[0];
                     const runout = log[1];
@@ -204,7 +210,6 @@ export class Table {
                 const player_name = log[1];
                 const action = log[2];
                 let actionNum = 0;
-                await this.cachePlayer(player_id,  player_name);
                 if (action === Action.CALL) {
                     actionNum = 1;
                     action_count += 1;
@@ -251,15 +256,6 @@ export class Table {
             } else {
                 const player_stats_JSON = JSON.parse(JSON.stringify(player_stats_str));
                 this.id_to_player.set(player_id, new Player(player_name, new PlayerStats(player_id, player_stats_JSON)));
-            }
-        }
-    }
-    //TODO: should cache from players_in_hand initialized by player stacks instead of logs
-    public async cacheFromLogs(logs: Array<Array<string>>): Promise<void> {
-        for (let i = 0; i < logs.length; i++) {
-            let msg = logs[i];
-            if (msg.length > 3) {
-                await this.cachePlayer(msg[0], msg[1]);
             }
         }
     }

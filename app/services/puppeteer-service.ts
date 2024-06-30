@@ -76,7 +76,6 @@ export class PuppeteerService {
     convertGameInfo(game_info: string): GameInfo {
         const re = RegExp("([A-Z]+)\\s~\\s([0-9]+)\\s\/\\s([0-9]+)");
         const matches = re.exec(game_info);
-        console.log(matches)
         if (matches && matches.length == 4) {
             return {game_type: matches[1], big_blind: Number(matches[3]), small_blind: Number(matches[2])};
         } else {
