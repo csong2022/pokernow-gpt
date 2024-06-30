@@ -241,7 +241,7 @@ export class Bot {
                 return await this.queryBotAction(query, retries, retry_counter + 1);
             }
 
-            if (this.isValidBotAction(bot_action)) {
+            if (await this.isValidBotAction(bot_action)) {
                 return bot_action;
             }
             console.log("Invalid bot action, retrying query.");
@@ -252,32 +252,49 @@ export class Bot {
         }
     }
 
-    private isValidBotAction(bot_action: BotAction): boolean {
+    private async isValidBotAction(bot_action: BotAction): Promise<boolean> {
         console.log("Attempted Bot Action:", bot_action);
         const valid_actions: string[] = ["bet", "raise", "call", "check", "fold"];
         const curr_stack_size_in_BBs = this.game.getHero()!.getStackSize();
-        console.log("Bot Stack in BBs", curr_stack_size_in_BBs);
+        console.log("Bot Stack in BBs:", curr_stack_size_in_BBs);
         let is_valid = false;
         if (bot_action.action_str && valid_actions.includes(bot_action.action_str)) {
+            let res;
             switch (bot_action.action_str) {
                 // TODO: check if the action is present on the page
                 case "bet":
+                    res = await puppeteer_service.waitForBetOption();
+                    if (res.code === "success") {
+                        is_valid = true;
+                    }
                     if (bot_action.bet_size_in_BBs > 0 && bot_action.bet_size_in_BBs <= curr_stack_size_in_BBs) {
                         is_valid = true;
                     }
                     break;
                 case "raise":
                     // should also check that the raise >= min raise
+                    res = await puppeteer_service.waitForBetOption();
+                    if (res.code === "success") {
+                        is_valid = true;
+                    }
                     if (bot_action.bet_size_in_BBs > 0 && bot_action.bet_size_in_BBs <= curr_stack_size_in_BBs) {
                         is_valid = true;
                     }
                     break;
                 case "call":
+                    res = await puppeteer_service.waitForCallOption();
+                    if (res.code === "success") {
+                        is_valid = true;
+                    }
                     if (bot_action.bet_size_in_BBs > 0 && bot_action.bet_size_in_BBs <= curr_stack_size_in_BBs) {
                         is_valid = true;
                     }
                     break;
                 case "check":
+                    res = await puppeteer_service.waitForCheckOption();
+                    if (res.code === "success") {
+                        is_valid = true;
+                    }
                     if (bot_action.bet_size_in_BBs == 0) {
                         is_valid = true;
                     }
