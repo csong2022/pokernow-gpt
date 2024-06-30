@@ -19,8 +19,7 @@ export async function queryGPT(query: string, prevMessages: ChatCompletionMessag
         messages: prevMessages,
         model: "gpt-3.5-turbo",
     });
-
-    //console.log("response 0", completion.choices[0]);
+    
     return {
         choices: completion.choices[0],
         prevMessages: prevMessages
