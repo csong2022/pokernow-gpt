@@ -1,7 +1,6 @@
-import { fetchData, getCreatedAt } from "../../app/services/log-service.ts"
+import { LogService } from "../../app/services/log-service.ts"
 import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-utils.ts';
-import { closeBrowser, getData, getMsg, getLast, getFirst } from '../../app/services/log-service.ts';
-import { getPlayer, getPlayerAction, getFirstWord, validateAllMsg, validateMsg, pruneFlop, getPlayerStacksFromMsg, pruneLogsBeforeCurrentHand } from "../../app/services/message-service.ts";
+import { validateAllMsg } from "../../app/services/message-service.ts";
 import { Table } from "../../app/models/table.ts";
 import { Game } from "../../app/models/game.ts";
 import { Hero, Player } from "../../app/models/player.ts";
@@ -14,13 +13,14 @@ import { processOutput } from "../../app/utils/ai-query-utils.ts";
 
 describe('query service test', async () => {
     it("should properly get logs and filter through them", async() => {
-        const log = await fetchData("pglrRhwA65bP08G-KFoygFwoC", "", "");
+        const log_service = new LogService("pglrRhwA65bP08G-KFoygFwoC");
+        await log_service.init();
+        const log = await log_service.fetchData("", "");
         if (log.code === SUCCESS_RESPONSE) {
             //console.log('success', log.data)
-            const res1 = getMsg(getData(log));
-            const prune = getMsg(pruneLogsBeforeCurrentHand(getData(log)));
-            const prune_flop = pruneFlop(prune);
-            const prune_flop_verify = validateAllMsg(prune_flop);
+            const res1 = log_service.getMsg(log_service.getData(log));
+            const prune = log_service.getMsg(log_service.pruneLogsBeforeCurrentHand(log_service.getData(log)));
+            const prune_verify = validateAllMsg(prune);
             const pruneres = validateAllMsg(prune);
             const g = new Game("11", 10, 5, "NLH", 30);
             const t = g.getTable()
@@ -29,7 +29,7 @@ describe('query service test', async () => {
             g.setHero(hero)
             t.nextHand();
             t.preProcessLogs(pruneres, g.getBigBlind());
-            t.postProcessLogsAfterHand(prune_flop_verify);
+            t.postProcessLogsAfterHand(prune_verify);
             t.setPlayerInitialStacksFromMsg(res1, 10);
             t.processPlayers();
             t.convertAllOrdersToPosition();

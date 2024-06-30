@@ -77,34 +77,6 @@ export function getNameToIdFromMsg(msg: string): Map<string, string>{
         res.set(element[1], element[2]);
         })
     return res;
-    }
-
-//TODO: doesn't belong here, move to log-service
-export function pruneLogsBeforeCurrentHand(data: Data): Data {
-    //starts from the top of logs
-    const log_arr = new Array<Log>;
-    let i = 0;
-    while ((i < data.logs.length) && !(data.logs[i].msg.includes("starting hand #"))) {
-        log_arr.push(data.logs[i]);
-        i += 1;
-    }
-    log_arr.push(data.logs[i]);
-    return {
-        logs: log_arr
-    }
-}
-
-// currently not used anywhere, maybe can be removed
-export function pruneFlop(msgs: Array<string>): Array<string> {
-    //starts from the bottom of logs
-    const res = new Array<string>;
-    let i = msgs.length - 1;
-    while ((i > 0) && !(msgs[i].includes("Flop: "))) {
-        res.push(msgs[i]);
-        i -= 1;
-    }
-    res.push(msgs[i]);
-    return res;
 }
 
 export function validateMsg(msg: string): Array<string> {
