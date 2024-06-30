@@ -5,7 +5,7 @@ import { fetchData, getFirst, getCreatedAt, getData, getMsg, getLast } from './s
 
 import { getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, pruneLogsBeforeCurrentHand, validateAllMsg } from './services/message-service.ts';
 import { BotAction, queryGPT, parseResponse } from './services/openai-service.ts'
-import * as puppeteer_service from './services/puppeteer-service.ts';
+import { PuppeteerService } from './services/puppeteer-service.ts';
 import { constructQuery } from './services/query-service.ts';
 import { sleep } from './utils/bot-utils.ts';
 import { logResponse, DebugMode } from './utils/error-handling-utils.ts';
@@ -13,6 +13,8 @@ import { convertToBBs, convertToValue, type ProcessedLogs } from './utils/log-pr
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
 
 export class Bot {
+    private puppeteer_service: PuppeteerService;
+
     private bot_name: string;
     private game: Game;
     private table: Table;
@@ -23,12 +25,16 @@ export class Bot {
     private debug_mode: DebugMode;
     private query_retries: number;
 
-    constructor(game: Game, debug_mode: DebugMode, query_retries: number = 0) {
+    constructor(puppeteer_service: PuppeteerService, game: Game, debug_mode: DebugMode, query_retries: number = 0) {
+        this.puppeteer_service = puppeteer_service;
+
         this.bot_name = "";
         this.game = game;
         this.table = game.getTable();
-        this.hand_history = [];
+
         this.first_created = "";
+        this.hand_history = [];
+        
         this.debug_mode = debug_mode;
         this.query_retries = query_retries;
     }

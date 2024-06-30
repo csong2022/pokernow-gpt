@@ -63,7 +63,7 @@ function defineCommunityCards(street: string, runout: string): string {
     return query;
 }
 
-export function defineStacks(player_stacks: Map<string, number>, player_positions: Map<string, string>): string {
+function defineStacks(player_stacks: Map<string, number>, player_positions: Map<string, string>): string {
     let query = "Here are the initial stack sizes of all players involved:\n";
     const player_ids = Array.from(player_positions.keys());
     for (var i = 0; i < player_ids.length; i++)  {
@@ -78,7 +78,7 @@ export function defineStacks(player_stacks: Map<string, number>, player_position
     return query;
 }
 
-export function defineActions(player_actions: Array<PlayerAction>, table: Table) {
+function defineActions(player_actions: Array<PlayerAction>, table: Table) {
     let query = "Here are the current actions that are relevant:\n";
     for (var i = 0; i < player_actions.length; i++)  {
         let player_pos = table.getPlayerPositionFromID(player_actions[i].getPlayerId());
@@ -92,7 +92,7 @@ export function defineActions(player_actions: Array<PlayerAction>, table: Table)
     return query
 }
 
-export function defineStats(player_positions: Map<string, string>, table: Table) {
+function defineStats(player_positions: Map<string, string>, table: Table) {
     let query = "Stats of players in the pot:\n"
     let player_ids = Array.from(player_positions.keys());
 
