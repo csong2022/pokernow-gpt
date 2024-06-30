@@ -72,7 +72,7 @@ export class PuppeteerService {
         const re = RegExp("([A-Z]+)\\s~\\s[0-9]+\\s\/\\s([0-9]+)");
         const matches = re.exec(game_info);
         if (matches && matches.length == 3) {
-            return {game_type: matches[1], stakes: Number(matches[2])};
+            return {game_type: matches[1], big_blind: Number(matches[2])};
         } else {
             throw new Error("Failed to convert game info.");
         }

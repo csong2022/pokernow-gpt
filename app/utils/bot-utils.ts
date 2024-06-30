@@ -7,5 +7,6 @@ export function sleep(ms: number): Promise<any> {
 
 export interface GameInfo {
     game_type: string,
-    stakes: number
+    big_blind: number,
+    small_blind: number,
 }
