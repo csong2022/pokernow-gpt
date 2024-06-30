@@ -98,10 +98,10 @@ export class Table {
         }
         return undefined;
     }
-    public preProcessLogs(logs: Array<Array<string>>, stakes: number) {
+    public preProcessLogs(logs: Array<Array<string>>, small_blind: number) {
         logs = logs.reverse();
         logs.forEach((element) => {
-            if (element[2] === 'posts' && element[4] === stakes.toString()) {
+            if (element[2] === 'posts' && element[4] === small_blind.toString()) {
                 this.first_seat_order_id = element[0]
             }
             this.logs_queue.enqueue(element);
@@ -162,7 +162,7 @@ export class Table {
                     if (action === "folds") {
                         table.decrementPlayersInPot();
                     }
-                    let player_action = new PlayerAction(player_id, action, convertToBBs(Number(bet_size), game.getStakes()));
+                    let player_action = new PlayerAction(player_id, action, convertToBBs(Number(bet_size), game.getBigBlind()));
                     table.updatePlayerActions(player_action);
                     await table.cachePlayer(player_id, player_name);
                 } else {
