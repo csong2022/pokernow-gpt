@@ -1,11 +1,12 @@
 import { fetchData, getCreatedAt } from "../../app/services/log-service.ts"
 import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-utils.ts';
 import { getData, getMsg, getLast, getFirst } from '../../app/services/log-service.ts';
-import { getPlayer, getPlayerAction, getFirstWord, validateAllMsg, validateMsg, pruneFlop, getPlayerStacksFromMsg, pruneLogsBeforeCurrentHand } from "../../app/services/message-service.ts";
+import { validateAllMsg, validateMsg, pruneFlop, getPlayerStacksFromMsg, pruneLogsBeforeCurrentHand, getPlayerStacksMsg, getTableSeatFromMsg } from "../../app/services/message-service.ts";
 import { Table } from "../../app/models/table.ts";
+import { table } from "console";
 
 describe('log service test', async () => {
-    it("should properly get logs and filter through them", async() => {
+    it.only("should properly get logs and filter through them", async() => {
         const log = await fetchData("pglrRhwA65bP08G-KFoygFwoC", "", "")
         if (log.code === SUCCESS_RESPONSE) {
             //console.log('success', log.data)
@@ -24,9 +25,19 @@ describe('log service test', async () => {
             const pruneres = validateAllMsg(prune);
             console.log("valid actions until starting", pruneres);
 
+            const player_stack_msg = getPlayerStacksMsg(prune_flop)
+            console.log("player_stack_msg", player_stack_msg)
+            const player_stacks_from_msg = getPlayerStacksFromMsg(player_stack_msg, 20)
+            console.log("player_stacks_from_msg", player_stacks_from_msg)
+            const table_seats = getTableSeatFromMsg(player_stack_msg)
+            console.log("table_seats", table_seats)
+
             const t = new Table();
             t.nextHand();
+            t.setTableSeatToPosition(table_seats);
             t.preProcessLogs(pruneres);
+            t.setIdToPosition(1);
+
             t.postProcessLogsAfterHand(prune_flop_verify);
             t.setPlayerInitialStacksFromMsg(res1, 20);
             console.log("stacks", t.getPlayerInitialStacks());
