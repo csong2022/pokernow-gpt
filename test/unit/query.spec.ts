@@ -22,13 +22,13 @@ describe('query service test', async () => {
             const prune_flop = pruneFlop(prune);
             const prune_flop_verify = validateAllMsg(prune_flop);
             const pruneres = validateAllMsg(prune);
-            const g = new Game("11", 10, "NLH", 30);
+            const g = new Game("11", 10, 5, "NLH", 30);
             const t = g.getTable()
             let hero_stats = new PlayerStats('aa')
             let hero = new Hero('xdd', hero_stats, ['4♣','4♥'], 10)
             g.setHero(hero)
             t.nextHand();
-            t.preProcessLogs(pruneres, g.getStakes());
+            t.preProcessLogs(pruneres, g.getBigBlind());
             t.postProcessLogsAfterHand(prune_flop_verify);
             t.setPlayerInitialStacksFromMsg(res1, 10);
             await t.cacheFromLogs(prune_flop_verify);

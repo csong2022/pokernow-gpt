@@ -22,7 +22,7 @@ async function init(puppeteer_service: PuppeteerService): Promise<Game> {
     logResponse(res, bot_config.debug_mode);
     if (res.code == "success") {
         const game_info = puppeteer_service.convertGameInfo(res.data as string);
-        return new Game(game_id, game_info.big_blind, game_info.game_type, 30);
+        return new Game(game_id, game_info.big_blind, game_info.small_blind, game_info.game_type, 30);
     } else {
         throw new Error ("Failed to get game info.");
     }

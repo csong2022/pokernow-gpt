@@ -123,7 +123,7 @@ export class Bot {
                     const hand = await this.getHand();
                     const stack_size = await this.getStackSize();
 
-                    await this.updateHero(hand, convertToBBs(stack_size, this.game.getStakes()));
+                    await this.updateHero(hand, convertToBBs(stack_size, this.game.getBigBlind()));
 
                     // post process logs and construct query
                     await this.table.postProcessLogs(this.table.getLogsQueue(), this.game);
@@ -166,13 +166,13 @@ export class Bot {
             if (first_fetch) {
                 data = pruneLogsBeforeCurrentHand(data);
                 msg = getMsg(data);
-                this.table.setPlayerInitialStacksFromMsg(msg, this.game.getStakes());
+                this.table.setPlayerInitialStacksFromMsg(msg, this.game.getBigBlind());
                 first_fetch = false;
                 this.first_created = getLast(getCreatedAt(data));
 
                 let stack_msg = getPlayerStacksMsg(msg);
 
-                let id_to_stack_map = getPlayerStacksFromMsg(stack_msg, this.game.getStakes());
+                let id_to_stack_map = getPlayerStacksFromMsg(stack_msg, this.game.getBigBlind());
                 this.table.setIdToStack(id_to_stack_map);
 
                 let seat_to_id_map = getTableSeatToIdFromMsg(stack_msg);
@@ -187,7 +187,7 @@ export class Bot {
 
             let only_valid = validateAllMsg(msg);
     
-            this.table.preProcessLogs(only_valid, this.game.getStakes());
+            this.table.preProcessLogs(only_valid, this.game.getSmallBlind());
             let first_seat_number = this.table.getIdToSeatNumber()!.get(this.table.getFirstSeatOrderId())!;
             this.table.setIdToPosition(first_seat_number)
             this.table.convertAllOrdersToPosition();
@@ -331,8 +331,8 @@ export class Bot {
 
     private async performBotAction(bot_action: BotAction): Promise<void> {
         console.log("Bot Action:", bot_action.action_str);
-        const bet_size = convertToValue(bot_action.bet_size_in_BBs, this.game.getStakes());
-        console.log("Bet Size:", convertToBBs(bet_size, this.game.getStakes()));
+        const bet_size = convertToValue(bot_action.bet_size_in_BBs, this.game.getBigBlind());
+        console.log("Bet Size:", convertToBBs(bet_size, this.game.getBigBlind()));
         switch (bot_action.action_str) {
             case "bet":
                 logResponse(await this.puppeteer_service.betOrRaise(bet_size), this.debug_mode);
