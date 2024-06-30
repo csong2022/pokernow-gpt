@@ -26,15 +26,7 @@ export function getFirstWord(msg: string): string {
     return res;
 }
 
-export function getPlayerStacksMsg(msgs: Array<string>): string {
-    for (let i = 0; i < msgs.length; i++) {
-        if (msgs[i].includes("Player stacks: ")) {
-            return msgs[i]
-            }
-        }
-    return ""
-}
-
+//TODO: populate a new players_in_hand array here as a byproduct 
 export function getPlayerStacksFromMsg(msg: string, stakes: number): Map<string, number>{
     //starts from the bottom of logs
     const re = RegExp('\\@\\s([^"]*)\\"\\s\\((\\d+)\\)', 'g');
@@ -42,9 +34,9 @@ export function getPlayerStacksFromMsg(msg: string, stakes: number): Map<string,
     let regExps = [...msg.matchAll(re)];
     regExps.forEach((element) => {
         res.set(element[1], convertToBBs(Number(element[2]), stakes));
-        })
+    })
     return res;
-    }
+}
 
 export function getTableSeatToIdFromMsg(msg: string): Map<number, string>{
     //starts from the bottom of logs
@@ -53,9 +45,9 @@ export function getTableSeatToIdFromMsg(msg: string): Map<number, string>{
     let regExps = [...msg.matchAll(re)];
     regExps.forEach((element) => {
         res.set(parseInt(element[1]), element[2]);
-        })
+    })
     return res;
-    }
+}
 
 export function getIdToTableSeatFromMsg(msg: string): Map<string, number>{
     //starts from the bottom of logs
@@ -64,9 +56,9 @@ export function getIdToTableSeatFromMsg(msg: string): Map<string, number>{
     let regExps = [...msg.matchAll(re)];
     regExps.forEach((element) => {
         res.set(element[2], parseInt(element[1]));
-        })
+    })
     return res;
-    }
+}
 
 export function getNameToIdFromMsg(msg: string): Map<string, string>{
     //starts from the bottom of logs
@@ -79,6 +71,7 @@ export function getNameToIdFromMsg(msg: string): Map<string, string>{
     return res;
     }
 
+//TODO: doesn't belong here, move to log-service
 export function pruneLogsBeforeCurrentHand(data: Data): Data {
     //starts from the top of logs
     const log_arr = new Array<Log>;

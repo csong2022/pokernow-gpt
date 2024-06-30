@@ -254,6 +254,7 @@ export class Table {
             }
         }
     }
+    //TODO: should cache from players_in_hand initialized by player stacks instead of logs
     public async cacheFromLogs(logs: Array<Array<string>>): Promise<void> {
         for (let i = 0; i < logs.length; i++) {
             let msg = logs[i];
