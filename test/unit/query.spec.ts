@@ -31,7 +31,6 @@ describe('query service test', async () => {
             t.preProcessLogs(pruneres, g.getBigBlind());
             t.postProcessLogsAfterHand(prune_flop_verify);
             t.setPlayerInitialStacksFromMsg(res1, 10);
-            await t.cacheFromLogs(prune_flop_verify);
             t.processPlayers();
             t.convertAllOrdersToPosition();
 
