@@ -32,9 +32,12 @@ async function init(puppeteer_service: PuppeteerService): Promise<Game> {
 const bot_factory = async function() {
     const puppeteer_service = new PuppeteerService(1000);
     await puppeteer_service.init();
+
+    const game = await init(puppeteer_service);
+    
     const log_service = new LogService(game_id);
     await log_service.init();
-    const game = await init(puppeteer_service);
+    
     const bot = new Bot(log_service, puppeteer_service, game, bot_config.debug_mode, bot_config.query_retries);
     await bot.run();
 }
