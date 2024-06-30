@@ -1,5 +1,5 @@
 import prompt from 'prompt-sync';
-import * as puppeteer_service from './services/puppeteer-service.ts';
+import { PuppeteerService } from './services/puppeteer-service.ts';
 import { Bot } from './bot.ts'
 import { logResponse, DebugMode } from './utils/error-handling-utils.ts';
 import { Game } from './models/game.ts';
@@ -9,11 +9,11 @@ import bot_config_json from "./configs/bot-config.json"
 const io = prompt();
 const bot_config: BotConfig = bot_config_json;
 
-async function init(): Promise<Game> {
+async function init(puppeteer_service: PuppeteerService): Promise<Game> {
     const game_id = io("Enter the PokerNow game id (ex. https://www.pokernow.club/games/{game_id}): ");
     console.log(`The PokerNow game with id: ${game_id} will now open.`);
     
-    logResponse(await puppeteer_service.init(game_id), bot_config.debug_mode);
+    logResponse(await puppeteer_service.navigateToGame(game_id), bot_config.debug_mode);
 
     logResponse(await puppeteer_service.waitForGameInfo(), bot_config.debug_mode);
 
@@ -29,8 +29,10 @@ async function init(): Promise<Game> {
 }
 
 const bot_factory = async function() {
-    const game = await init();
-    const bot = new Bot(game, bot_config.debug_mode, bot_config.query_retries);
+    const puppeteer_service = new PuppeteerService(1000);
+    await puppeteer_service.init();
+    const game = await init(puppeteer_service);
+    const bot = new Bot(puppeteer_service, game, bot_config.debug_mode, bot_config.query_retries);
     await bot.run();
 }
 
