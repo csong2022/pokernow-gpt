@@ -3,6 +3,10 @@ import OpenAI from "openai";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
 import { processOutput } from "../utils/ai-query-utils.ts";
 
+//TODO: init function here
+export async function init() {
+    
+}
 dotenv.config();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 

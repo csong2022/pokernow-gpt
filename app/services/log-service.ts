@@ -2,6 +2,7 @@ import puppeteer from 'puppeteer';
 import type { Response } from '../utils/error-handling-utils.ts';
 import { Data } from '../utils/log-processing-utils.ts';
 
+//TODO: init function here
 const browser = await puppeteer.launch({
     defaultViewport: null,
     headless: true
