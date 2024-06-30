@@ -4,7 +4,7 @@ import { Player } from "./player.ts"
 import { PlayerAction } from "./player-action.ts";
 import { PlayerStats } from "./player-stats.ts";
 import { Queue } from "../utils/data-structures.ts"
-import { pruneFlop, getPlayerStacksMsg, getPlayerStacksFromMsg as getPlayerInitialStacksFromMsg } from "../services/message-service.ts";
+import { getPlayerStacksMsg, getPlayerStacksFromMsg as getPlayerInitialStacksFromMsg } from "../services/message-service.ts";
 import { Street, convertToBBs } from "../utils/log-processing-utils.ts";
 import { Game } from "./game.ts";
 
@@ -254,6 +254,7 @@ export class Table {
             }
         }
     }
+    //TODO: should cache from players_in_hand initialized by player stacks instead of logs
     public async cacheFromLogs(logs: Array<Array<string>>): Promise<void> {
         for (let i = 0; i < logs.length; i++) {
             let msg = logs[i];
