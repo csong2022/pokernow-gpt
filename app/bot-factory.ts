@@ -41,7 +41,8 @@ const bot_factory = async function() {
 
     const ai_service_factory = new AIServiceFactory();
     ai_service_factory.printSupportedModels();
-    const ai_service = ai_service_factory.createAIService(ai_config.provider, ai_config.model);
+    const ai_service = ai_service_factory.createAIService(ai_config.provider, ai_config.model_name);
+    console.log(`Created AI service: ${ai_config.provider} ${ai_config.model_name}`);
     ai_service.init();
 
     const bot = new Bot(log_service, ai_service, player_service, puppeteer_service, game_id, bot_config.debug_mode, bot_config.query_retries);

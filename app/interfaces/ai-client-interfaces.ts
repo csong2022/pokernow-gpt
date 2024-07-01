@@ -11,11 +11,11 @@ export interface AIResponse {
 
 export abstract class AIService {
     private api_key: string;
-    private model: string;
+    private model_name: string;
 
     constructor(api_key: string, model: string) {
         this.api_key = api_key;
-        this.model = model;
+        this.model_name = model;
     }
 
     abstract init(): void;
@@ -26,8 +26,8 @@ export abstract class AIService {
         return this.api_key;
     }
 
-    getModel(): string {
-        return this.model;
+    getModelName(): string {
+        return this.model_name;
     }
 }
 
