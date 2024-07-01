@@ -2,7 +2,7 @@ import { DebugMode } from "../utils/error-handling-utils.ts"
 
 export interface AIConfig {
     provider: string,
-    model: string
+    model_name: string
 }
 
 export interface BotConfig {

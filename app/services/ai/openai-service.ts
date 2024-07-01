@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
-import { AIMessage, AIResponse, AIService, BotAction } from "../interfaces/ai-client-interfaces.ts";
-import { parseResponse, playstyleToPrompt } from "../helpers/ai-query-helper.ts";
+import { AIMessage, AIResponse, AIService, BotAction } from "../../interfaces/ai-client-interfaces.ts";
+import { parseResponse, playstyleToPrompt } from "../../helpers/ai-query-helper.ts";
 
 export class OpenAIService extends AIService {
     private agent!: OpenAI;
@@ -24,23 +24,23 @@ export class OpenAIService extends AIService {
             ];
         }
     
+        console.log("prev_messages:", prev_messages);
         const processed_messages = this.processMessages(prev_messages);
-        console.log("after", processed_messages);
         const completion = await this.agent.chat.completions.create({
             messages: processed_messages,
-            model: this.getModel()
+            model: this.getModelName()
         });
 
         const choice = completion.choices[0];
-        const message = choice.message;
-        const text_content = message.content;
+        const response = choice.message;
+        const text_content = response.content;
 
         let bot_action: BotAction = {
             action_str: "",
             bet_size_in_BBs: 0
         };;
 
-        if (choice && text_content) {
+        if (response && text_content) {
             bot_action = parseResponse(text_content);
         }
 
@@ -50,7 +50,7 @@ export class OpenAIService extends AIService {
             curr_message: {
                 text_content: text_content!,
                 metadata: {
-                    "role": message.role
+                    "role": response.role
                 }
             }
         }

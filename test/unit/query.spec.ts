@@ -9,7 +9,7 @@ import { Table } from "../../app/models/table.ts";
 
 import { DBService } from "../../app/services/db-service.ts";
 import { LogService } from "../../app/services/log-service.ts"
-import { OpenAIService } from '../../app/services/openai-service.ts';
+import { OpenAIService } from '../../app/services/ai/openai-service.ts';
 import { PlayerService } from "../../app/services/player-service.ts";
 
 import { Queue } from "../../app/utils/data-structures.ts";
