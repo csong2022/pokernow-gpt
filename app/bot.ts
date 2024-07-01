@@ -17,7 +17,7 @@ import { constructQuery } from './helpers/construct-query-helper.ts';
 import { BotConfig } from './utils/config-utils.ts';
 import { logResponse } from './utils/error-handling-utils.ts';
 import { type ProcessedLogs } from './utils/log-processing-utils.ts';
-import { getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './utils/message-processing-utils.ts';
+import { getIdToTableSeatFromMsg, getNameToIdFromMsg, getIdToInitialStackFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './utils/message-processing-utils.ts';
 import { convertToBBs, convertToValue } from './utils/value-conversion-utils.ts'
 
 export class Bot {
@@ -208,7 +208,7 @@ export class Bot {
 
                 let stack_msg = getPlayerStacksMsg(msg);
 
-                let id_to_stack_map = getPlayerStacksFromMsg(stack_msg, this.game.getBigBlind());
+                let id_to_stack_map = getIdToInitialStackFromMsg(stack_msg, this.game.getBigBlind());
                 this.table.setIdToStack(id_to_stack_map);
 
                 let seat_to_id_map = getTableSeatToIdFromMsg(stack_msg);

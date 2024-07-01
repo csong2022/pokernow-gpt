@@ -6,7 +6,7 @@ import { PlayerService } from '../../app/services/player-service.ts';
 import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-utils.ts';
 import { LogService } from '../../app/services/log-service.ts';
 
-import { validateAllMsg, validateMsg, getPlayerStacksFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, getNameToIdFromMsg, getIdToTableSeatFromMsg } from "../../app/utils/message-processing-utils.ts";
+import { validateAllMsg, validateMsg, getIdToInitialStackFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, getNameToIdFromMsg, getIdToTableSeatFromMsg } from "../../app/utils/message-processing-utils.ts";
 
 describe('log service test', async () => {
     it("should properly get logs and filter through them", async() => {
@@ -34,7 +34,7 @@ describe('log service test', async () => {
 
             const player_stack_msg = getPlayerStacksMsg(prune);
             console.log("player_stack_msg", player_stack_msg);
-            const player_stacks_from_msg = getPlayerStacksFromMsg(player_stack_msg, 20);
+            const player_stacks_from_msg = getIdToInitialStackFromMsg(player_stack_msg, 20);
             console.log("player_stacks_from_msg", player_stacks_from_msg);
             const table_seats = getTableSeatToIdFromMsg(player_stack_msg);
             console.log("table_seats", table_seats);
