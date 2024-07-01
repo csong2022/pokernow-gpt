@@ -25,7 +25,7 @@ export class OpenAIService extends AIService {
             prevMessages.push({ role: "user", content: input })
         } else {
             prevMessages = [
-                { role: "system", content: playstyleToPrompt.get("aggressive")!},
+                { role: "system", content: playstyleToPrompt.get("pro")!},
                 { role: "user", content: input }]
         }
     
