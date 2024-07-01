@@ -1,3 +1,14 @@
+export interface AIMessage {
+    text_content: string,
+    metadata: any
+}
+
+export interface AIResponse {
+    bot_action: BotAction,
+    prev_messages: AIMessage[],
+    curr_message: AIMessage
+}
+
 export interface BotAction {
     action_str: string,
     bet_size_in_BBs: number
@@ -11,7 +22,8 @@ export abstract class AIService {
     }
 
     abstract init(): void;
-    abstract query(input: string, prevMessages?: any): Promise<any>;
+    abstract query(input: string, prev_messages: AIMessage[]): Promise<any>;
+    abstract processMessages(messages: AIMessage[]): Array<any>;
 
     getAPIKey(): string {
         return this.api_key;
