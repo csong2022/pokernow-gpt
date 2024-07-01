@@ -1,7 +1,9 @@
-import * as player_service from "../../app/services/player-service.ts"
 import { assert } from "chai";
-import { PlayerStats } from "../../app/models/player-stats.ts"
+
 import { Table } from "../../app/models/table.ts";
+
+import { DBService } from "../../app/services/db-service.ts";
+import { PlayerService } from "../../app/services/player-service.ts";
 
 const player_id = "chan-abcd";
 const player_JSON = {
@@ -14,8 +16,11 @@ const player_JSON = {
 
 describe('cachePlayer tests', async() => {
     it("should properly cache player when player does not exist in db", async() => {
-        debugger;
-        const table = new Table();
+        const db_service = new DBService("./test/unit/pokernow-gpt-test.db");
+        await db_service.init();
+        const player_service = new PlayerService(db_service);
+
+        const table = new Table(player_service);
         const msg = [player_id, "chan"]
         await table.cachePlayer(msg[0], msg[1]);
         
@@ -28,10 +33,15 @@ describe('cachePlayer tests', async() => {
         
         //cleanup
         player_service.remove(player_id);
+        await db_service.close();
     })
 
     it("should properly cache player when player already exists in db", async() => {
-        const table = new Table();
+        const db_service = new DBService("./test/unit/pokernow-gpt-test.db");
+        await db_service.init();
+        const player_service = new PlayerService(db_service);
+
+        const table = new Table(player_service);
         const msg = [player_id, "chan"]
         await player_service.create(player_JSON);
         await table.cachePlayer(msg[0], msg[1]);
@@ -44,5 +54,6 @@ describe('cachePlayer tests', async() => {
     
         //cleanup
         player_service.remove(player_id);
+        await db_service.close();
     })
 });

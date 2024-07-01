@@ -7,8 +7,11 @@ import { Queue } from "../utils/data-structures.ts"
 import { getPlayerStacksMsg, getPlayerStacksFromMsg as getPlayerInitialStacksFromMsg } from "../services/message-service.ts";
 import { Street, convertToBBs } from "../utils/log-processing-utils.ts";
 import { Game } from "./game.ts";
+import { PlayerService } from "../services/player-service.ts";
 
 export class Table {
+    private player_service: PlayerService;
+
     private num_players: number;
     private players_in_pot: number;
     private pot: number;
@@ -27,7 +30,9 @@ export class Table {
     private first_seat_order_id: string;
     private id_to_table_seat: Map<string, number>;
 
-    constructor() {
+    constructor(player_service: PlayerService) {
+        this.player_service = player_service;
+
         this.num_players = 0;
         this.players_in_pot = 0;
         this.pot = 0;
@@ -245,13 +250,13 @@ export class Table {
 
     public async cachePlayer(player_id: string, player_name: string): Promise<void> {
         if (!this.id_to_player.has(player_id)) {
-            const player_stats_str = await player_service.get(player_id);
+            const player_stats_str = await this.player_service.get(player_id);
             // if the player does not currently exist in the database, create a new player in db
             // otherwise retrieve the existing player from database,
             // then, add player to player_cache
             if (!player_stats_str) {
                 const new_player_stats = new PlayerStats(player_id);
-                await player_service.create(new_player_stats.toJSON());
+                await this.player_service.create(new_player_stats.toJSON());
                 this.id_to_player.set(player_id, new Player(player_name, new_player_stats));
             } else {
                 const player_stats_JSON = JSON.parse(JSON.stringify(player_stats_str));
@@ -277,7 +282,7 @@ export class Table {
                     // update player in-memory cache
                     // ßthis.id_to_player.set(player_id, player);
                     // update database
-                    await player_service.update(player_id, player_stats.toJSON());
+                    await this.player_service.update(player_id, player_stats.toJSON());
                 } else {
                     throw new Error("Player stats is undefined.");
                 }
@@ -287,7 +292,6 @@ export class Table {
         }
     }
 
-    
     public getPlayerPositions(): Map<string, string> {
         return this.id_to_position;
     }

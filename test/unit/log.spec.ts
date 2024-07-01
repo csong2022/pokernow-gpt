@@ -3,11 +3,18 @@ import { LogService } from '../../app/services/log-service.ts';
 import { validateAllMsg, validateMsg, getPlayerStacksFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, getNameToIdFromMsg, getIdToTableSeatFromMsg } from "../../app/services/message-service.ts";
 import { Table } from "../../app/models/table.ts";
 import { table } from "console";
+import { DBService } from '../../app/services/db-service.ts';
+import { PlayerService } from '../../app/services/player-service.ts';
 
 describe('log service test', async () => {
-    it.only("should properly get logs and filter through them", async() => {
+    it("should properly get logs and filter through them", async() => {
         const log_service = new LogService("pglrRhwA65bP08G-KFoygFwoC");
         await log_service.init();
+
+        const db_service = new DBService("./pokernow-gpt-test.db");
+        await db_service.init();
+        const player_service = new PlayerService(db_service);
+
         const log = await log_service.fetchData("", "")
         if (log.code === SUCCESS_RESPONSE) {
             //console.log('success', log.data)
@@ -32,7 +39,7 @@ describe('log service test', async () => {
             const id_to_table_seat = getIdToTableSeatFromMsg(player_stack_msg);
             console.log("id_to_table_seat", id_to_table_seat);
 
-            const t = new Table();
+            const t = new Table(player_service);
             t.nextHand();
             t.setTableSeatToId(table_seats);
             t.preProcessLogs(pruneres, 20);
@@ -56,11 +63,10 @@ describe('log service test', async () => {
 
             const name_to_id = getNameToIdFromMsg(player_stack_msg);
             console.log("name_to_id", name_to_id);
-
-            //console.log(t.getPlayerPositions.)
         }
         if (log.code === ERROR_RESPONSE) {
             console.log('error', log.error);
         }
+        db_service.close();
     })
 })
