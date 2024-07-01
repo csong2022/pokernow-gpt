@@ -7,7 +7,7 @@ import { PlayerService } from "../services/player-service.ts";
 
 import { Queue } from "../utils/data-structures.ts"
 import { Action, Street } from "../utils/log-processing-utils.ts";
-import { getPlayerStacksMsg, getPlayerStacksFromMsg as getPlayerInitialStacksFromMsg } from "../utils/message-processing-utils.ts";
+import { getPlayerStacksMsg, getIdToInitialStackFromMsg as getPlayerInitialStacksFromMsg } from "../utils/message-processing-utils.ts";
 import { convertToBBs } from "../utils/value-conversion-utils.ts";
 
 export class Table {

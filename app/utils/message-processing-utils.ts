@@ -27,6 +27,7 @@ export function getFirstWord(msg: string): string {
 }
 
 export function getPlayerStacksMsg(msgs: Array<string>): string {
+    //starts from the bottom of logs
     for (let i = 0; i < msgs.length; i++) {
         if (msgs[i].includes("Player stacks: ")) {
             return msgs[i]
@@ -35,8 +36,7 @@ export function getPlayerStacksMsg(msgs: Array<string>): string {
     return ""
 }
 
-export function getPlayerStacksFromMsg(msg: string, stakes: number): Map<string, number>{
-    //starts from the bottom of logs
+export function getIdToInitialStackFromMsg(msg: string, stakes: number): Map<string, number>{
     const re = RegExp('\\@\\s([^"]*)\\"\\s\\((\\d+)\\)', 'g');
     let res = new Map<string, number>;
     let regExps = [...msg.matchAll(re)];
@@ -47,7 +47,6 @@ export function getPlayerStacksFromMsg(msg: string, stakes: number): Map<string,
 }
 
 export function getTableSeatToIdFromMsg(msg: string): Map<number, string>{
-    //starts from the bottom of logs
     const re = RegExp('\\#(\\d+)\\s\\"[^@]+\\@\\s([^"]*)', 'g');
     let res = new Map<number, string>;
     let regExps = [...msg.matchAll(re)];
@@ -58,7 +57,6 @@ export function getTableSeatToIdFromMsg(msg: string): Map<number, string>{
 }
 
 export function getIdToTableSeatFromMsg(msg: string): Map<string, number>{
-    //starts from the bottom of logs
     const re = RegExp('\\#(\\d+)\\s\\"[^@]+\\@\\s([^"]*)', 'g');
     let res = new Map<string, number>;
     let regExps = [...msg.matchAll(re)];
@@ -69,7 +67,6 @@ export function getIdToTableSeatFromMsg(msg: string): Map<string, number>{
 }
 
 export function getNameToIdFromMsg(msg: string): Map<string, string>{
-    //starts from the bottom of logs
     const re = RegExp('\\#\\d+\\s\\"([^@]+)\\s\\@\\s([^"]*)', 'g');
     let res = new Map<string, string>;
     let regExps = [...msg.matchAll(re)];
@@ -79,6 +76,8 @@ export function getNameToIdFromMsg(msg: string): Map<string, string>{
     return res;
 }
 
+//takes an unformatted action string and turns it into [id, name, action, msg, bet amount] format
+//messages that are streets are formatted into [street, runout] and if neither street nor action are ignored
 export function validateMsg(msg: string): Array<string> {
     let w = getFirstWord(msg);
     let temp = msg.split(": ")[0];
@@ -93,17 +92,20 @@ export function validateMsg(msg: string): Array<string> {
     return [];
 }
 
+//calls validateMsg on all msgs, if the msg is a street msg, validate immediately
+//otherwise could be an action or invalid message, needs extra processing
+//only valid messages are pushed and returned
 export function validateAllMsg(msgs: Array<string>): Array<Array<string>> {
     const res = new Array<Array<string>>
-    msgs.forEach((element) => {
-        const first = getFirstWord(element);
-        const player = getPlayer(element);
-        let temp = element.split(": ")[0];
-        if (Object.values<string>(Street).includes(temp)) {
-            res.push(validateMsg(element));
+    msgs.forEach((message) => {
+        const first = getFirstWord(message);
+        const player = getPlayer(message);
+        let first_word = message.split(": ")[0];
+        if (Object.values<string>(Street).includes(first_word)) {
+            res.push(validateMsg(message));
         }
         if (player.length > 1) {
-            const player_action  = getPlayerAction(element, player[0]);
+            const player_action  = getPlayerAction(message, player[0]);
             const validate = validateMsg(player_action);
             if (!(validate === undefined || validate.length == 0)) {
                 let value = validate[1].replace(/\D/g, "");
