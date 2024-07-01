@@ -5,16 +5,26 @@ import { Table } from "../../app/models/table.ts";
 import { Game } from "../../app/models/game.ts";
 import { Hero, Player } from "../../app/models/player.ts";
 import { PlayerStats } from "../../app/models/player-stats.ts";
-import { queryGPT, parseResponse } from '../../app/services/openai-service.ts';
+import { OpenAIService } from '../../app/services/openai-service.ts';
 import { queryObjects } from "v8";
 import { convertToValue } from "../../app/utils/log-processing-utils.ts";
 import { Queue } from "../../app/utils/data-structures.ts";
 import { processOutput } from "../../app/utils/ai-query-utils.ts";
+import { DBService } from "../../app/services/db-service.ts";
+import { PlayerService } from "../../app/services/player-service.ts";
 
 describe('query service test', async () => {
     it("should properly get logs and filter through them", async() => {
         const log_service = new LogService("pglrRhwA65bP08G-KFoygFwoC");
         await log_service.init();
+
+        const db_service = new DBService("./pokernow-gpt-test.db");
+        await db_service.init();
+        const player_service = new PlayerService(db_service);
+
+        const openai_service = new OpenAIService();
+        await openai_service.init();
+
         const log = await log_service.fetchData("", "");
         if (log.code === SUCCESS_RESPONSE) {
             //console.log('success', log.data)
@@ -22,7 +32,7 @@ describe('query service test', async () => {
             const prune = log_service.getMsg(log_service.pruneLogsBeforeCurrentHand(log_service.getData(log)));
             const prune_verify = validateAllMsg(prune);
             const pruneres = validateAllMsg(prune);
-            const g = new Game("11", 10, 5, "NLH", 30);
+            const g = new Game("11", new Table(player_service), 10, 5, "NLH", 30);
             const t = g.getTable()
             let hero_stats = new PlayerStats('aa')
             let hero = new Hero('xdd', hero_stats, ['4♣','4♥'], 10)
@@ -68,14 +78,14 @@ describe('query service test', async () => {
 
             console.log(process.env["OPENAI_API_KEY"]);
             console.log("query", query)
-            let GPTResponse = await queryGPT(query, []);
+            let GPTResponse = await openai_service.queryGPT(query, []);
             const resp = GPTResponse.choices;
             const messages = GPTResponse.prevMessages;
             console.log("response", resp)
             const message_content = resp!.message.content;
             console.log("content", message_content)
             console.log("messages", messages)
-            const bot_action = parseResponse(message_content!);
+            const bot_action = openai_service.parseResponse(message_content!);
             console.log("action str:", bot_action.action_str);
             console.log("bet size:", bot_action.bet_size_in_BBs);
             /* messages.push(resp!.message)
@@ -91,11 +101,6 @@ describe('query service test', async () => {
         if (log.code === ERROR_RESPONSE) {
             console.log('error', log.error);
         }
+        db_service.close();
     })
-    /* it("test query out processing", () => {
-        const msg = 'To play this hand from the small blind with 8♦ 4♦, a fold is the recommended strategy given the weak hand and the lack of aggression from both players. The best move is to fold and wait for a better opportunity. \n' +
-      '{fold, 0}';
-        console.log(processOutput(msg));
-    })
-    closeBrowser(); */
 })
