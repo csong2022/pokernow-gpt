@@ -1,4 +1,4 @@
-import { BotAction } from "../interfaces/ai-query-interfaces.ts";
+import { BotAction } from "../interfaces/ai-client-interfaces.ts";
 
 export const playstyleToPrompt: Map<string, string> = new Map<string, string>([
     ["pro", "You are an experienced poker player, play strong ranges preflop and play aggressively postflop."],

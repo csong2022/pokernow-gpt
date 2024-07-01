@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
-import { AIMessage, AIResponse, AIService, BotAction } from "../interfaces/ai-query-interfaces.ts";
+import { AIMessage, AIResponse, AIService, BotAction } from "../interfaces/ai-client-interfaces.ts";
 import { parseResponse, playstyleToPrompt } from "../helpers/ai-query-helper.ts";
 
 export class OpenAIService extends AIService {
@@ -28,7 +28,7 @@ export class OpenAIService extends AIService {
         console.log("after", processed_messages);
         const completion = await this.agent.chat.completions.create({
             messages: processed_messages,
-            model: "gpt-3.5-turbo",
+            model: this.getModel()
         });
 
         const choice = completion.choices[0];

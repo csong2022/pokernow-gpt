@@ -3,18 +3,16 @@ import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mj
 
 import { sleep } from './helpers/bot-helper.ts';
 
-import { BotAction } from './interfaces/ai-query-interfaces.ts';
+import { AIService, BotAction } from './interfaces/ai-client-interfaces.ts';
 import { ProcessedLogs } from './interfaces/log-processing-interfaces.ts';
 
 import { Game } from './models/game.ts';
 import { Table } from './models/table.ts';
 
 import { LogService } from './services/log-service.ts';
-import { OpenAIService } from './services/openai-service.ts'
 import { PlayerService } from './services/player-service.ts';
 import { PuppeteerService } from './services/puppeteer-service.ts';
 
-import { parseResponse } from './helpers/ai-query-helper.ts'
 import { constructQuery } from './helpers/construct-query-helper.ts';
 
 import { DebugMode, logResponse } from './utils/error-handling-utils.ts';
@@ -24,7 +22,7 @@ import { convertToBBs, convertToValue } from './utils/value-conversion-utils.ts'
 
 export class Bot {
     private log_service: LogService;
-    private openai_service: OpenAIService;
+    private ai_service: AIService;
     private player_service: PlayerService;
     private puppeteer_service: PuppeteerService;
 
@@ -40,7 +38,7 @@ export class Bot {
     private bot_name!: string;
 
     constructor(log_service: LogService, 
-                openai_service: OpenAIService,
+                ai_service: AIService,
                 player_service: PlayerService,
                 puppeteer_service: PuppeteerService,
                 game_id: string,
@@ -48,7 +46,7 @@ export class Bot {
                 query_retries: number) 
     {
         this.log_service = log_service;
-        this.openai_service = openai_service;
+        this.ai_service = ai_service;
         this.player_service = player_service;
         this.puppeteer_service = puppeteer_service;
 
@@ -184,7 +182,7 @@ export class Bot {
             }
         }
 
-        res = await this.puppeteer_service.getStackSize()
+        res = await this.puppeteer_service.getStackSize();
         logResponse(res, this.debug_mode);
         if (res.code === "success") {
             console.log("Ending stack size:", res.data);
@@ -292,7 +290,7 @@ export class Bot {
         }
         try {
             await sleep(2000);
-            const ai_response = await this.openai_service.query(query, this.hand_history);
+            const ai_response = await this.ai_service.query(query, this.hand_history);
             this.hand_history = ai_response.prev_messages;
 
             if (await this.isValidBotAction(ai_response.bot_action)) {
