@@ -30,14 +30,6 @@ export interface ProcessedLogs {
     first_fetch: boolean
 }
 
-export function convertToBBs(bet_amount: number, stakes: number): number {
-    return bet_amount / stakes;
-}
-
-export function convertToValue(bet_amount: number, stakes: number): number {
-    return bet_amount * stakes
-}
-
 export const letterToSuit: Map<string, string> = new Map<string, string>([
     ["s", "♠"],
     ["h", "♥"],

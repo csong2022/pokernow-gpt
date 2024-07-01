@@ -1,17 +1,21 @@
-import { LogService } from "../../app/services/log-service.ts"
-import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-utils.ts';
-import { validateAllMsg } from "../../app/services/message-service.ts";
-import { Table } from "../../app/models/table.ts";
+import { queryObjects } from "v8";
+
+import { parseResponse } from "../../app/helpers/ai-query-helper.ts";
+
 import { Game } from "../../app/models/game.ts";
 import { Hero, Player } from "../../app/models/player.ts";
 import { PlayerStats } from "../../app/models/player-stats.ts";
-import { OpenAIService } from '../../app/services/openai-service.ts';
-import { queryObjects } from "v8";
-import { convertToValue } from "../../app/utils/log-processing-utils.ts";
-import { Queue } from "../../app/utils/data-structures.ts";
-import { processOutput } from "../../app/utils/ai-query-utils.ts";
+import { Table } from "../../app/models/table.ts";
+
 import { DBService } from "../../app/services/db-service.ts";
+import { LogService } from "../../app/services/log-service.ts"
+import { OpenAIService } from '../../app/services/openai-service.ts';
 import { PlayerService } from "../../app/services/player-service.ts";
+
+import { Queue } from "../../app/utils/data-structures.ts";
+import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-utils.ts';
+import { validateAllMsg } from "../../app/utils/message-processing-utils.ts";
+import { convertToValue } from "../../app/utils/value-conversion-utils.ts";
 
 describe('query service test', async () => {
     it("should properly get logs and filter through them", async() => {
@@ -85,7 +89,7 @@ describe('query service test', async () => {
             const message_content = resp!.message.content;
             console.log("content", message_content)
             console.log("messages", messages)
-            const bot_action = openai_service.parseResponse(message_content!);
+            const bot_action = parseResponse(message_content!);
             console.log("action str:", bot_action.action_str);
             console.log("bet size:", bot_action.bet_size_in_BBs);
             /* messages.push(resp!.message)

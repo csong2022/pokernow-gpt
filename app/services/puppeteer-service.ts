@@ -1,7 +1,13 @@
 import puppeteer from 'puppeteer';
 import type { Response } from '../utils/error-handling-utils.ts';
 import { letterToSuit } from '../utils/log-processing-utils.ts';
-import { computeTimeout, GameInfo } from '../utils/bot-utils.ts';
+import { computeTimeout } from '../helpers/bot-helper.ts';
+
+interface GameInfo {
+    game_type: string,
+    big_blind: number,
+    small_blind: number,
+}
 
 export class PuppeteerService {
     private default_timeout: number;

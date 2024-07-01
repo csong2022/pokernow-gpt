@@ -1,20 +1,24 @@
 import prompt from 'prompt-sync';
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
 
+import { sleep } from './helpers/bot-helper.ts';
+
 import { Game } from './models/game.ts';
 import { Table } from './models/table.ts';
 
 import { LogService } from './services/log-service.ts';
-import { getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './services/message-service.ts';
 import { BotAction, OpenAIService } from './services/openai-service.ts'
 import { PlayerService } from './services/player-service.ts';
 import { PuppeteerService } from './services/puppeteer-service.ts';
-import { constructQuery } from './services/query-service.ts';
 
-import { sleep } from './utils/bot-utils.ts';
+import { parseResponse } from './helpers/ai-query-helper.ts'
+import { constructQuery } from './helpers/construct-query-helper.ts';
+
 import { BotConfig } from './utils/config-utils.ts';
 import { logResponse } from './utils/error-handling-utils.ts';
-import { convertToBBs, convertToValue, type ProcessedLogs } from './utils/log-processing-utils.ts';
+import { type ProcessedLogs } from './utils/log-processing-utils.ts';
+import { getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './utils/message-processing-utils.ts';
+import { convertToBBs, convertToValue } from './utils/value-conversion-utils.ts'
 
 export class Bot {
     private log_service: LogService;
@@ -290,7 +294,7 @@ export class Bot {
             };
 
             if (choices && choices.message.content) {
-                bot_action = this.openai_service.parseResponse(choices.message.content);
+                bot_action = parseResponse(choices.message.content);
             } else {
                 console.log("Empty ChatGPT response, retrying query.");
                 return await this.queryBotAction(query, retries, retry_counter + 1);
