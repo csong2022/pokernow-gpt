@@ -10,26 +10,18 @@ export class OpenAIService extends AIService {
         this.agent = new OpenAI({ apiKey: this.getAPIKey() });
     }
     
-    //Takes an already created query and passes it into chatGPT if it is the first action,
+    //takes an already created query and passes it into chatGPT if it is the first action,
     //otherwise attaches it to previous queries and feeds the entire conversation into chatGPT
-    //TODO: refactor model as a parameter
     async query(input: string, prev_messages: AIMessage[]): Promise<AIResponse> {
-        //console.log("before", prevMessages)
         if (prev_messages && prev_messages.length > 0) {
-            prev_messages.push({ 
-                text_content: input,
-                metadata: {
-                    "role": "user"
-                }})
+            if (input !== prev_messages[prev_messages.length - 1].text_content) {
+                prev_messages.push({text_content: input, metadata: {"role": "user"}});
+            }
         } else {
             prev_messages = [
-                { text_content: playstyleToPrompt.get("pro")!, metadata: {
-                    "role": "system"
-                }},
-                { text_content: input, metadata: {
-                    "role": "user"
-                } }
-            ]
+                {text_content: playstyleToPrompt.get("pro")!, metadata: {"role": "system"}},
+                {text_content: input, metadata: {"role": "user"}}
+            ];
         }
     
         const processed_messages = this.processMessages(prev_messages);

@@ -184,6 +184,12 @@ export class Bot {
             }
         }
 
+        res = await this.puppeteer_service.getStackSize()
+        logResponse(res, this.debug_mode);
+        if (res.code === "success") {
+            console.log("Ending stack size:", res.data);
+        }
+
         try {
             processed_logs = await this.pullAndProcessLogs(this.first_created, processed_logs.first_fetch);
             await postProcessLogsAfterHand(processed_logs.valid_msgs, this.game);
@@ -306,7 +312,7 @@ export class Bot {
 
     private async isValidBotAction(bot_action: BotAction): Promise<boolean> {
         console.log("Attempted Bot Action:", bot_action);
-        const valid_actions: string[] = ["bet", "raise", "call", "check", "fold"];
+        const valid_actions: string[] = ["bet", "raise", "call", "check", "fold", "all-in"];
         const curr_stack_size_in_BBs = this.game.getHero()!.getStackSize();
         console.log("Bot Stack in BBs:", curr_stack_size_in_BBs);
         let is_valid = false;
@@ -345,8 +351,8 @@ export class Bot {
                     }
                     break;
                 case "fold":
-                    res = await this.puppeteer_service.waitForCheckOption();
-                    if (res.code === "error" && bot_action.bet_size_in_BBs == 0) {
+                    res = await this.puppeteer_service.waitForFoldOption();
+                    if (res.code === "success" && bot_action.bet_size_in_BBs == 0) {
                         is_valid = true;
                     }
                     break;
