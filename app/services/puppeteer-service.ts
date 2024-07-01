@@ -265,23 +265,6 @@ export class PuppeteerService {
         }
     }
     
-    // wait for the current hand to finish after a winner has been decided (when the "winner" elem is no longer present)
-    async waitForHandEnd<D, E=Error>(): Response<D, E> {
-        try {
-            await this.page.waitForSelector(".table-player.winner", {hidden: true, timeout: this.default_timeout * 10});
-        } catch (err) {
-            return {
-                code: "error",
-                error: new Error("Failed to wait for hand to finish.") as E
-            }
-        }
-        return {
-            code: "success",
-            data: null as D,
-            msg: "Waited for hand to finish."
-        }
-    }
-    
     async getStackSize<D, E=Error>(): Response<D, E> {
         try {
             await this.page.waitForSelector(".you-player > .table-player-infos-ctn > div > .table-player-stack");
@@ -298,13 +281,14 @@ export class PuppeteerService {
             }
         }
     }
+
     async waitForCallOption<D, E=Error>(): Response<D, E> {
         try {
+            await this.page.waitForSelector(".game-decisions-ctn > .action-buttons > .call", {timeout: this.default_timeout});
             const is_disabled = await this.page.$eval(".game-decisions-ctn > .action-buttons > .call", (button: any) => button.disabled);
             if (is_disabled) {
                 throw new Error("Call option is disabled.")
             }
-            await this.page.waitForSelector(".game-decisions-ctn > .action-buttons > .call", {timeout: this.default_timeout});
         } catch (err) {
             return {
                 code: "error",
@@ -334,6 +318,26 @@ export class PuppeteerService {
         }
     }
     
+    async waitForFoldOption<D, E=Error>(): Response<D, E> {
+        try {
+            await this.page.waitForSelector(".game-decisions-ctn > .action-buttons > .fold", {timeout: this.default_timeout});
+            const is_disabled = await this.page.$eval(".game-decisions-ctn > .action-buttons > .fold", (button: any) => button.disabled);
+            if (is_disabled) {
+                throw new Error("Fold option is disabled.")
+            }
+        } catch (err) {
+            return {
+                code: "error",
+                error: new Error("No option to fold available.") as E
+            }
+        }
+        return {
+            code: "success",
+            data: null as D,
+            msg: "Successfully waited for fold option."
+        }
+    }
+
     async fold<D, E=Error>(): Response<D, E> {
         try {
             await this.page.waitForSelector(".game-decisions-ctn > .action-buttons > .fold", {timeout: this.default_timeout});
@@ -374,11 +378,11 @@ export class PuppeteerService {
     
     async waitForCheckOption<D, E=Error>(): Response<D, E> {
         try {
+            await this.page.waitForSelector(".game-decisions-ctn > .action-buttons > .check", {timeout: this.default_timeout});
             const is_disabled = await this.page.$eval(".game-decisions-ctn > .action-buttons > .check", (button: any) => button.disabled);
             if (is_disabled) {
                 throw new Error("Check option is disabled.")
             }
-            await this.page.waitForSelector(".game-decisions-ctn > .action-buttons > .check", {timeout: this.default_timeout});
         } catch (err) {
             return {
                 code: "error",
@@ -411,11 +415,11 @@ export class PuppeteerService {
     
     async waitForBetOption<D, E=Error>(): Response<D ,E> {
         try {
+            await this.page.waitForSelector(".game-decisions-ctn > .action-buttons > .raise", {timeout: this.default_timeout});
             const is_disabled = await this.page.$eval(".game-decisions-ctn > .action-buttons > .raise", (button: any) => button.disabled);
             if (is_disabled) {
                 throw new Error("Bet or raise option is disabled.")
             }
-            await this.page.waitForSelector(".game-decisions-ctn > .action-buttons > .raise", {timeout: this.default_timeout});
         } catch (err) {
             return {
                 code: "error",
@@ -462,10 +466,10 @@ export class PuppeteerService {
     async getCurrentBet<D, E=Error>(): Response<D, E> {
         try {
             const el = await this.page.waitForSelector(".you-player > .table-player-bet-value", {timeout: this.default_timeout});
-            const current_bet = await this.page.evaluate(el => el!.textContent, el);
+            const current_bet = await this.page.evaluate((el: any) => isNaN(el.textContent) ? '0' : el.textContent, el);
             return {
                 code: "success",
-                data: parseFloat(current_bet!) as D,
+                data: parseFloat(current_bet) as D,
                 msg: `Successfully retrieved current bet amount: ${current_bet}`
             }
         } catch (err) {
@@ -473,6 +477,22 @@ export class PuppeteerService {
                 code: "error",
                 error: new Error("No existing bet amount found.") as E
             }
+        }
+    }
+
+    async waitForHandEnd<D, E=Error>(): Response<D, E> {
+        try {
+            await this.page.waitForSelector(".table-player.winner", {hidden: true, timeout: this.default_timeout * 10});
+        } catch (err) {
+            return {
+                code: "error",
+                error: new Error("Failed to wait for hand to finish.") as E
+            }
+        }
+        return {
+            code: "success",
+            data: null as D,
+            msg: "Waited for hand to finish."
         }
     }
 }

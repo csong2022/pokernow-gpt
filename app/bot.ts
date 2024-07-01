@@ -166,10 +166,10 @@ export class Bot {
                     // post process logs and construct query
                     await postProcessLogs(this.table.getLogsQueue(), this.game);
                     const query = constructQuery(this.game);
-
                     // query chatGPT and make action
                     try {
                         const bot_action = await this.queryBotAction(query, this.query_retries);
+                        this.table.resetPlayerActions();
                         await this.performBotAction(bot_action);
                     } catch (err) {
                         console.log("Failed to query and perform bot action.")
@@ -182,6 +182,12 @@ export class Bot {
                     break;
                 }
             }
+        }
+
+        res = await this.puppeteer_service.getStackSize()
+        logResponse(res, this.debug_mode);
+        if (res.code === "success") {
+            console.log("Ending stack size:", res.data);
         }
 
         try {
@@ -286,23 +292,15 @@ export class Bot {
         }
         try {
             await sleep(2000);
-            const GPTResponse = await this.openai_service.query(query, this.hand_history);
-            this.hand_history = GPTResponse.prevMessages;
-            const choices = GPTResponse.choices;
-            this.hand_history.push(choices.message);
-            this.table.resetPlayerActions();
-            let bot_action: BotAction = {
-                action_str: "",
-                bet_size_in_BBs: 0
-            };
-            if (choices && choices.message.content) {
-                bot_action = parseResponse(choices.message.content);
-            } else {
-                console.log("Empty ChatGPT response, retrying query.");
-                return await this.queryBotAction(query, retries, retry_counter + 1);
-            }
-            if (await this.isValidBotAction(bot_action)) {
-                return bot_action;
+            const ai_response = await this.openai_service.query(query, this.hand_history);
+            this.hand_history = ai_response.prev_messages;
+
+            if (await this.isValidBotAction(ai_response.bot_action)) {
+                // only push to hand history if the choice made is valid
+                if (ai_response.curr_message) {
+                    this.hand_history.push(ai_response.curr_message);
+                }
+                return ai_response.bot_action;
             }
             console.log("Invalid bot action, retrying query.");
             return await this.queryBotAction(query, retries, retry_counter + 1);
@@ -314,7 +312,7 @@ export class Bot {
 
     private async isValidBotAction(bot_action: BotAction): Promise<boolean> {
         console.log("Attempted Bot Action:", bot_action);
-        const valid_actions: string[] = ["bet", "raise", "call", "check", "fold"];
+        const valid_actions: string[] = ["bet", "raise", "call", "check", "fold", "all-in"];
         const curr_stack_size_in_BBs = this.game.getHero()!.getStackSize();
         console.log("Bot Stack in BBs:", curr_stack_size_in_BBs);
         let is_valid = false;
@@ -353,7 +351,8 @@ export class Bot {
                     }
                     break;
                 case "fold":
-                    if (bot_action.bet_size_in_BBs == 0) {
+                    res = await this.puppeteer_service.waitForFoldOption();
+                    if (res.code === "success" && bot_action.bet_size_in_BBs == 0) {
                         is_valid = true;
                     }
                     break;
