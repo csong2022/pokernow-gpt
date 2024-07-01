@@ -1,11 +1,7 @@
-import dotenv from "dotenv";
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
-
-export interface BotAction {
-    action_str: string,
-    bet_size_in_BBs: number
-}
+import { AIService } from "../interfaces/ai-query-interfaces.ts";
+import { playstyleToPrompt } from "../helpers/ai-query-helper.ts";
 
 interface GPTResponse {
     choices: OpenAI.Chat.Completions.ChatCompletion.Choice,
@@ -13,25 +9,24 @@ interface GPTResponse {
 }
 
 //TODO: implement factory method for creating a generic AI service based on an interface
-export class OpenAIService {
+export class OpenAIService extends AIService {
     private agent!: OpenAI;
 
-    constructor() {
-    }
-
-    async init() {
-        dotenv.config();
-        this.agent = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    init(): void {
+        this.agent = new OpenAI({ apiKey: this.getAPIKey() });
     }
     
     //Takes an already created query and passes it into chatGPT if it is the first action,
     //otherwise attaches it to previous queries and feeds the entire conversation into chatGPT
-    async queryGPT(query: string, prevMessages: ChatCompletionMessageParam[]): Promise<GPTResponse> {
+    //TODO: refactor model as a parameter
+    async query(input: string, prevMessages: ChatCompletionMessageParam[]): Promise<GPTResponse> {
         //console.log("before", prevMessages)
         if (prevMessages && prevMessages.length > 0) {
-            prevMessages.push({ role: "system", content: query })
+            prevMessages.push({ role: "user", content: input })
         } else {
-            prevMessages = [{ role: "system", content: query }]
+            prevMessages = [
+                { role: "system", content: playstyleToPrompt.get("aggressive")!},
+                { role: "user", content: input }]
         }
     
         console.log("after", prevMessages)

@@ -47,7 +47,7 @@ function defineHand(cards: string[]) {
 }
 
 function defineGameState(street: string, players_in_pot: number) {
-    return ` It is ${players_in_pot}-handed and the current street is: ${street ? street : "preflop"}.`
+    return `It is ${players_in_pot}-handed and the current street is: ${street ? street : "preflop"}.`
 }
 
 function defineCommunityCards(street: string, runout: string): string {
