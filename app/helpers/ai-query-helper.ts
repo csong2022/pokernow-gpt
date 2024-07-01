@@ -1,6 +1,7 @@
 import { BotAction } from "../interfaces/ai-query-interfaces.ts";
 
 export const playstyleToPrompt: Map<string, string> = new Map<string, string>([
+    ["pro", "You are an experienced poker player, play strong ranges preflop and play aggressively postflop."],
     ["aggressive", "You are an experienced poker player, skilled at exploiting your opponents by making aggressive plays."],
     ["passive", "You are an experienced poker player with a passive and tight playstyle."],
     ["balanced", "You are an experienced poker player, skilled at both being passive and aggressive with your actions."]
@@ -9,10 +10,14 @@ export const playstyleToPrompt: Map<string, string> = new Map<string, string>([
 export function parseResponse(msg: string): BotAction {
     msg = processOutput(msg);
 
-    const action_matches = msg.match(/(bet|raise|call|check|fold)/);
+    //TODO: parse all in: ex. all-in all in
+    const action_matches = msg.match(/(bet|raise|call|check|fold|all.in)/);
     let action_str = "";
-    if (action_matches) {
+    if (action_matches && action_matches.groups) {
         action_str = action_matches[0];
+        if (action_matches.groups[2]) {
+            action_str = "all-in";
+        }
     }
 
     const bet_size_matches = msg.match(/[+]?([0-9]+(?:[\.][0-9]*)?|\.[0-9]+)/);

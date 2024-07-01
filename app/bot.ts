@@ -334,6 +334,12 @@ export class Bot {
                         is_valid = true;
                     }
                     break;
+                case "all-in":
+                    res = await this.puppeteer_service.waitForBetOption();
+                    if (res.code === "success") {
+                        is_valid = true;
+                    }
+                    break;
                 case "call":
                     res = await this.puppeteer_service.waitForCallOption();
                     if (res.code === "success" && bot_action.bet_size_in_BBs > 0 && bot_action.bet_size_in_BBs <= curr_stack_size_in_BBs) {
@@ -358,13 +364,19 @@ export class Bot {
 
     private async performBotAction(bot_action: BotAction): Promise<void> {
         console.log("Bot Action:", bot_action.action_str);
-        const bet_size = convertToValue(bot_action.bet_size_in_BBs, this.game.getBigBlind());
-        console.log("Bet Size:", convertToBBs(bet_size, this.game.getBigBlind()));
+        let bet_size = convertToValue(bot_action.bet_size_in_BBs, this.game.getBigBlind());
         switch (bot_action.action_str) {
             case "bet":
+                console.log("Bet Size:", convertToBBs(bet_size, this.game.getBigBlind()));
                 logResponse(await this.puppeteer_service.betOrRaise(bet_size), this.debug_mode);
                 break;
             case "raise":
+                console.log("Bet Size:", convertToBBs(bet_size, this.game.getBigBlind()));
+                logResponse(await this.puppeteer_service.betOrRaise(bet_size), this.debug_mode);
+                break;
+            case "all-in":
+                bet_size = convertToValue(this.game.getHero()!.getStackSize(), this.game.getBigBlind());
+                console.log("Bet Size:", convertToBBs(bet_size, this.game.getBigBlind()));
                 logResponse(await this.puppeteer_service.betOrRaise(bet_size), this.debug_mode);
                 break;
             case "call":
