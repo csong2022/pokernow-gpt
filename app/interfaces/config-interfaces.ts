@@ -1,5 +1,10 @@
 import { DebugMode } from "../utils/error-handling-utils.ts"
 
+export interface AIConfig {
+    provider: string,
+    model: string
+}
+
 export interface BotConfig {
     debug_mode: DebugMode,
     query_retries: number

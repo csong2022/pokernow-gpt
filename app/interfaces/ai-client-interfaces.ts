@@ -9,16 +9,13 @@ export interface AIResponse {
     curr_message: AIMessage
 }
 
-export interface BotAction {
-    action_str: string,
-    bet_size_in_BBs: number
-}
-
 export abstract class AIService {
     private api_key: string;
+    private model: string;
 
-    constructor(api_key: string) {
+    constructor(api_key: string, model: string) {
         this.api_key = api_key;
+        this.model = model;
     }
 
     abstract init(): void;
@@ -28,4 +25,13 @@ export abstract class AIService {
     getAPIKey(): string {
         return this.api_key;
     }
+
+    getModel(): string {
+        return this.model;
+    }
+}
+
+export interface BotAction {
+    action_str: string,
+    bet_size_in_BBs: number
 }
