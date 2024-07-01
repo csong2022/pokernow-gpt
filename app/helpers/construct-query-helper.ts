@@ -5,9 +5,9 @@ import { Table } from "../models/table.ts";
 export function constructQuery(game: Game): string{
     const table = game.getTable();
     const hero_name = game.getHero()!.getName();
-    const hero_id = table.getIDFromName(hero_name);
+    const hero_id = table.getIdFromName(hero_name);
     const hero_stack = game.getHero()!.getStackSize();
-    const hero_position = table.getPlayerPositionFromID(hero_id);
+    const hero_position = table.getPlayerPositionFromId(hero_id);
     const hero_cards = game.getHero()!.getHand();
 
     const street = table.getStreet();
@@ -78,7 +78,7 @@ function defineStacks(player_stacks: Map<string, number>, player_positions: Map<
 function defineActions(player_actions: Array<PlayerAction>, table: Table) {
     let query = "Here are the current actions that are relevant:\n";
     for (var i = 0; i < player_actions.length; i++)  {
-        let player_pos = table.getPlayerPositionFromID(player_actions[i].getPlayerId());
+        let player_pos = table.getPlayerPositionFromId(player_actions[i].getPlayerId());
         let player_action_string = player_actions[i].toString();
         let curr = `${player_pos} ${player_action_string}`;
         if (i != player_actions.length - 1) {
@@ -96,7 +96,7 @@ function defineStats(player_positions: Map<string, string>, table: Table) {
     for (var i = 0; i < player_ids.length; i++)  {
         let player_id = player_ids[i]
         let player_stats = table.getPlayerStatsFromId(player_id);
-        let player_pos = table.getPlayerPositionFromID(player_id);
+        let player_pos = table.getPlayerPositionFromId(player_id);
         let curr = `${player_pos}: VPIP: ${player_stats.computeVPIPStat()}, PFR: ${player_stats.computePFRStat()}`;
         if (i != player_ids.length - 1) {
             curr = curr.concat("\n");
