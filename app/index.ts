@@ -1,6 +1,8 @@
+import once from 'events';
 import express from 'express';
 import bot_factory from './bot-factory.ts'
 import player_router from './routes/player-routes.ts';
+import db_service from './services/db-service.ts';
 
 const app = express();
 const port = 8080;
@@ -13,9 +15,17 @@ app.get('/', (req: any, res:any) => {
 
 app.use('/player', player_router);
 
-app.listen(
-    port,
-    () => console.log(`App listening on http://localhost:${port}`)
-)
+async function startServer() {
+    await db_service.init();
+    await db_service.createTables();
+    return new Promise<void>((resolve) => {
+        app.listen(port, ()  => {
+            console.log(`App listening on http://localhost:${port}`);
+            return resolve();
+        });
+    });
+}
 
-await bot_factory();
+startServer().then(
+    async() => await bot_factory()
+)
