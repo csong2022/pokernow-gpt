@@ -87,7 +87,6 @@ export async function postProcessLogsAfterHand(logs: Array<Array<string>>, game:
     for (const log of logs) {
         if (log.length > 3) {
             const player_id = log[0];
-            const player_name = log[1];
             const action = log[2];
             let action_num = 0;
             if (action === Action.CALL) {
