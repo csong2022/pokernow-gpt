@@ -1,4 +1,3 @@
-import { Game } from "./game.ts";
 import { Player } from "./player.ts"
 import { PlayerAction } from "./player-action.ts";
 import { PlayerStats } from "./player-stats.ts";
@@ -6,9 +5,7 @@ import { PlayerStats } from "./player-stats.ts";
 import { PlayerService } from "../services/player-service.ts";
 
 import { Queue } from "../utils/data-structures.ts"
-import { Action, Street } from "../utils/log-processing-utils.ts";
 import { getPlayerStacksMsg, getIdToInitialStackFromMsg as getPlayerInitialStacksFromMsg } from "../utils/message-processing-utils.ts";
-import { convertToBBs } from "../utils/value-conversion-utils.ts";
 
 export class Table {
     private player_service: PlayerService;
@@ -101,6 +98,9 @@ export class Table {
     public getLogsQueue(): Queue<Array<string>> {
         return this.logs_queue;
     }
+    public updateLogsQueue(log: string[]): void {
+        this.logs_queue.enqueue(log);
+    }
     public popLogsQueue(): Array<string> | undefined{
         if (!(this.logs_queue.isEmpty())) {
             let res = this.logs_queue.dequeue()!;
@@ -108,37 +108,118 @@ export class Table {
         }
         return undefined;
     }
-    public preProcessLogs(logs: Array<Array<string>>, small_blind: number) {
-        logs = logs.reverse();
-        logs.forEach((element) => {
-            if (element[2] === 'posts' && element[4] === small_blind.toString()) {
-                this.first_seat_order_id = element[0]
+
+    public getPlayerActions(): Array<PlayerAction> {
+        return this.player_actions;
+    }
+    public updatePlayerActions(player_action: PlayerAction): void {
+        this.player_actions.push(player_action);
+    }
+    public resetPlayerActions(): void {
+        this.player_actions = new Array<PlayerAction>();
+    }
+
+    public getIdToActionNum(): Map<string, number> {
+        return this.id_to_action_num;
+    }
+    public getActionNumFromId(player_id: string): number {
+        const action_num = this.id_to_action_num.get(player_id);
+        if (action_num) {
+            return action_num;
+        }
+        throw new Error(`Could not retrieve action_num for player with id ${player_id}`);
+    }
+    public updateIdToActionNum(player_id: string, action_num: number): void {
+        this.id_to_action_num.set(player_id, action_num);
+    }
+    public existsInIdToActionNum(player_id: string): boolean {
+        return this.id_to_action_num.has(player_id);
+    }
+    public async processPlayers() {
+        for (const player_id of this.id_to_action_num.keys()) {
+            const player = this.id_to_player.get(player_id);
+            const player_action = this.id_to_action_num.get(player_id);
+            if (player) {
+                const player_stats = player.getPlayerStats();
+                if (player_stats) {
+                    if (player_action == 2) {
+                        player_stats.setVPIPHands(player_stats.getVPIPHands() + 1);
+                        player_stats.setPFRHands(player_stats.getPFRHands() + 1);
+                    } else if (player_action == 1) {
+                        player_stats.setVPIPHands(player_stats.getVPIPHands() + 1);
+                    }
+                    player_stats.setTotalHands(player_stats.getTotalHands() + 1);
+                    player.updatePlayerStats(player_stats);
+                    await this.player_service.update(player_id, player_stats.toJSON());
+                } else {
+                    throw new Error("Player stats is undefined.");
+                }
+            } else {
+                throw new Error("Player is undefined.");
             }
-            this.logs_queue.enqueue(element);
-        })
+        }
     }
 
-    public getFirstSeatOrderId(): string {
-        return this.first_seat_order_id;
+    public getPlayerInitialStacks(): Map<string, number> {
+        return this.id_to_initial_stacks;
     }
-
-    public setTableSeatToId(map: Map<number, string>): void {
-        this.table_seat_to_id = map;
+    public getPlayerInitialStackFromId(player_id: string): number {
+        const player_stack_in_BBs = this.id_to_initial_stacks.get(player_id);
+        if (player_stack_in_BBs) {
+            return player_stack_in_BBs;
+        }
+        throw new Error(`Could not retrieve stack for player with id: ${player_id}.`);
     }
-
-    public setIdToTableSeat(map: Map<string, number>): void {
-        this.id_to_table_seat = map;
-    }
-
-
     public setIdToStack(map: Map<string, number>): void {
         this.id_to_initial_stacks = map;
     }
-
-    public setNameToId(map: Map<string, string>): void {
-        this.name_to_id = map;
+    public setPlayerInitialStacksFromMsg(msgs: string[], stakes: number): void {
+        this.id_to_initial_stacks = getPlayerInitialStacksFromMsg(getPlayerStacksMsg(msgs), stakes);
     }
 
+    public getPlayerCache(): Map<string, Player> {
+        return this.id_to_player;
+    }
+    public getPlayerStatsFromId(player_id: string): PlayerStats {
+        const player = this.id_to_player.get(player_id);
+        if (player) {
+            return player.getPlayerStats();
+        }
+        throw new Error(`Could not retrieve player stats for player with id: ${player_id}.`);
+    }
+    public async updateCache(): Promise<void> {
+        for (const name of this.name_to_id.keys()) {
+            const id = this.name_to_id.get(name)!
+            await this.cachePlayer(id, name);
+        }
+    }
+    public async cachePlayer(player_id: string, player_name: string): Promise<void> {
+        if (!this.id_to_player.has(player_id)) {
+            const player_stats_str = await this.player_service.get(player_id);
+            // if the player does not currently exist in the database, create a new player in db
+            // otherwise retrieve the existing player from database,
+            // then, add player to player_cache
+            if (!player_stats_str) {
+                const new_player_stats = new PlayerStats(player_id);
+                await this.player_service.create(new_player_stats.toJSON());
+                this.id_to_player.set(player_id, new Player(player_name, new_player_stats));
+            } else {
+                const player_stats_JSON = JSON.parse(JSON.stringify(player_stats_str));
+                this.id_to_player.set(player_id, new Player(player_name, new PlayerStats(player_id, player_stats_JSON)));
+            }
+        }
+    }
+
+    public getPlayerPositions(): Map<string, string> {
+        return this.id_to_position;
+    }
+    public getPlayerPositionFromId(player_id: string): string {
+        const player_position = this.id_to_position.get(player_id);
+        if (player_position) {
+            return player_position;
+        }
+        throw new Error(`Could not retrieve position for player with id: ${player_id}.`);
+    }
     public setIdToPosition(first_seat = 1): void {
         let visited = new Set<number>();
         let i = first_seat
@@ -156,155 +237,6 @@ export class Table {
                 i = 1
             }
         }
-    }
-
-    public async postProcessLogs(logs_queue: Queue<Array<string>>, game: Game) {
-        const table = game.getTable();
-        while (!logs_queue.isEmpty()) {
-            const log = logs_queue.dequeue();
-            //process player action
-            if (log != null) {
-                if (!Object.values<string>(Street).includes(log[0])) {
-                    const player_id = log[0];
-                    const player_name = log[1];
-                    const action = log[2];
-                    const bet_size = log[4];
-                    if (action === "folds") {
-                        table.decrementPlayersInPot();
-                    }
-                    let player_action = new PlayerAction(player_id, action, convertToBBs(Number(bet_size), game.getBigBlind()));
-                    table.updatePlayerActions(player_action);
-                } else {
-                    const street = log[0];
-                    const runout = log[1];
-                    table.setStreet(street.toLowerCase());
-                    table.setRunout(runout);
-                }
-            }
-        }
-    }
-
-    public getPlayerActions(): Array<PlayerAction> {
-        return this.player_actions;
-    }
-    public updatePlayerActions(player_action: PlayerAction): void {
-        this.player_actions.push(player_action);
-    }
-    public getSeatNumberToId(): Map<number, string> {
-        return this.table_seat_to_id
-    }
-    public getIdToSeatNumber(): Map<string, number> {
-        return this.id_to_table_seat
-    }
-
-    public getActionNumFromId(): Map<string, number> {
-        return this.id_to_action_num;
-    }
-
-    public async postProcessLogsAfterHand(logs: Array<Array<string>>) {
-        // 0 means they didn't put in money, 1 means they put in money but didn't raise (CALL)
-        // 2 means they put in money through a raise. 1 -> vpip, 2 -> vpip & pfr
-        // higher numbers override lower numbers
-        let action_count = 0;
-        for (const log of logs) {
-            if (log.length > 3) {
-                const player_id = log[0];
-                const player_name = log[1];
-                const action = log[2];
-                let actionNum = 0;
-                if (action === Action.CALL) {
-                    actionNum = 1;
-                    action_count += 1;
-                } else if (action === Action.BET || action === Action.RAISE) {
-                    actionNum = 2;
-                    action_count += 1;
-                }
-                if (!this.id_to_action_num.has(player_id) || this.id_to_action_num.get(player_id)! < actionNum) {
-                    this.id_to_action_num.set(player_id, actionNum);
-                }
-            }
-        }
-        if (action_count == 0) {
-            const player_ids_arr = Array.from(this.id_to_action_num.keys());
-            player_ids_arr.forEach(player_id => {
-                const player_stats = this.getPlayerStatsFromId(player_id);
-                player_stats.incrementWalks();
-            })
-        }
-    }
-
-    public getPlayerCache(): Map<string, Player> {
-        return this.id_to_player;
-    }
-
-    public getPlayerStatsFromId(id: string): PlayerStats {
-        const player = this.id_to_player.get(id);
-        if (player) {
-            return player.getPlayerStats();
-        }
-        throw new Error("Could not retrieve player stats.");
-    }
-
-    public async cachePlayer(player_id: string, player_name: string): Promise<void> {
-        if (!this.id_to_player.has(player_id)) {
-            const player_stats_str = await this.player_service.get(player_id);
-            // if the player does not currently exist in the database, create a new player in db
-            // otherwise retrieve the existing player from database,
-            // then, add player to player_cache
-            if (!player_stats_str) {
-                const new_player_stats = new PlayerStats(player_id);
-                await this.player_service.create(new_player_stats.toJSON());
-                this.id_to_player.set(player_id, new Player(player_name, new_player_stats));
-            } else {
-                const player_stats_JSON = JSON.parse(JSON.stringify(player_stats_str));
-                this.id_to_player.set(player_id, new Player(player_name, new PlayerStats(player_id, player_stats_JSON)));
-            }
-        }
-    }
-    public async updateCache(): Promise<void> {
-        for (const name of this.name_to_id.keys()) {
-            const id = this.name_to_id.get(name)!
-            await this.cachePlayer(id, name);
-        }
-    }
-    
-    public async processPlayers() {
-        for (const player_id of this.id_to_action_num.keys()) {
-            const player = this.id_to_player.get(player_id);
-            const player_action = this.id_to_action_num.get(player_id);
-            if (player) {
-                const player_stats = player.getPlayerStats();
-                if (player_stats) {
-                    if (player_action == 2) {
-                        player_stats.setVPIPHands(player_stats.getVPIPHands() + 1);
-                        player_stats.setPFRHands(player_stats.getPFRHands() + 1);
-                    } else if (player_action == 1) {
-                        player_stats.setVPIPHands(player_stats.getVPIPHands() + 1);
-                    }
-                    player_stats.setTotalHands(player_stats.getTotalHands() + 1);
-                    player.updatePlayerStats(player_stats);
-                    // update player in-memory cache
-                    // ßthis.id_to_player.set(player_id, player);
-                    // update database
-                    await this.player_service.update(player_id, player_stats.toJSON());
-                } else {
-                    throw new Error("Player stats is undefined.");
-                }
-            } else {
-                throw new Error("Player is undefined.");
-            }
-        }
-    }
-
-    public getPlayerPositions(): Map<string, string> {
-        return this.id_to_position;
-    }
-    public getPlayerPositionFromID(player_id: string): string {
-        const player_position = this.id_to_position.get(player_id);
-        if (player_position) {
-            return player_position;
-        }
-        throw new Error(`Could not retrieve position for player with id: ${player_id}.`);
     }
     public convertAllOrdersToPosition() {
         for (let key of this.id_to_position.keys()) {
@@ -348,30 +280,36 @@ export class Table {
         return "";
     }
 
-    public getPlayerInitialStacks(): Map<string, number> {
-        return this.id_to_initial_stacks;
+    public getIdToSeatNumber(): Map<string, number> {
+        return this.id_to_table_seat
     }
-    public getPlayerInitialStackFromID(player_id: string): number {
-        const player_stack_in_BBs = this.id_to_initial_stacks.get(player_id);
-        if (player_stack_in_BBs) {
-            return player_stack_in_BBs;
-        }
-        throw new Error(`Could not retrieve stack for player with id: ${player_id}.`);
-    }
-    public setPlayerInitialStacksFromMsg(msgs: string[], stakes: number): void {
-        this.id_to_initial_stacks = getPlayerInitialStacksFromMsg(getPlayerStacksMsg(msgs), stakes);
+    public setIdToTableSeat(map: Map<string, number>): void {
+        this.id_to_table_seat = map;
     }
 
-    public getIDFromName(name: string): string {
+    public getIdFromName(name: string): string {
         const player_id = this.name_to_id.get(name);
         if (player_id) {
             return player_id;
         }
         throw new Error(`Could not retrieve id for player with name: ${name}.`)
     }
+    public setNameToId(map: Map<string, string>): void {
+        this.name_to_id = map;
+    }
 
-    public resetPlayerActions(): void {
-        this.player_actions = new Array<PlayerAction>();
+    public getSeatNumberToId(): Map<number, string> {
+        return this.table_seat_to_id;
+    }
+    public setTableSeatToId(map: Map<number, string>): void {
+        this.table_seat_to_id = map;
+    }
+
+    public getFirstSeatOrderId(): string {
+        return this.first_seat_order_id;
+    }
+    public setFirstSeatOrderId(first_seat_order_id: string): void {
+        this.first_seat_order_id = first_seat_order_id;
     }
 
     public nextHand(): void {

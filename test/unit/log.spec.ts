@@ -6,7 +6,9 @@ import { PlayerService } from '../../app/services/player-service.ts';
 import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-utils.ts';
 import { LogService } from '../../app/services/log-service.ts';
 
+import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from "../../app/utils/log-processing-utils.ts";
 import { validateAllMsg, validateMsg, getIdToInitialStackFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, getNameToIdFromMsg, getIdToTableSeatFromMsg } from "../../app/utils/message-processing-utils.ts";
+import { Game } from "../../app/models/game.ts";
 
 describe('log service test', async () => {
     it("should properly get logs and filter through them", async() => {
@@ -41,10 +43,11 @@ describe('log service test', async () => {
             const id_to_table_seat = getIdToTableSeatFromMsg(player_stack_msg);
             console.log("id_to_table_seat", id_to_table_seat);
 
+            const g = new Game("11", new Table(player_service), 10, 5, "NLH", 30);
             const t = new Table(player_service);
             t.nextHand();
             t.setTableSeatToId(table_seats);
-            t.preProcessLogs(pruneres, 20);
+            preProcessLogs(pruneres, g);
             const get_first = t.getFirstSeatOrderId();
             console.log("get_first", get_first);
             const first_pos = id_to_table_seat.get(get_first)!;
@@ -52,10 +55,10 @@ describe('log service test', async () => {
 
             t.setIdToPosition(first_pos);
 
-            t.postProcessLogsAfterHand(prune_verify);
-            t.setPlayerInitialStacksFromMsg(res1, 20);
+            postProcessLogsAfterHand(prune_verify, g);
+            t.setPlayerInitialStacksFromMsg(res1, g.getBigBlind());
             console.log("stacks", t.getPlayerInitialStacks());
-            console.log("player_actions", t.getActionNumFromId());
+            console.log("player_actions", t.getIdToActionNum());
             console.log("player cache", t.getPlayerCache());
             t.processPlayers();
             console.log("player cache after processing", t.getPlayerCache());

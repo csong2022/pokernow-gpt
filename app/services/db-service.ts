@@ -9,7 +9,7 @@ export class DBService {
         this.file_name = file_name;
     }
 
-    async init() {
+    async init(): Promise<void> {
         this.db = await open<sqlite3.Database, sqlite3.Statement>({
             filename: this.file_name,
             driver: sqlite3.Database
@@ -38,7 +38,7 @@ export class DBService {
         }
     }
     
-    async close() {
+    async close(): Promise<void> {
         await this.db.close();
     }
     

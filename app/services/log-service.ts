@@ -11,7 +11,7 @@ export class LogService {
         this.game_id = game_id;
     }
 
-    async init() {
+    async init(): Promise<void> {
         this.browser = await puppeteer.launch({
             defaultViewport: null,
             headless: true
