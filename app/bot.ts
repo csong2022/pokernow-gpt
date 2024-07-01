@@ -15,8 +15,8 @@ import { parseResponse } from './helpers/ai-query-helper.ts'
 import { constructQuery } from './helpers/construct-query-helper.ts';
 
 import { DebugMode, logResponse } from './utils/error-handling-utils.ts';
-import { type ProcessedLogs } from './utils/log-processing-utils.ts';
-import { getIdToTableSeatFromMsg, getNameToIdFromMsg, getIdToInitialStackFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './utils/message-processing-utils.ts';
+import { type ProcessedLogs, postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from './utils/log-processing-utils.ts';
+import { getIdToInitialStackFromMsg, getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './utils/message-processing-utils.ts';
 import { convertToBBs, convertToValue } from './utils/value-conversion-utils.ts'
 
 export class Bot {
@@ -161,7 +161,7 @@ export class Bot {
                     await this.updateHero(hand, convertToBBs(stack_size, this.game.getBigBlind()));
 
                     // post process logs and construct query
-                    await this.table.postProcessLogs(this.table.getLogsQueue(), this.game);
+                    await postProcessLogs(this.table.getLogsQueue(), this.game);
                     const query = constructQuery(this.game);
 
                     // query chatGPT and make action
@@ -183,7 +183,7 @@ export class Bot {
 
         try {
             processed_logs = await this.pullAndProcessLogs(this.first_created, processed_logs.first_fetch);
-            await this.table.postProcessLogsAfterHand(processed_logs.valid_msgs);
+            await postProcessLogsAfterHand(processed_logs.valid_msgs, this.game);
             await this.table.processPlayers();
         } catch (err) {
             console.log("Failed to process players.");
@@ -225,7 +225,7 @@ export class Bot {
 
             let only_valid = validateAllMsg(msg);
     
-            this.table.preProcessLogs(only_valid, this.game.getSmallBlind());
+            preProcessLogs(only_valid, this.game);
             let first_seat_number = this.table.getIdToSeatNumber()!.get(this.table.getFirstSeatOrderId())!;
             this.table.setIdToPosition(first_seat_number)
             this.table.convertAllOrdersToPosition();

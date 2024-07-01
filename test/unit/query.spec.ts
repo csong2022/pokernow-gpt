@@ -14,6 +14,7 @@ import { PlayerService } from "../../app/services/player-service.ts";
 
 import { Queue } from "../../app/utils/data-structures.ts";
 import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-utils.ts';
+import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from "../../app/utils/log-processing-utils.ts";
 import { validateAllMsg } from "../../app/utils/message-processing-utils.ts";
 import { convertToValue } from "../../app/utils/value-conversion-utils.ts";
 
@@ -42,13 +43,13 @@ describe('query service test', async () => {
             let hero = new Hero('xdd', hero_stats, ['4♣','4♥'], 10)
             g.setHero(hero)
             t.nextHand();
-            t.preProcessLogs(pruneres, g.getBigBlind());
-            t.postProcessLogsAfterHand(prune_verify);
+            preProcessLogs(pruneres, g);
+            postProcessLogsAfterHand(prune_verify, g);
             t.setPlayerInitialStacksFromMsg(res1, 10);
             t.processPlayers();
             t.convertAllOrdersToPosition();
 
-            t.postProcessLogs(t.getLogsQueue(), g);
+            postProcessLogs(t.getLogsQueue(), g);
             //console.log("player_actions", t.getPlayerActions());
             
             /* const stacks_msg = defineStacks(t);
