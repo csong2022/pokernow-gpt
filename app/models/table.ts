@@ -101,7 +101,7 @@ export class Table {
     public updateLogsQueue(log: string[]): void {
         this.logs_queue.enqueue(log);
     }
-    public popLogsQueue(): Array<string> | undefined{
+    public popLogsQueue(): Array<string> | undefined {
         if (!(this.logs_queue.isEmpty())) {
             let res = this.logs_queue.dequeue()!;
             return res;
@@ -124,7 +124,7 @@ export class Table {
     }
     public getActionNumFromId(player_id: string): number {
         const action_num = this.id_to_action_num.get(player_id);
-        if (action_num) {
+        if (action_num !== undefined) {
             return action_num;
         }
         throw new Error(`Could not retrieve action_num for player with id ${player_id}`);
@@ -165,7 +165,7 @@ export class Table {
     }
     public getPlayerInitialStackFromId(player_id: string): number {
         const player_stack_in_BBs = this.id_to_initial_stacks.get(player_id);
-        if (player_stack_in_BBs) {
+        if (player_stack_in_BBs !== undefined) {
             return player_stack_in_BBs;
         }
         throw new Error(`Could not retrieve stack for player with id: ${player_id}.`);
@@ -182,7 +182,7 @@ export class Table {
     }
     public getPlayerStatsFromId(player_id: string): PlayerStats {
         const player = this.id_to_player.get(player_id);
-        if (player) {
+        if (player !== undefined) {
             return player.getPlayerStats();
         }
         throw new Error(`Could not retrieve player stats for player with id: ${player_id}.`);
@@ -215,7 +215,7 @@ export class Table {
     }
     public getPlayerPositionFromId(player_id: string): string {
         const player_position = this.id_to_position.get(player_id);
-        if (player_position) {
+        if (player_position !== undefined) {
             return player_position;
         }
         throw new Error(`Could not retrieve position for player with id: ${player_id}.`);
@@ -289,7 +289,7 @@ export class Table {
 
     public getIdFromName(name: string): string {
         const player_id = this.name_to_id.get(name);
-        if (player_id) {
+        if (player_id !== undefined) {
             return player_id;
         }
         throw new Error(`Could not retrieve id for player with name: ${name}.`)
