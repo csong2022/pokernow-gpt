@@ -1,0 +1,4 @@
+{
+    "default_timeout": 1000,
+    "headless_flag": true
+}

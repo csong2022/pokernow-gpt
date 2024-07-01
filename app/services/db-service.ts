@@ -1,6 +1,5 @@
+import { Database, open } from 'sqlite'
 import sqlite3 from 'sqlite3';
-import { Database } from 'sqlite'
-import { open } from 'sqlite';
 
 export class DBService {
     private file_name: string;
@@ -15,16 +14,15 @@ export class DBService {
             filename: this.file_name,
             driver: sqlite3.Database
         })
-        this.createTables(this.db);
     }
-
-    async createTables(db: any): Promise<void> {
-        await this.createPlayerTable(db);
+    
+    async createTables(): Promise<void> {
+        await this.createPlayerTable();
     }
-
-    async createPlayerTable(db: any): Promise<void> {
+    
+    async createPlayerTable(): Promise<void> {
         try {
-            await db.exec(`
+            await this.db.exec(`
                 CREATE TABLE IF NOT EXISTS PlayerStats (
                     id TEXT PRIMARY KEY NOT NULL,
                     total_hands INT NOT NULL,
@@ -39,6 +37,11 @@ export class DBService {
             console.log("Failed to create player table", err.message);
         }
     }
+    
+    async close() {
+        await this.db.close();
+    }
+    
 
     async query(sql: string, params: Array<any>): Promise<Array<string>> {
         var rows : string[] = [];
@@ -50,8 +53,8 @@ export class DBService {
         });
         return rows;
     }
-
-    async close() {
-        await this.db.close();
-    }
 }
+
+const db_service = new DBService("./app/pokernow-gpt.db");
+
+export default db_service;

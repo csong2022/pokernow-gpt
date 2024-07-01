@@ -39,8 +39,8 @@ export function getPlayerStacksFromMsg(msg: string, stakes: number): Map<string,
     //starts from the bottom of logs
     const re = RegExp('\\@\\s([^"]*)\\"\\s\\((\\d+)\\)', 'g');
     let res = new Map<string, number>;
-    let regExps = [...msg.matchAll(re)];
-    regExps.forEach((element) => {
+    let matches = [...msg.matchAll(re)];
+    matches.forEach((element) => {
         res.set(element[1], convertToBBs(Number(element[2]), stakes));
     })
     return res;
@@ -50,8 +50,8 @@ export function getTableSeatToIdFromMsg(msg: string): Map<number, string>{
     //starts from the bottom of logs
     const re = RegExp('\\#(\\d+)\\s\\"[^@]+\\@\\s([^"]*)', 'g');
     let res = new Map<number, string>;
-    let regExps = [...msg.matchAll(re)];
-    regExps.forEach((element) => {
+    let matches = [...msg.matchAll(re)];
+    matches.forEach((element) => {
         res.set(parseInt(element[1]), element[2]);
     })
     return res;
@@ -61,8 +61,8 @@ export function getIdToTableSeatFromMsg(msg: string): Map<string, number>{
     //starts from the bottom of logs
     const re = RegExp('\\#(\\d+)\\s\\"[^@]+\\@\\s([^"]*)', 'g');
     let res = new Map<string, number>;
-    let regExps = [...msg.matchAll(re)];
-    regExps.forEach((element) => {
+    let matches = [...msg.matchAll(re)];
+    matches.forEach((element) => {
         res.set(element[2], parseInt(element[1]));
     })
     return res;
