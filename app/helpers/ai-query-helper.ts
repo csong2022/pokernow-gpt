@@ -30,9 +30,6 @@ export function parseResponse(msg: string): BotAction {
     let bet_size_in_BBs = 0;
     if (bet_size_matches) {
         bet_size_in_BBs = parseFloat(bet_size_matches[0]);
-        if (isNaN(bet_size_in_BBs)) {
-            throw new Error("Parsed bet size is not a number!");
-        }
     }
     return {
         action_str: action_str,
