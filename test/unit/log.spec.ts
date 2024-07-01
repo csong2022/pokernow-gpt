@@ -1,10 +1,12 @@
-import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-utils.ts';
-import { LogService } from '../../app/services/log-service.ts';
-import { validateAllMsg, validateMsg, getPlayerStacksFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, getNameToIdFromMsg, getIdToTableSeatFromMsg } from "../../app/services/message-service.ts";
 import { Table } from "../../app/models/table.ts";
-import { table } from "console";
+
 import { DBService } from '../../app/services/db-service.ts';
 import { PlayerService } from '../../app/services/player-service.ts';
+
+import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-utils.ts';
+import { LogService } from '../../app/services/log-service.ts';
+
+import { validateAllMsg, validateMsg, getPlayerStacksFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, getNameToIdFromMsg, getIdToTableSeatFromMsg } from "../../app/utils/message-processing-utils.ts";
 
 describe('log service test', async () => {
     it("should properly get logs and filter through them", async() => {

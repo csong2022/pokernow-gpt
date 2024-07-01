@@ -4,9 +4,3 @@ export function computeTimeout(num_players: number, max_turn_length: number, num
 export function sleep(ms: number): Promise<any> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-export interface GameInfo {
-    game_type: string,
-    big_blind: number,
-    small_blind: number,
-}

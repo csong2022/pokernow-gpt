@@ -1,13 +1,14 @@
-import * as player_service from "../services/player-service.ts"
-import { Action } from "../utils/log-processing-utils.ts";
+import { Game } from "./game.ts";
 import { Player } from "./player.ts"
 import { PlayerAction } from "./player-action.ts";
 import { PlayerStats } from "./player-stats.ts";
-import { Queue } from "../utils/data-structures.ts"
-import { getPlayerStacksMsg, getPlayerStacksFromMsg as getPlayerInitialStacksFromMsg } from "../services/message-service.ts";
-import { Street, convertToBBs } from "../utils/log-processing-utils.ts";
-import { Game } from "./game.ts";
+
 import { PlayerService } from "../services/player-service.ts";
+
+import { Queue } from "../utils/data-structures.ts"
+import { Action, Street } from "../utils/log-processing-utils.ts";
+import { getPlayerStacksMsg, getPlayerStacksFromMsg as getPlayerInitialStacksFromMsg } from "../utils/message-processing-utils.ts";
+import { convertToBBs } from "../utils/value-conversion-utils.ts";
 
 export class Table {
     private player_service: PlayerService;
@@ -203,7 +204,6 @@ export class Table {
         return this.id_to_action_num;
     }
 
-    // TODO: this needs to take in the blinds or else total_hands isn't updated correctly
     public async postProcessLogsAfterHand(logs: Array<Array<string>>) {
         // 0 means they didn't put in money, 1 means they put in money but didn't raise (CALL)
         // 2 means they put in money through a raise. 1 -> vpip, 2 -> vpip & pfr

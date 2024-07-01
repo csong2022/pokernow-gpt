@@ -1,5 +1,5 @@
 import { DBService} from './db-service.ts';
-import { emptyOrSingleRow } from '../utils/db-query-utils.ts'
+import { emptyOrSingleRow } from '../helpers/db-query-helper.ts'
 
 export class PlayerService {
     private db_service: DBService;
