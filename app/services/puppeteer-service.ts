@@ -1,7 +1,9 @@
 import puppeteer from 'puppeteer';
+
+import { computeTimeout } from '../helpers/bot-helper.ts';
+
 import type { Response } from '../utils/error-handling-utils.ts';
 import { letterToSuit } from '../utils/log-processing-utils.ts';
-import { computeTimeout } from '../helpers/bot-helper.ts';
 
 interface GameInfo {
     game_type: string,
@@ -11,17 +13,20 @@ interface GameInfo {
 
 export class PuppeteerService {
     private default_timeout: number;
+    private headless_flag: boolean;
+
     private browser!: puppeteer.Browser;
     private page!: puppeteer.Page;
 
-    constructor(default_timeout: number) {
+    constructor(default_timeout: number, headless_flag: boolean) {
         this.default_timeout = default_timeout;
+        this.headless_flag = headless_flag;
     }
 
     async init(): Promise<void> {
         this.browser = await puppeteer.launch({
             defaultViewport: null,
-            headless: false
+            headless: this.headless_flag
         });
         this.page = await this.browser.newPage();
     }

@@ -14,8 +14,7 @@ import { PuppeteerService } from './services/puppeteer-service.ts';
 import { parseResponse } from './helpers/ai-query-helper.ts'
 import { constructQuery } from './helpers/construct-query-helper.ts';
 
-import { BotConfig } from './utils/config-utils.ts';
-import { logResponse } from './utils/error-handling-utils.ts';
+import { DebugMode, logResponse } from './utils/error-handling-utils.ts';
 import { type ProcessedLogs } from './utils/log-processing-utils.ts';
 import { getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './utils/message-processing-utils.ts';
 import { convertToBBs, convertToValue } from './utils/value-conversion-utils.ts'
@@ -27,7 +26,8 @@ export class Bot {
     private puppeteer_service: PuppeteerService;
 
     private game_id: string;
-    private bot_config: BotConfig;
+    private debug_mode: DebugMode;
+    private query_retries: number;
 
     private first_created: string;
     private hand_history: ChatCompletionMessageParam | any;
@@ -41,7 +41,8 @@ export class Bot {
                 player_service: PlayerService,
                 puppeteer_service: PuppeteerService,
                 game_id: string,
-                bot_config: BotConfig) 
+                debug_mode: DebugMode,
+                query_retries: number) 
     {
         this.log_service = log_service;
         this.openai_service = openai_service;
@@ -49,7 +50,8 @@ export class Bot {
         this.puppeteer_service = puppeteer_service;
 
         this.game_id = game_id;
-        this.bot_config = bot_config;
+        this.debug_mode = debug_mode;
+        this.query_retries = query_retries;
 
         this.first_created = "";
         this.hand_history = [];
@@ -68,7 +70,6 @@ export class Bot {
             this.table.setPlayersInPot(this.table.getNumPlayers());
             await this.playOneHand();
             this.hand_history = [];
-            //this.table.updatePlayerActions()
             this.table.nextHand();
         }
     }
@@ -76,12 +77,12 @@ export class Bot {
     private async openGame() {
         console.log(`The PokerNow game with id: ${this.game_id} will now open.`);
         
-        logResponse(await this.puppeteer_service.navigateToGame(this.game_id), this.bot_config.debug_mode);
-        logResponse(await this.puppeteer_service.waitForGameInfo(), this.bot_config.debug_mode);
+        logResponse(await this.puppeteer_service.navigateToGame(this.game_id), this.debug_mode);
+        logResponse(await this.puppeteer_service.waitForGameInfo(), this.debug_mode);
     
         console.log("Getting game info.");
         const res = await this.puppeteer_service.getGameInfo();
-        logResponse(res, this.bot_config.debug_mode);
+        logResponse(res, this.debug_mode);
         if (res.code == "success") {
             const game_info = this.puppeteer_service.convertGameInfo(res.data as string);
             this.table = new Table(this.player_service);
@@ -102,7 +103,7 @@ export class Bot {
             console.log(`Your initial stack size will be ${stack_size}.`)
     
             console.log(`Attempting to enter table with name: ${name} and stack size: ${stack_size}.`);
-            const code = logResponse(await this.puppeteer_service.sendEnterTableRequest(name, Number(stack_size)), this.bot_config.debug_mode);
+            const code = logResponse(await this.puppeteer_service.sendEnterTableRequest(name, Number(stack_size)), this.debug_mode);
     
             if (code === "success") {
                 break;
@@ -110,7 +111,7 @@ export class Bot {
             console.log("Please try again.");
         }
         console.log("Waiting for table host to accept ingress request.");
-        logResponse(await this.puppeteer_service.waitForTableEntry(), this.bot_config.debug_mode);
+        logResponse(await this.puppeteer_service.waitForTableEntry(), this.debug_mode);
     }
 
     private async updateNumPlayers() {
@@ -130,7 +131,6 @@ export class Bot {
     // check if it is the player's turn -> perform actions
     // check if there is a winner -> perform end of hand actions
     private async playOneHand() {
-
         let processed_logs = {
             valid_msgs: new Array<Array<string>>,
             last_created: this.first_created,
@@ -166,14 +166,14 @@ export class Bot {
 
                     // query chatGPT and make action
                     try {
-                        const bot_action = await this.queryBotAction(query, this.bot_config.query_retries);
+                        const bot_action = await this.queryBotAction(query, this.query_retries);
                         await this.performBotAction(bot_action);
                     } catch (err) {
                         console.log("Failed to query and perform bot action.")
                     }
 
                     console.log("Waiting for bot's turn to end");
-                    logResponse(await this.puppeteer_service.waitForBotTurnEnd(), this.bot_config.debug_mode);
+                    logResponse(await this.puppeteer_service.waitForBotTurnEnd(), this.debug_mode);
                 } else if (data.includes("winner")) {
                     console.log("Detected winner in hand.")
                     break;
@@ -189,7 +189,7 @@ export class Bot {
             console.log("Failed to process players.");
         }
         
-        logResponse(await this.puppeteer_service.waitForHandEnd(), this.bot_config.debug_mode);
+        logResponse(await this.puppeteer_service.waitForHandEnd(), this.debug_mode);
         console.log("Completed a hand.");
     }
 
@@ -244,7 +244,7 @@ export class Bot {
     private async getHand(): Promise<string[]> {
         var hand: string[] = [];
         const res = await this.puppeteer_service.getHand();
-        logResponse(res, this.bot_config.debug_mode);
+        logResponse(res, this.debug_mode);
         if (res.code === "success") {
             hand = res.data as string[];
         }
@@ -254,7 +254,7 @@ export class Bot {
     private async getStackSize(): Promise<number> {
         var stack_size: number = 0;
         const res = await this.puppeteer_service.getStackSize();
-        logResponse(res, this.bot_config.debug_mode);
+        logResponse(res, this.debug_mode);
         if (res.code === "success") {
             stack_size = res.data as number;
         }
@@ -373,22 +373,22 @@ export class Bot {
         console.log("Bet Size:", convertToBBs(bet_size, this.game.getBigBlind()));
         switch (bot_action.action_str) {
             case "bet":
-                logResponse(await this.puppeteer_service.betOrRaise(bet_size), this.bot_config.debug_mode);
+                logResponse(await this.puppeteer_service.betOrRaise(bet_size), this.debug_mode);
                 break;
             case "raise":
-                logResponse(await this.puppeteer_service.betOrRaise(bet_size), this.bot_config.debug_mode);
+                logResponse(await this.puppeteer_service.betOrRaise(bet_size), this.debug_mode);
                 break;
             case "call":
-                logResponse(await this.puppeteer_service.call(), this.bot_config.debug_mode);
+                logResponse(await this.puppeteer_service.call(), this.debug_mode);
                 break;
             case "check":
-                logResponse(await this.puppeteer_service.check(), this.bot_config.debug_mode);
+                logResponse(await this.puppeteer_service.check(), this.debug_mode);
                 break;
             case "fold":
-                logResponse(await this.puppeteer_service.fold(), this.bot_config.debug_mode);
+                logResponse(await this.puppeteer_service.fold(), this.debug_mode);
                 const res = await this.puppeteer_service.cancelUnnecessaryFold();
                 if (res.code === "success") {
-                    logResponse(await this.puppeteer_service.check(), this.bot_config.debug_mode);
+                    logResponse(await this.puppeteer_service.check(), this.debug_mode);
                 }
                 break;
         }

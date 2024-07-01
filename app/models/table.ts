@@ -23,13 +23,15 @@ export class Table {
     private player_actions: Array<PlayerAction>;
     
     private id_to_action_num: Map<string, number>;
+    private id_to_initial_stacks: Map<string, number>;
     private id_to_player: Map<string, Player>;
     private id_to_position: Map<string, string>;
-    private id_to_initial_stacks: Map<string, number>;
+    private id_to_table_seat: Map<string, number>;
     private name_to_id: Map<string, string>;
     private table_seat_to_id: Map<number, string>;
+
     private first_seat_order_id: string;
-    private id_to_table_seat: Map<string, number>;
+    
 
     constructor(player_service: PlayerService) {
         this.player_service = player_service;
@@ -44,13 +46,15 @@ export class Table {
         this.player_actions = new Array<PlayerAction>;
         
         this.id_to_action_num = new Map<string, number>();
+        this.id_to_initial_stacks = new Map<string, number>();
         this.id_to_player = new Map<string, Player>();
         this.id_to_position = new Map<string, string>();
-        this.id_to_initial_stacks = new Map<string, number>();
+        this.id_to_table_seat = new Map<string, number>();
+        
         this.name_to_id = new Map<string, string>();
         this.table_seat_to_id = new Map<number, string>();
+        
         this.first_seat_order_id = "";
-        this.id_to_table_seat = new Map<string, number>();
     }
 
     public getNumPlayers(): number {
@@ -151,13 +155,6 @@ export class Table {
             if (i >= 11) {
                 i = 1
             }
-        }
-    }
-
-    public async updateCache(): Promise<void> {
-        for (const name of this.name_to_id.keys()) {
-            const id = this.name_to_id.get(name)!
-            await this.cachePlayer(id, name)
         }
     }
 
@@ -264,6 +261,13 @@ export class Table {
             }
         }
     }
+    public async updateCache(): Promise<void> {
+        for (const name of this.name_to_id.keys()) {
+            const id = this.name_to_id.get(name)!
+            await this.cachePlayer(id, name);
+        }
+    }
+    
     public async processPlayers() {
         for (const player_id of this.id_to_action_num.keys()) {
             const player = this.id_to_player.get(player_id);
