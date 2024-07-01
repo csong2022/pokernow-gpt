@@ -265,23 +265,6 @@ export class PuppeteerService {
         }
     }
     
-    // wait for the current hand to finish after a winner has been decided (when the "winner" elem is no longer present)
-    async waitForHandEnd<D, E=Error>(): Response<D, E> {
-        try {
-            await this.page.waitForSelector(".table-player.winner", {hidden: true, timeout: this.default_timeout * 10});
-        } catch (err) {
-            return {
-                code: "error",
-                error: new Error("Failed to wait for hand to finish.") as E
-            }
-        }
-        return {
-            code: "success",
-            data: null as D,
-            msg: "Waited for hand to finish."
-        }
-    }
-    
     async getStackSize<D, E=Error>(): Response<D, E> {
         try {
             await this.page.waitForSelector(".you-player > .table-player-infos-ctn > div > .table-player-stack");
@@ -462,10 +445,10 @@ export class PuppeteerService {
     async getCurrentBet<D, E=Error>(): Response<D, E> {
         try {
             const el = await this.page.waitForSelector(".you-player > .table-player-bet-value", {timeout: this.default_timeout});
-            const current_bet = await this.page.evaluate(el => el!.textContent, el);
+            const current_bet = await this.page.evaluate((el: any) => isNaN(el.textContent) ? '0' : el.textContent, el);
             return {
                 code: "success",
-                data: parseFloat(current_bet!) as D,
+                data: parseFloat(current_bet) as D,
                 msg: `Successfully retrieved current bet amount: ${current_bet}`
             }
         } catch (err) {
@@ -473,6 +456,22 @@ export class PuppeteerService {
                 code: "error",
                 error: new Error("No existing bet amount found.") as E
             }
+        }
+    }
+
+    async waitForHandEnd<D, E=Error>(): Response<D, E> {
+        try {
+            await this.page.waitForSelector(".table-player.winner", {hidden: true, timeout: this.default_timeout * 10});
+        } catch (err) {
+            return {
+                code: "error",
+                error: new Error("Failed to wait for hand to finish.") as E
+            }
+        }
+        return {
+            code: "success",
+            data: null as D,
+            msg: "Waited for hand to finish."
         }
     }
 }

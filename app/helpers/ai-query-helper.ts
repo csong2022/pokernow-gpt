@@ -10,12 +10,18 @@ export const playstyleToPrompt: Map<string, string> = new Map<string, string>([
 export function parseResponse(msg: string): BotAction {
     msg = processOutput(msg);
 
-    //TODO: parse all in: ex. all-in all in
+    if (!msg) {
+        return {
+            action_str: "",
+            bet_size_in_BBs: 0
+        }
+    }
+    
     const action_matches = msg.match(/(bet|raise|call|check|fold|all.in)/);
     let action_str = "";
-    if (action_matches && action_matches.groups) {
+    if (action_matches) {
         action_str = action_matches[0];
-        if (action_matches.groups[2]) {
+        if (action_str.includes("in")) {
             action_str = "all-in";
         }
     }
