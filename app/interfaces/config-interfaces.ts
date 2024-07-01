@@ -1,4 +1,4 @@
-import { DebugMode } from "./error-handling-utils.ts"
+import { DebugMode } from "../utils/error-handling-utils.ts"
 
 export interface BotConfig {
     debug_mode: DebugMode,

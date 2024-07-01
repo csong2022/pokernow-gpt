@@ -1,4 +1,10 @@
-import { BotAction } from "../services/openai-service.ts";
+import { BotAction } from "../interfaces/ai-query-interfaces.ts";
+
+export const playstyleToPrompt: Map<string, string> = new Map<string, string>([
+    ["aggressive", "You are an experienced poker player, skilled at exploiting your opponents by making aggressive plays."],
+    ["passive", "You are an experienced poker player with a passive and tight playstyle."],
+    ["balanced", "You are an experienced poker player, skilled at both being passive and aggressive with your actions."]
+]);
 
 export function parseResponse(msg: string): BotAction {
     msg = processOutput(msg);
@@ -13,6 +19,9 @@ export function parseResponse(msg: string): BotAction {
     let bet_size_in_BBs = 0;
     if (bet_size_matches) {
         bet_size_in_BBs = parseFloat(bet_size_matches[0]);
+        if (isNaN(bet_size_in_BBs)) {
+            throw new Error("Parsed bet size is not a number!");
+        }
     }
     return {
         action_str: action_str,
