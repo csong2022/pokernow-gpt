@@ -3,11 +3,14 @@ import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mj
 
 import { sleep } from './helpers/bot-helper.ts';
 
+import { BotAction } from './interfaces/ai-query-interfaces.ts';
+import { ProcessedLogs } from './interfaces/log-processing-interfaces.ts';
+
 import { Game } from './models/game.ts';
 import { Table } from './models/table.ts';
 
 import { LogService } from './services/log-service.ts';
-import { BotAction, OpenAIService } from './services/openai-service.ts'
+import { OpenAIService } from './services/openai-service.ts'
 import { PlayerService } from './services/player-service.ts';
 import { PuppeteerService } from './services/puppeteer-service.ts';
 
@@ -15,7 +18,7 @@ import { parseResponse } from './helpers/ai-query-helper.ts'
 import { constructQuery } from './helpers/construct-query-helper.ts';
 
 import { DebugMode, logResponse } from './utils/error-handling-utils.ts';
-import { type ProcessedLogs, postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from './utils/log-processing-utils.ts';
+import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from './utils/log-processing-utils.ts';
 import { getIdToInitialStackFromMsg, getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './utils/message-processing-utils.ts';
 import { convertToBBs, convertToValue } from './utils/value-conversion-utils.ts'
 
@@ -283,7 +286,7 @@ export class Bot {
         }
         try {
             await sleep(2000);
-            const GPTResponse = await this.openai_service.queryGPT(query, this.hand_history);
+            const GPTResponse = await this.openai_service.query(query, this.hand_history);
             this.hand_history = GPTResponse.prevMessages;
             const choices = GPTResponse.choices;
             this.hand_history.push(choices.message);
@@ -292,14 +295,12 @@ export class Bot {
                 action_str: "",
                 bet_size_in_BBs: 0
             };
-
             if (choices && choices.message.content) {
                 bot_action = parseResponse(choices.message.content);
             } else {
                 console.log("Empty ChatGPT response, retrying query.");
                 return await this.queryBotAction(query, retries, retry_counter + 1);
             }
-
             if (await this.isValidBotAction(bot_action)) {
                 return bot_action;
             }

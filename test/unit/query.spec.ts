@@ -83,7 +83,7 @@ describe('query service test', async () => {
 
             console.log(process.env["OPENAI_API_KEY"]);
             console.log("query", query)
-            let GPTResponse = await openai_service.queryGPT(query, []);
+            let GPTResponse = await openai_service.query(query, []);
             const resp = GPTResponse.choices;
             const messages = GPTResponse.prevMessages;
             console.log("response", resp)
