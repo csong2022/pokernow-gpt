@@ -5,23 +5,23 @@ import { Table } from "./table.ts";
 
 export class Game {
     private game_id: string;
+    private table: Table;
     private big_blind: number;
     private small_blind: number;
     private game_type: string;
     private max_turn_length: number;
     private players: Map<string, Player>;
     private hero?: Hero;
-    private table: Table;
 
-    constructor(game_id: string, big_blind: number, small_blind: number, game_type: string, max_turn_length: number) {
+    constructor(game_id: string, table: Table, big_blind: number, small_blind: number, game_type: string, max_turn_length: number) {
         this.game_id = game_id;
+        this.table = table;
         this.big_blind = big_blind;
         this.small_blind = small_blind;
         this.game_type = game_type;
         this.max_turn_length = max_turn_length;
         this.players = new Map<string, Player>();
         this.hero = undefined;
-        this.table = new Table();
     }
 
     public getGameId(): string {
