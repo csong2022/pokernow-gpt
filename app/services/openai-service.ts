@@ -24,8 +24,10 @@ export class OpenAIService {
         this.agent = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     }
     
+    //Takes an already created query and passes it into chatGPT if it is the first action,
+    //otherwise attaches it to previous queries and feeds the entire conversation into chatGPT
     async queryGPT(query: string, prevMessages: ChatCompletionMessageParam[]): Promise<GPTResponse> {
-        console.log("before", prevMessages)
+        //console.log("before", prevMessages)
         if (prevMessages && prevMessages.length > 0) {
             prevMessages.push({ role: "system", content: query })
         } else {

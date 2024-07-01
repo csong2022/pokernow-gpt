@@ -6,8 +6,8 @@ export function getPlayer(msg: string): Array<string> {
     const split = msg.split(" @ ");
     if (split.length > 1) {
         const name = split[0].split("\"")[1];
-        const tag = split[1].split("\"")[0];
-        res.push(tag, name);
+        const id = split[1].split("\"")[0];
+        res.push(id, name);
     }
     return res
 }
