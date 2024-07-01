@@ -322,38 +322,26 @@ export class Bot {
             switch (bot_action.action_str) {
                 case "bet":
                     res = await this.puppeteer_service.waitForBetOption();
-                    if (res.code === "success") {
-                        is_valid = true;
-                    }
-                    if (bot_action.bet_size_in_BBs > 0 && bot_action.bet_size_in_BBs <= curr_stack_size_in_BBs) {
+                    if (res.code === "success" && bot_action.bet_size_in_BBs > 0 && bot_action.bet_size_in_BBs <= curr_stack_size_in_BBs) {
                         is_valid = true;
                     }
                     break;
                 case "raise":
                     //TODO: should also check that the raise >= min raise
                     res = await this.puppeteer_service.waitForBetOption();
-                    if (res.code === "success") {
-                        is_valid = true;
-                    }
-                    if (bot_action.bet_size_in_BBs > 0 && bot_action.bet_size_in_BBs <= curr_stack_size_in_BBs) {
+                    if (res.code === "success" && bot_action.bet_size_in_BBs > 0 && bot_action.bet_size_in_BBs <= curr_stack_size_in_BBs) {
                         is_valid = true;
                     }
                     break;
                 case "call":
                     res = await this.puppeteer_service.waitForCallOption();
-                    if (res.code === "success") {
-                        is_valid = true;
-                    }
-                    if (bot_action.bet_size_in_BBs > 0 && bot_action.bet_size_in_BBs <= curr_stack_size_in_BBs) {
+                    if (res.code === "success" && bot_action.bet_size_in_BBs > 0 && bot_action.bet_size_in_BBs <= curr_stack_size_in_BBs) {
                         is_valid = true;
                     }
                     break;
                 case "check":
                     res = await this.puppeteer_service.waitForCheckOption();
-                    if (res.code === "success") {
-                        is_valid = true;
-                    }
-                    if (bot_action.bet_size_in_BBs == 0) {
+                    if (res.code === "success" && bot_action.bet_size_in_BBs == 0) {
                         is_valid = true;
                     }
                     break;
