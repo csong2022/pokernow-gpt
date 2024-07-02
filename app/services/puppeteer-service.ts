@@ -3,7 +3,7 @@ import puppeteer from 'puppeteer';
 import { computeTimeout, sleep } from '../helpers/bot-helper.ts';
 
 import type { Response } from '../utils/error-handling-utils.ts';
-import { letterToSuit } from '../utils/log-processing-utils.ts';
+import { suitToLetter } from '../utils/log-processing-utils.ts';
 
 interface GameInfo {
     game_type: string,
@@ -238,6 +238,23 @@ export class PuppeteerService {
         }
     }
     
+    async getPotSize<D, E=Error>(): Response<D, E> {
+        try {
+            await this.page.waitForSelector(".table > .table-pot-size > .main-value");
+            const pot_size_str = await this.page.$eval(".table > .table-pot-size > .main-value", (p: any) => p.textContent);
+            return {
+                code: "success",
+                data: pot_size_str as D,
+                msg: "Successfully retrieved table pot size."
+            }
+        } catch (err) {
+            return {
+                code: "error",
+                error: new Error("Failed to retrieve table pot size.") as E
+            }
+        }
+    }
+    
     async getHand<D, E=Error>(): Response<D, E> {
         try {
             const cards_div = await this.page.$$(".you-player > .table-player-cards > div");
@@ -245,8 +262,8 @@ export class PuppeteerService {
             for (const card_div of cards_div) {
                 const card_value = await card_div.$eval(".value", (span: any) => span.textContent);
                 const sub_suit_letter = await card_div.$eval(".sub-suit", (span: any) => span.textContent);
-                if (card_value && sub_suit_letter && letterToSuit.has(sub_suit_letter)) {
-                    cards.push(card_value + letterToSuit.get(sub_suit_letter)!);
+                if (card_value && sub_suit_letter) {
+                    cards.push(card_value + sub_suit_letter);
                 } else {
                     throw "Invalid card.";
                 }

@@ -5,6 +5,8 @@ export class PlayerStats {
     private vpip_hands: number;
     private pfr_hands: number;
 
+    //TODO: player stats should use name not id
+    //should have separate table mapping name to id in db that updates everytime new id is detected for particular name
     constructor(id: string, player_JSON?: any) {
         this.id = id;
         if (player_JSON) {

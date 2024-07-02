@@ -12,7 +12,7 @@ export class Table {
 
     private num_players: number;
     private players_in_pot: number;
-    private pot: number;
+    private pot_size_in_BBs: number;
     private runout: string;
     private street: string;
 
@@ -35,7 +35,7 @@ export class Table {
 
         this.num_players = 0;
         this.players_in_pot = 0;
-        this.pot = 0;
+        this.pot_size_in_BBs = 0;
         this.runout = "";
         this.street = "";
 
@@ -72,10 +72,10 @@ export class Table {
     } 
 
     public getPot(): number {
-        return this.pot;
+        return this.pot_size_in_BBs;
     }
     public setPot(pot: number): void {
-        this.pot = pot;
+        this.pot_size_in_BBs = pot;
     }
 
 
@@ -320,7 +320,7 @@ export class Table {
     public nextHand(): void {
         this.num_players = 0;
         this.players_in_pot = 0;
-        this.pot = 0;
+        this.pot_size_in_BBs = 0;
         this.runout = "";
         this.street = "";
 
