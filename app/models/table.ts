@@ -21,11 +21,13 @@ export class Table {
     
     private id_to_action_num: Map<string, number>;
     private id_to_initial_stacks: Map<string, number>;
-    private id_to_player: Map<string, Player>;
     private id_to_position: Map<string, string>;
     private id_to_table_seat: Map<string, number>;
-    private name_to_id: Map<string, string>;
     private table_seat_to_id: Map<number, string>;
+
+    private id_to_name: Map<string, string>;
+    private name_to_id: Map<string, string>;
+    private name_to_player: Map<string, Player>;
 
     private first_seat_order_id: string;
     
@@ -44,12 +46,13 @@ export class Table {
         
         this.id_to_action_num = new Map<string, number>();
         this.id_to_initial_stacks = new Map<string, number>();
-        this.id_to_player = new Map<string, Player>();
         this.id_to_position = new Map<string, string>();
         this.id_to_table_seat = new Map<string, number>();
-        
-        this.name_to_id = new Map<string, string>();
         this.table_seat_to_id = new Map<number, string>();
+        
+        this.id_to_name = new Map<string, string>();
+        this.name_to_id = new Map<string, string>();
+        this.name_to_player = new Map<string, Player>();
         
         this.first_seat_order_id = "";
     }
@@ -137,7 +140,8 @@ export class Table {
     }
     public async processPlayers() {
         for (const player_id of this.id_to_action_num.keys()) {
-            const player = this.id_to_player.get(player_id);
+            const player_name = this.getNameFromId(player_id);
+            const player = this.name_to_player.get(player_name);
             const player_action = this.id_to_action_num.get(player_id);
             if (player) {
                 const player_stats = player.getPlayerStats();
@@ -150,7 +154,7 @@ export class Table {
                     }
                     player_stats.setTotalHands(player_stats.getTotalHands() + 1);
                     player.updatePlayerStats(player_stats);
-                    await this.player_service.update(player_id, player_stats.toJSON());
+                    await this.player_service.update(player_name, player_stats.toJSON());
                 } else {
                     throw new Error("Player stats is undefined.");
                 }
@@ -175,39 +179,6 @@ export class Table {
     }
     public setPlayerInitialStacksFromMsg(msgs: string[], stakes: number): void {
         this.id_to_initial_stacks = getPlayerInitialStacksFromMsg(getPlayerStacksMsg(msgs), stakes);
-    }
-
-    public getPlayerCache(): Map<string, Player> {
-        return this.id_to_player;
-    }
-    public getPlayerStatsFromId(player_id: string): PlayerStats {
-        const player = this.id_to_player.get(player_id);
-        if (player !== undefined) {
-            return player.getPlayerStats();
-        }
-        throw new Error(`Could not retrieve player stats for player with id: ${player_id}.`);
-    }
-    public async updateCache(): Promise<void> {
-        for (const name of this.name_to_id.keys()) {
-            const id = this.name_to_id.get(name)!
-            await this.cachePlayer(id, name);
-        }
-    }
-    public async cachePlayer(player_id: string, player_name: string): Promise<void> {
-        if (!this.id_to_player.has(player_id)) {
-            const player_stats_str = await this.player_service.get(player_id);
-            // if the player does not currently exist in the database, create a new player in db
-            // otherwise retrieve the existing player from database,
-            // then, add player to player_cache
-            if (!player_stats_str) {
-                const new_player_stats = new PlayerStats(player_id);
-                await this.player_service.create(new_player_stats.toJSON());
-                this.id_to_player.set(player_id, new Player(player_name, new_player_stats));
-            } else {
-                const player_stats_JSON = JSON.parse(JSON.stringify(player_stats_str));
-                this.id_to_player.set(player_id, new Player(player_name, new PlayerStats(player_id, player_stats_JSON)));
-            }
-        }
     }
 
     public getPlayerPositions(): Map<string, string> {
@@ -292,22 +263,66 @@ export class Table {
         this.id_to_table_seat = map;
     }
 
-    public getIdFromName(name: string): string {
-        const player_id = this.name_to_id.get(name);
-        if (player_id !== undefined) {
-            return player_id;
-        }
-        throw new Error(`Could not retrieve id for player with name: ${name}.`)
-    }
-    public setNameToId(map: Map<string, string>): void {
-        this.name_to_id = map;
-    }
-
     public getSeatNumberToId(): Map<number, string> {
         return this.table_seat_to_id;
     }
     public setTableSeatToId(map: Map<number, string>): void {
         this.table_seat_to_id = map;
+    }
+
+    public getNameFromId(player_id: string): string {
+        const player_name = this.id_to_name.get(player_id);
+        if (player_name !== undefined) {
+            return player_name;
+        }
+        throw new Error(`Could not retrieve name for player with id: ${player_id}.`)
+    }
+    public setIdToName(map: Map<string, string>): void {
+        this.id_to_name = map;
+    }
+
+    public getIdFromName(player_name: string): string {
+        const player_id = this.name_to_id.get(player_name);
+        if (player_id !== undefined) {
+            return player_id;
+        }
+        throw new Error(`Could not retrieve id for player with name: ${player_name}.`)
+    }
+    public setNameToId(map: Map<string, string>): void {
+        this.name_to_id = map;
+    }
+
+    public getPlayerCache(): Map<string, Player> {
+        return this.name_to_player;
+    }
+    public getPlayerStatsFromName(player_name: string): PlayerStats {
+        const player = this.name_to_player.get(player_name);
+        if (player !== undefined) {
+            return player.getPlayerStats();
+        }
+        throw new Error(`Could not retrieve player stats for player with name: ${player_name}.`);
+    }
+    public async updateCache(): Promise<void> {
+        for (const name of this.name_to_id.keys()) {
+            const id = this.name_to_id.get(name)!
+            await this.cachePlayer(name, id);
+        }
+    }
+    public async cachePlayer(player_name: string, player_id: string): Promise<void> {
+        if (!this.name_to_player.has(player_name)) {
+            const player_stats_str = await this.player_service.get(player_name);
+            // if the player does not currently exist in the database, create a new player in db
+            // otherwise retrieve the existing player from database,
+            // then, add player to player_cache
+            if (!player_stats_str) {
+                const new_player_stats = new PlayerStats(player_name);
+                await this.player_service.create(new_player_stats.toJSON());
+                this.name_to_player.set(player_name, new Player(player_id, new_player_stats));
+            } else {
+                const player_stats_JSON = JSON.parse(JSON.stringify(player_stats_str));
+                this.name_to_player.set(player_name, new Player(player_id, new PlayerStats(player_name, player_stats_JSON)));
+            }
+        }
     }
 
     public getFirstSeatOrderId(): string {
