@@ -1,4 +1,4 @@
-import { Content, GoogleGenerativeAI } from "@google/generative-ai";
+import { Content, GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
 import { AIMessage, AIResponse, AIService, BotAction } from "../../interfaces/ai-client-interfaces.ts";
 import { parseResponse, playstyleToPrompt } from "../../helpers/ai-query-helper.ts";
 
@@ -19,8 +19,16 @@ export class GoogleAIService extends AIService {
         console.log("prev_messages:", prev_messages);
         console.log("input:", input)
         const processed_messages = this.processMessages(prev_messages);
+
+        const safetySettings = [
+            { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE }
+        ]
         const model = this.agent.getGenerativeModel({ 
-            model: this.getModelName()
+            model: this.getModelName(),
+            safetySettings
         });
 
 
