@@ -31,7 +31,6 @@ export class GoogleAIService extends AIService {
             safetySettings
         });
 
-
         const chat = model.startChat({
             history: processed_messages
         })

@@ -447,7 +447,7 @@ export class PuppeteerService {
             }
             await this.page.waitForSelector(".game-decisions-ctn > form > .raise-bet-value > div > input", {timeout: this.default_timeout});
             await this.page.focus(".game-decisions-ctn > form > .raise-bet-value > div > input");
-            await this.page.keyboard.type(bet_amount.toString());
+            await this.page.keyboard.type(bet_amount.toString(), {delay: 200});
             await this.page.waitForSelector(".game-decisions-ctn > form > .action-buttons > .bet", {timeout: this.default_timeout});
             await this.page.$eval(".game-decisions-ctn > form > .action-buttons > .bet", (input: any) => input.click());
         } catch (err) {
