@@ -27,7 +27,7 @@ export function constructQuery(game: Game): string{
     query = query.concat(defineGameState(street, players_in_pot), '\n');
     query = query.concat(defineCommunityCards(street, runout), '\n')
     query = query.concat(defineHand(hero_cards), '\n');
-    query = query.concat(defineStacks(player_stacks, player_positions), '\n');
+    query = query.concat(defineStacks(player_stacks, player_positions, hero_id), '\n');
     query = query.concat(definePotSize(pot_size), `\n`);
     query = query.concat(defineActions(player_actions, table), '\n');
     query = query.concat(defineStats(player_positions, table, hero_name), '\n');
@@ -59,14 +59,17 @@ function defineHand(cards: string[]): string {
     return `My hole cards are: ${cards.join(", ")}`;
 }
 
-function defineStacks(player_stacks: Map<string, number>, player_positions: Map<string, string>): string {
-    let query = "Here are the initial stack sizes of all players involved, defined in the format {position: stack_size_in_BBs}:\n";
+function defineStacks(player_stacks: Map<string, number>, player_positions: Map<string, string>, hero_id: string): string {
+    let query = "Here are the initial stack sizes of the other players in the pot, defined in the format {position: stack_size_in_BBs}:\n";
     const player_ids = Array.from(player_positions.keys());
     for (var i = 0; i < player_ids.length; i++)  {
-        let curr_id = player_ids[i]
-        let pos = player_positions.get(curr_id);
-        let stack = player_stacks.get(curr_id);
-        query = query.concat(`{${pos}: ${stack} BBs}`)
+        const player_id = player_ids[i]
+        if (player_id === hero_id) {
+            continue;
+        }
+        const player_pos = player_positions.get(player_id);
+        const stack_size = player_stacks.get(player_id);
+        query = query.concat(`{${player_pos}: ${stack_size} BBs}`)
         if (i != player_ids.length - 1) {
             query = query.concat(", ");
         }
@@ -93,7 +96,7 @@ function defineActions(player_actions: Array<PlayerAction>, table: Table): strin
 }
 
 function defineStats(player_positions: Map<string, string>, table: Table, hero_name: string): string {
-    let query = "Here are the stats of players in the pot, defined in the format {position: Total Hands Played = total_hands, VPIP = vpip_stat, PFR = pfr_stat}:\n"
+    let query = "Here are the stats of the other players in the pot, defined in the format {position: Total Hands Played = total_hands, VPIP = vpip_stat, PFR = pfr_stat}:\n"
     let player_ids = Array.from(player_positions.keys());
 
     for (var i = 0; i < player_ids.length; i++)  {
