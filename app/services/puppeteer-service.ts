@@ -53,7 +53,7 @@ export class PuppeteerService {
     
     async waitForGameInfo<D, E=Error>(): Response<D, E> {
         try {
-            await this.page.waitForSelector('.game-infos > .blind-value-ctn > .blind-value > span', {timeout: this.default_timeout * 60});
+            await this.page.waitForSelector('.game-infos > .blind-value-ctn > .blind-value > span', {timeout: this.default_timeout * 30});
         } catch (err) {
             return {
                 code: "error",
@@ -138,7 +138,7 @@ export class PuppeteerService {
     
     async waitForTableEntry<D, E=Error>(): Response<D, E> {
         try {
-            await this.page.waitForSelector(".you-player");
+            await this.page.waitForSelector(".you-player", {timeout: this.default_timeout * 120});
         } catch (err) {
             return {
                 code: "error",
@@ -170,7 +170,7 @@ export class PuppeteerService {
         // if player is in waiting state, wait for the waiting state to disappear
         try {
             await this.page.waitForSelector([".you-player > .waiting", ".you-player > .waiting-next-hand"].join(','), 
-            {hidden: true, timeout: computeTimeout(num_players, max_turn_length, 4) + this.default_timeout});
+            {hidden: true, timeout: computeTimeout(num_players, max_turn_length, 4) * 5 + this.default_timeout});
         } catch (err) {
             return {
                 code: "error",
@@ -207,8 +207,7 @@ export class PuppeteerService {
     // wait for bot's turn or winner of hand has been determined
     async waitForBotTurnOrWinner<D, E=Error>(num_players: number, max_turn_length: number): Response<D, E> {
         try {
-            //await page.waitForSelector('.table-player.winner', {timeout: default_timeout});
-            const el = await this.page.waitForSelector([".action-signal", ".table-player.winner"].join(','), {timeout: computeTimeout(num_players, max_turn_length, 4) + this.default_timeout});
+            const el = await this.page.waitForSelector([".action-signal", ".table-player.winner"].join(','), {timeout: computeTimeout(num_players, max_turn_length, 4) * 5 + this.default_timeout});
             const class_name = await this.page.evaluate(el => el!.className, el);
             return {
                 code: "success",

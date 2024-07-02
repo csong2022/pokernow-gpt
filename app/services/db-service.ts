@@ -45,7 +45,7 @@ export class DBService {
 
     async query(sql: string, params: Array<any>): Promise<Array<string>> {
         var rows : string[] = [];
-        const result = await this.db.each(sql, params, (err: any, row: string) => {
+        await this.db.each(sql, params, (err: any, row: string) => {
             if (err) {
                 throw new Error(err.message);
             }
