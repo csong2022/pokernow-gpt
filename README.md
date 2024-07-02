@@ -85,7 +85,7 @@ As ChatGPT and Large Language Models get better over time, we can and should exp
    ```sh
    npx tsx app/index.ts
    ```
-
+6. Follow the command line prompts to join an existing PokerNow game.
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
