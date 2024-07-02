@@ -35,3 +35,13 @@ export interface BotAction {
     action_str: string,
     bet_size_in_BBs: number
 }
+
+export const defaultCheckAction = {
+    action_str: "check",
+    bet_size_in_BBs: 0
+}
+
+export const defaultFoldAction = {
+    action_str: "fold",
+    bet_size_in_BBs: 0
+}
