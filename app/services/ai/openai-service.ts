@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
 import { AIMessage, AIResponse, AIService, BotAction } from "../../interfaces/ai-client-interfaces.ts";
-import { parseResponse, playstyleToPrompt } from "../../helpers/ai-query-helper.ts";
+import { getPromptFromPlaystyle, parseResponse} from "../../helpers/ai-query-helper.ts";
 
 export class OpenAIService extends AIService {
     private agent!: OpenAI;
@@ -13,15 +13,23 @@ export class OpenAIService extends AIService {
     //takes an already created query and passes it into chatGPT if it is the first action,
     //otherwise attaches it to previous queries and feeds the entire conversation into chatGPT
     async query(input: string, prev_messages: AIMessage[]): Promise<AIResponse> {
-        if (prev_messages && prev_messages.length > 0) {
+        if (prev_messages.length > 0) {
             if (input !== prev_messages[prev_messages.length - 1].text_content) {
                 prev_messages.push({text_content: input, metadata: {"role": "user"}});
             }
         } else {
-            prev_messages = [
-                {text_content: playstyleToPrompt.get("pro")!, metadata: {"role": "system"}},
-                {text_content: input, metadata: {"role": "user"}}
-            ];
+            try {
+                const playstyle_prompt = getPromptFromPlaystyle(this.getPlaystyle());
+                prev_messages = [
+                    {text_content: playstyle_prompt, metadata: {"role": "system"}},
+                    {text_content: input, metadata: {"role": "user"}}
+                ];
+            } catch (err) {
+                console.log(err);
+                prev_messages = [
+                    {text_content: input, metadata: {"role": "user"}}
+                ];
+            }
         }
     
         console.log("prev_messages:", prev_messages);
