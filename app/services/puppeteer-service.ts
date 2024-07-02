@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer';
 
-import { computeTimeout } from '../helpers/bot-helper.ts';
+import { computeTimeout, sleep } from '../helpers/bot-helper.ts';
 
 import type { Response } from '../utils/error-handling-utils.ts';
 import { letterToSuit } from '../utils/log-processing-utils.ts';
@@ -447,6 +447,7 @@ export class PuppeteerService {
             }
             await this.page.waitForSelector(".game-decisions-ctn > form > .raise-bet-value > div > input", {timeout: this.default_timeout});
             await this.page.focus(".game-decisions-ctn > form > .raise-bet-value > div > input");
+            await sleep(this.default_timeout);
             await this.page.keyboard.type(bet_amount.toString(), {delay: 200});
             await this.page.waitForSelector(".game-decisions-ctn > form > .action-buttons > .bet", {timeout: this.default_timeout});
             await this.page.$eval(".game-decisions-ctn > form > .action-buttons > .bet", (input: any) => input.click());
@@ -462,7 +463,7 @@ export class PuppeteerService {
             msg: `Successfully executed bet action with amount ${bet_amount}.`
         }
     }
-    
+
     async getCurrentBet<D, E=Error>(): Response<D, E> {
         try {
             const el = await this.page.waitForSelector(".you-player > .table-player-bet-value", {timeout: this.default_timeout});
