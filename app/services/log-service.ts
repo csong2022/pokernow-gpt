@@ -27,7 +27,7 @@ export class LogService {
         const url = `https://www.pokernow.club/games/${this.game_id}/log?before_at=${before}&after_at=${after}&mm=false&v=2`;
         await this.page.goto(url);
         try {
-            await this.page.waitForSelector("body > pre", {timeout: 2000});
+            await this.page.waitForSelector("body > pre", {timeout: 4000});
             const logs_str = await this.page.$eval("body > pre", pre => pre.textContent);
             return {
                 code: "success",

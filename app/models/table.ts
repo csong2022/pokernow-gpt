@@ -220,21 +220,22 @@ export class Table {
         }
         throw new Error(`Could not retrieve position for player with id: ${player_id}.`);
     }
+    
     public setIdToPosition(first_seat = 1): void {
-        let visited = new Set<number>();
-        let i = first_seat
-        let order = 0
+        const visited = new Set<number>();
+        let i = first_seat;
+        let order = 0;
         const player_positions = Array.from(this.table_seat_to_id.keys());
         while (!(visited.has(i))) {
             visited.add(i)
             if (player_positions.includes(i)) {
-                order += 1
-                let id = this.table_seat_to_id.get(i)!
-                this.id_to_position.set(id, order.toString())
+                order += 1;
+                const id = this.table_seat_to_id.get(i)!;
+                this.id_to_position.set(id, order.toString());
             }
-            i += 1
-            if (i >= 11) {
-                i = 1
+            i += 1;
+            if (i > 10) {
+                i = 1;
             }
         }
     }
@@ -280,8 +281,12 @@ export class Table {
         return "";
     }
 
-    public getIdToSeatNumber(): Map<string, number> {
-        return this.id_to_table_seat
+    public getSeatNumberFromId(player_id: string): number {
+        const seat_number = this.id_to_table_seat.get(player_id);
+        if (seat_number !== undefined) {
+            return seat_number
+        }
+        throw new Error(`Could not retrieve seat number for player with id: ${player_id}.`)
     }
     public setIdToTableSeat(map: Map<string, number>): void {
         this.id_to_table_seat = map;
