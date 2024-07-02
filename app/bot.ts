@@ -3,7 +3,7 @@ import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mj
 
 import { sleep } from './helpers/bot-helper.ts';
 
-import { AIService, BotAction } from './interfaces/ai-client-interfaces.ts';
+import { AIService, BotAction, defaultCheckAction, defaultFoldAction } from './interfaces/ai-client-interfaces.ts';
 import { ProcessedLogs } from './interfaces/log-processing-interfaces.ts';
 
 import { Game } from './models/game.ts';
@@ -280,12 +280,12 @@ export class Bot {
 
     private async queryBotAction(query: string, retries: number, retry_counter: number = 0): Promise<BotAction> {
         if (retry_counter > retries) {
-            const res = await this.puppeteer_service.check();
-            if (res.code === "success") {
-                console.log(`Failed to query bot action, exceeded the retry limit after ${retries} attempts. Defaulted to checking.`);
+            if (await this.isValidBotAction(defaultCheckAction)) {
+                console.log(`Failed to query bot action, exceeded the retry limit after ${retries} attempts. Defaulting to checking.`);
+                return defaultCheckAction;
             } else {
-                await this.puppeteer_service.fold();
-                console.log(`Failed to query bot action, exceeded the retry limit after ${retries} attempts. Defaulted to folding.`);
+                console.log(`Failed to query bot action, exceeded the retry limit after ${retries} attempts. Defaulting to folding.`);
+                return defaultFoldAction;
             }
         }
         try {
