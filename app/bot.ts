@@ -202,7 +202,7 @@ export class Bot {
         }
         
         logResponse(await this.puppeteer_service.waitForHandEnd(), this.debug_mode);
-        console.log("Completed a hand.");
+        console.log("Completed a hand.\n");
     }
 
     private async pullAndProcessLogs(last_created: string, first_fetch: boolean): Promise<ProcessedLogs> {
