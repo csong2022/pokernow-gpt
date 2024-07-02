@@ -1,3 +1,5 @@
+// @ts-ignore
+import { rankBoard } from "phe";
 import { Game } from "../models/game.ts";
 import { PlayerAction } from "../models/player-action.ts";
 import { Table } from "../models/table.ts";
@@ -27,6 +29,7 @@ export function constructQuery(game: Game): string{
     query = query.concat(defineGameState(street, players_in_pot), '\n');
     query = query.concat(defineCommunityCards(street, runout), '\n')
     query = query.concat(defineHand(hero_cards), '\n');
+    query = query.concat(defineRank(runout, hero_cards));
     query = query.concat(defineStacks(player_stacks, player_positions, hero_id), '\n');
     query = query.concat(definePotSize(pot_size), `\n`);
     query = query.concat(defineActions(player_actions, table), '\n');
@@ -57,6 +60,52 @@ function defineCommunityCards(street: string, runout: string): string {
 
 function defineHand(cards: string[]): string {
     return `My hole cards are: ${cards.join(", ")}`;
+}
+
+export function defineRank(runout: string, cards: string[]): string {
+    let query = "The combination of the community cards and hand is: ";
+    cards = cards.concat(convertRunoutToCards(runout));
+    const rank_num = rankBoard(cards.join(" "));
+    switch (rank_num) {
+        case 0:
+            query = query.concat("STRAIGHT_FLUSH");
+            break;
+        case 1:
+            query = query.concat("FOUR_OF_A_KIND");
+            break;
+        case 2:
+            query = query.concat("FULL_HOUSE");
+            break;
+        case 3:
+            query = query.concat("FLUSH");
+            break;
+        case 4:
+            query = query.concat("STRAIGHT");
+            break;
+        case 5:
+            query = query.concat("THREE_OF_A_KIND");
+            break;
+        case 6:
+            query = query.concat("TWO_PAIR");
+            break;
+        case 7:
+            query = query.concat("ONE_PAIR");
+            break;
+        case 8:
+            query = query.concat("HIGH_CARD");
+            break;
+    }
+    return query;
+}
+
+function convertRunoutToCards(runout: string): string[] {
+    const re = RegExp(/([JQKA]|10|[1-9])([shdc])/, 'g');
+    const res = new Array<string>;
+    const matches = [...runout.matchAll(re)];
+    matches.forEach((element) => 
+        res.push(element[1] + element[2])
+    )
+    return res;
 }
 
 function defineStacks(player_stacks: Map<string, number>, player_positions: Map<string, string>, hero_id: string): string {

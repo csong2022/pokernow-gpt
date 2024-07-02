@@ -38,8 +38,8 @@ export function getPlayerStacksMsg(msgs: Array<string>): string {
 
 export function getIdToInitialStackFromMsg(msg: string, stakes: number): Map<string, number>{
     const re = RegExp('\\@\\s([^"]*)\\"\\s\\((\\d+)\\)', 'g');
-    let res = new Map<string, number>;
-    let matches = [...msg.matchAll(re)];
+    const res = new Map<string, number>;
+    const matches = [...msg.matchAll(re)];
     matches.forEach((element) => {
         res.set(element[1], convertToBBs(Number(element[2]), stakes));
     })
@@ -48,8 +48,8 @@ export function getIdToInitialStackFromMsg(msg: string, stakes: number): Map<str
 
 export function getTableSeatToIdFromMsg(msg: string): Map<number, string>{
     const re = RegExp('\\#(\\d+)\\s\\"[^@]+\\@\\s([^"]*)', 'g');
-    let res = new Map<number, string>;
-    let matches = [...msg.matchAll(re)];
+    const res = new Map<number, string>;
+    const matches = [...msg.matchAll(re)];
     matches.forEach((element) => {
         res.set(parseInt(element[1]), element[2]);
     })
@@ -58,8 +58,8 @@ export function getTableSeatToIdFromMsg(msg: string): Map<number, string>{
 
 export function getIdToTableSeatFromMsg(msg: string): Map<string, number>{
     const re = RegExp('\\#(\\d+)\\s\\"[^@]+\\@\\s([^"]*)', 'g');
-    let res = new Map<string, number>;
-    let matches = [...msg.matchAll(re)];
+    const res = new Map<string, number>;
+    const matches = [...msg.matchAll(re)];
     matches.forEach((element) => {
         res.set(element[2], parseInt(element[1]));
     })
@@ -68,8 +68,8 @@ export function getIdToTableSeatFromMsg(msg: string): Map<string, number>{
 
 export function getNameToIdFromMsg(msg: string): Map<string, string>{
     const re = RegExp('\\#\\d+\\s\\"([^@]+)\\s\\@\\s([^"]*)', 'g');
-    let res = new Map<string, string>;
-    let regExps = [...msg.matchAll(re)];
+    const res = new Map<string, string>;
+    const regExps = [...msg.matchAll(re)];
     regExps.forEach((element) => {
         res.set(element[1], element[2]);
         })
@@ -78,8 +78,8 @@ export function getNameToIdFromMsg(msg: string): Map<string, string>{
 
 export function getIdToNameFromMsg(msg: string): Map<string, string>{
     const re = RegExp('\\#\\d+\\s\\"([^@]+)\\s\\@\\s([^"]*)', 'g');
-    let res = new Map<string, string>;
-    let regExps = [...msg.matchAll(re)];
+    const res = new Map<string, string>;
+    const regExps = [...msg.matchAll(re)];
     regExps.forEach((element) => {
         res.set(element[2], element[1]);
         })
@@ -90,7 +90,7 @@ export function getIdToNameFromMsg(msg: string): Map<string, string>{
 //messages that are streets are formatted into [street, runout] and if neither street nor action are ignored
 export function validateMsg(msg: string): Array<string> {
     let w = getFirstWord(msg);
-    let temp = msg.split(": ")[0];
+    const temp = msg.split(": ")[0];
     if (Object.values<string>(Street).includes(temp)) {
         w = w.substring(0, w.length - 1);
         const temp = msg.split(": ");
@@ -108,7 +108,6 @@ export function validateMsg(msg: string): Array<string> {
 export function validateAllMsg(msgs: Array<string>): Array<Array<string>> {
     const res = new Array<Array<string>>
     msgs.forEach((message) => {
-        const first = getFirstWord(message);
         const player = getPlayer(message);
         let first_word = message.split(": ")[0];
         if (Object.values<string>(Street).includes(first_word)) {
