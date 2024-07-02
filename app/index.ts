@@ -1,6 +1,6 @@
 import once from 'events';
 import express from 'express';
-import bot_factory from './bot-factory.ts'
+import bot_manager from './bot-manager.ts'
 import player_router from './routes/player-routes.ts';
 import db_service from './services/db-service.ts';
 
@@ -27,5 +27,5 @@ async function startServer() {
 }
 
 startServer().then(
-    async() => await bot_factory()
+    async() => await bot_manager()
 )

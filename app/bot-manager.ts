@@ -25,7 +25,7 @@ function init(): string {
     return io("Enter the PokerNow game id (ex. https://www.pokernow.club/games/{game_id}): ");
 }
 
-const bot_factory = async function() {
+const bot_manager = async function() {
     const game_id = init();
 
     const puppeteer_service = new PuppeteerService(webdriver_config.default_timeout, webdriver_config.headless_flag);
@@ -49,4 +49,4 @@ const bot_factory = async function() {
     await bot.run();
 }
 
-export default bot_factory;
+export default bot_manager;
