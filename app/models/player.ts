@@ -1,16 +1,16 @@
 import { PlayerStats } from "./player-stats.ts";
 
 export class Player {
-    private name: string;
+    private player_id: string;
     private player_stats: PlayerStats;
 
-    constructor(name: string, player_stats: PlayerStats) {
-        this.name = name;
+    constructor(player_id: string, player_stats: PlayerStats) {
+        this.player_id = player_id;
         this.player_stats = player_stats;
     }
 
-    public getName(): string {
-        return this.name;
+    public getPlayerId(): string {
+        return this.player_id;
     }
 
     public getPlayerStats(): PlayerStats {
@@ -26,8 +26,8 @@ export class Hero extends Player {
     private hand: string[];
     private stack_size: number;
 
-    constructor(name: string, player_stats: PlayerStats, hand: string[], stack_size: number) {
-        super(name, player_stats);
+    constructor(player_id: string, player_stats: PlayerStats, hand: string[], stack_size: number) {
+        super(player_id, player_stats);
         this.hand = hand;
         this.stack_size = stack_size;
     }

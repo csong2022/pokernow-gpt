@@ -1,6 +1,6 @@
 import { Content, GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
 import { AIMessage, AIResponse, AIService, BotAction } from "../../interfaces/ai-client-interfaces.ts";
-import { parseResponse, playstyleToPrompt } from "../../helpers/ai-query-helper.ts";
+import { getPromptFromPlaystyle, parseResponse } from "../../helpers/ai-query-helper.ts";
 
 export class GoogleAIService extends AIService {
     private agent!: GoogleGenerativeAI;
@@ -12,8 +12,13 @@ export class GoogleAIService extends AIService {
     //takes an already created query and passes it into chatGPT if it is the first action,
     //otherwise attaches it to previous queries and feeds the entire conversation into chatGPT
     async query(input: string, prev_messages: AIMessage[]): Promise<AIResponse> {
-        if (prev_messages === undefined || prev_messages.length == 0) {
-            prev_messages = [{text_content: playstyleToPrompt.get("pro")!, metadata: {"role": "user"}}];
+        if (prev_messages.length == 0) {
+            try {
+                const playstyle_prompt = getPromptFromPlaystyle(this.getPlaystyle());
+                prev_messages = [{text_content: playstyle_prompt, metadata: {"role": "user"}}];
+            } catch (err) {
+                console.log(err);
+            }
         }
 
         console.log("prev_messages:", prev_messages);

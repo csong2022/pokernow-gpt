@@ -24,7 +24,7 @@ export class DBService {
         try {
             await this.db.exec(`
                 CREATE TABLE IF NOT EXISTS PlayerStats (
-                    id TEXT PRIMARY KEY NOT NULL,
+                    name TEXT PRIMARY KEY NOT NULL,
                     total_hands INT NOT NULL,
                     walks INT NOT NULL,
                     vpip_hands INT NOT NULL,
