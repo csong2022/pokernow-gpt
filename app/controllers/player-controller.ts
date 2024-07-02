@@ -5,18 +5,18 @@ const player_service = new PlayerService(db_service);
 
 export async function get(req: any, res: any, next: any) {
     try {
-        res.json(await player_service.get(req.query.id));
+        res.json(await player_service.get(req.query.name));
     } catch (err) {
-        console.error('Error while getting player', err.message);
+        console.error(`Error while getting player with name ${req.query.name}`, err.message);
         next(err);
     }
 }
 
 export async function remove(req: any, res: any, next: any) {
     try {
-        res.json(await player_service.remove(req.params.id));
+        res.json(await player_service.remove(req.params.name));
     }  catch (err) {
-        console.error('Error while deleting player', err.message);
+        console.error(`Error while deleting player with name ${req.params.name}`, err.message);
         next(err);
     }
 }
