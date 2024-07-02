@@ -79,7 +79,7 @@ As ChatGPT and Large Language Models get better over time, we can and should exp
    ```
 4. Create a .env file and enter your API Key
    ```js
-   const OPENAI_API_KEY = 'YOUR API KEY';
+   OPENAI_API_KEY = 'YOUR API KEY';
    ```
 5. Run the app
    ```sh
