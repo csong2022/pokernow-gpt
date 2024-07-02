@@ -1,9 +1,5 @@
-import { queryObjects } from "v8";
-
-import { parseResponse } from "../../app/helpers/ai-query-helper.ts";
-
 import { Game } from "../../app/models/game.ts";
-import { Hero, Player } from "../../app/models/player.ts";
+import { Hero } from "../../app/models/player.ts";
 import { PlayerStats } from "../../app/models/player-stats.ts";
 import { Table } from "../../app/models/table.ts";
 
@@ -12,11 +8,9 @@ import { LogService } from "../../app/services/log-service.ts"
 import { OpenAIService } from '../../app/services/ai/openai-service.ts';
 import { PlayerService } from "../../app/services/player-service.ts";
 
-import { Queue } from "../../app/utils/data-structures.ts";
 import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-utils.ts';
 import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from "../../app/utils/log-processing-utils.ts";
 import { validateAllMsg } from "../../app/utils/message-processing-utils.ts";
-import { convertToValue } from "../../app/utils/value-conversion-utils.ts";
 
 describe('query service test', async () => {
     it("should properly get logs and filter through them", async() => {
@@ -27,8 +21,8 @@ describe('query service test', async () => {
         await db_service.init();
         const player_service = new PlayerService(db_service);
 
-        const openai_service = new OpenAIService(process.env.OPENAI_API_KEY!, "gpt-3.5-turbo");
-        await openai_service.init();
+        const openai_service = new OpenAIService(process.env.OPENAI_API_KEY!, "gpt-3.5-turbo", "pro");
+        openai_service.init();
 
         const log = await log_service.fetchData("", "");
         if (log.code === SUCCESS_RESPONSE) {
@@ -78,31 +72,8 @@ describe('query service test', async () => {
       'SB: VPIP: 85.71428571428571, PFR: 0\n' +
       'BB: VPIP: 0, PFR: 0\n' +
       'Please respond in this format: {action,bet_size_in_BBs}';
-            
-            //let query = "hi my name is bob"
-
-            console.log(process.env["OPENAI_API_KEY"]);
-            console.log("query", query)
-            /* let GPTResponse = await openai_service.query(query, []);
-            const resp = GPTResponse.choices;
-            const messages = GPTResponse.prevMessages;
-            console.log("response", resp)
-            const message_content = resp!.message.content;
-            console.log("content", message_content)
-            console.log("messages", messages)
-            const bot_action = parseResponse(message_content!);
-            console.log("action str:", bot_action.action_str);
-            console.log("bet size:", bot_action.bet_size_in_BBs); */
-            /* messages.push(resp!.message)
-            console.log("messages after push", messages)
-            let query1 = "do you remember my name?"
-
-            console.log("query1", query1)
-            let [resp1, messages1] = await queryGPT(query1, messages)
-            console.log("resp1", resp1)
-            console.log("messages1", messages1) */
-
         }
+
         if (log.code === ERROR_RESPONSE) {
             console.log('error', log.error);
         }
