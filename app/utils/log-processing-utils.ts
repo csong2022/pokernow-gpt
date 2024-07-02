@@ -19,11 +19,11 @@ export enum Street {
     RIVER = "River",
 }
 
-export const letterToSuit: Map<string, string> = new Map<string, string>([
-    ["s", "♠"],
-    ["h", "♥"],
-    ["d", "♦"],
-    ["c", "♣"]
+export const suitToLetter: Map<string, string> = new Map<string, string>([
+    ["♠", "s"],
+    ["♥", "h"],
+    ["♦", "d"],
+    ["♣", "c"]
 ]);
 
 export function preProcessLogs(logs: Array<Array<string>>, game: Game) {
