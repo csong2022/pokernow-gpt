@@ -12,10 +12,12 @@ export interface AIResponse {
 export abstract class AIService {
     private api_key: string;
     private model_name: string;
+    private playstyle: string;
 
-    constructor(api_key: string, model: string) {
+    constructor(api_key: string, model: string, playstyle: string) {
         this.api_key = api_key;
         this.model_name = model;
+        this.playstyle = playstyle;
     }
 
     abstract init(): void;
@@ -28,6 +30,10 @@ export abstract class AIService {
 
     getModelName(): string {
         return this.model_name;
+    }
+
+    getPlaystyle(): string {
+        return this.playstyle;
     }
 }
 

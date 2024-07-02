@@ -1,11 +1,19 @@
 import { BotAction } from "../interfaces/ai-client-interfaces.ts";
 
 export const playstyleToPrompt: Map<string, string> = new Map<string, string>([
-    ["pro", "You are an experienced poker player, play strong ranges preflop and play aggressively postflop."],
-    ["aggressive", "You are an experienced poker player, skilled at exploiting your opponents by making aggressive plays."],
-    ["passive", "You are an experienced poker player with a passive and tight playstyle."],
-    ["balanced", "You are an experienced poker player, skilled at both being passive and aggressive with your actions."]
+    ["pro", "You are a pro poker player who plays strong ranges preflop and plays aggressively postflop."],
+    ["aggressive", "You are an experienced poker player who plays aggressively like a maniac."],
+    ["passive", "You are an experienced poker player who plays passively like a nit."],
+    ["neutral", "You are an experienced poker player."]
 ]);
+
+export function getPromptFromPlaystyle(playstyle: string) {
+    const prompt = playstyleToPrompt.get(playstyle);
+    if (prompt !== undefined) {
+        return prompt;
+    }
+    throw new Error("Invalid playstyle, could not get playstyle prompt.");
+}
 
 export function parseResponse(msg: string): BotAction {
     msg = processOutput(msg);

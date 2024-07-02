@@ -12,7 +12,7 @@ export class AIServiceFactory {
         ]);
     }
 
-    createAIService(provider: string, model_name: string): AIService {
+    createAIService(provider: string, model_name: string, playstyle: string = "neutral"): AIService {
         if (!(this.supportedModels.has(provider) && this.supportedModels.get(provider)!.includes(model_name))) {
             throw new Error("AI provider or model not supported, please check the list of supported models.")
         }
@@ -22,13 +22,13 @@ export class AIServiceFactory {
                 if (!openai_auth_key) {
                     throw new Error(`Invalid ${provider} auth key.`);
                 }
-                return new OpenAIService(openai_auth_key, model_name);
+                return new OpenAIService(openai_auth_key, model_name, playstyle);
             case ("Google"):
                 const googleai_auth_key = process.env.GOOGLEAI_API_KEY;
                 if (!googleai_auth_key) {
                     throw new Error (`Invalid ${provider} auth key.`);
                 }
-                return new GoogleAIService(googleai_auth_key, model_name);
+                return new GoogleAIService(googleai_auth_key, model_name, playstyle);
         }
         throw new Error("Failed to create AI service.");
     }
