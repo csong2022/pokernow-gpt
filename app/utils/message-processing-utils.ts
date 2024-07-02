@@ -76,6 +76,16 @@ export function getNameToIdFromMsg(msg: string): Map<string, string>{
     return res;
 }
 
+export function getIdToNameFromMsg(msg: string): Map<string, string>{
+    const re = RegExp('\\#\\d+\\s\\"([^@]+)\\s\\@\\s([^"]*)', 'g');
+    let res = new Map<string, string>;
+    let regExps = [...msg.matchAll(re)];
+    regExps.forEach((element) => {
+        res.set(element[2], element[1]);
+        })
+    return res;
+}
+
 //takes an unformatted action string and turns it into [id, name, action, msg, bet amount] format
 //messages that are streets are formatted into [street, runout] and if neither street nor action are ignored
 export function validateMsg(msg: string): Array<string> {

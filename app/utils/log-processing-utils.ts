@@ -88,7 +88,7 @@ export async function postProcessLogsAfterHand(logs: Array<Array<string>>, game:
     if (action_count == 0) {
         const player_ids_arr = Array.from(table.getIdToActionNum().keys());
         player_ids_arr.forEach(player_id => {
-            const player_stats = table.getPlayerStatsFromId(player_id);
+            const player_stats = table.getPlayerStatsFromName(table.getNameFromId(player_id));
             player_stats.incrementWalks();
         })
     }

@@ -17,7 +17,7 @@ import { constructQuery } from './helpers/construct-query-helper.ts';
 
 import { DebugMode, logResponse } from './utils/error-handling-utils.ts';
 import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from './utils/log-processing-utils.ts';
-import { getIdToInitialStackFromMsg, getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './utils/message-processing-utils.ts';
+import { getIdToInitialStackFromMsg, getIdToNameFromMsg, getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './utils/message-processing-utils.ts';
 import { convertToBBs, convertToValue } from './utils/value-conversion-utils.ts'
 
 export class Bot {
@@ -229,6 +229,9 @@ export class Bot {
                 let id_to_seat_map = getIdToTableSeatFromMsg(stack_msg);
                 this.table.setIdToTableSeat(id_to_seat_map);
                 
+                let id_to_name_map = getIdToNameFromMsg(stack_msg);
+                this.table.setIdToName(id_to_name_map);
+
                 let name_to_id_map = getNameToIdFromMsg(stack_msg);
                 this.table.setNameToId(name_to_id_map);
 
@@ -286,7 +289,7 @@ export class Bot {
     private async updateHero(hand: string[], stack_size: number): Promise<void> {
         const hero = this.game.getHero();
         if (!hero) {
-            this.game.createAndSetHero(this.bot_name, hand, stack_size);
+            this.game.createAndSetHero(this.table.getIdFromName(this.bot_name), hand, stack_size);
         } else {
             hero.setHand(hand);
             hero.setStackSize(stack_size);

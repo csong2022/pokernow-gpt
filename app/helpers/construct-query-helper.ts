@@ -9,8 +9,8 @@ export function constructQuery(game: Game): string{
     const street = table.getStreet();
     const runout = table.getRunout();
 
-    const hero_name = game.getHero()!.getName();
-    const hero_id = table.getIdFromName(hero_name);
+    const hero_id = game.getHero()!.getPlayerId();
+    const hero_name = table.getNameFromId(hero_id);
     const hero_stack = game.getHero()!.getStackSize();
     const hero_position = table.getPlayerPositionFromId(hero_id);
     const hero_cards = game.getHero()!.getHand();
@@ -30,7 +30,7 @@ export function constructQuery(game: Game): string{
     query = query.concat(defineStacks(player_stacks, player_positions), '\n');
     query = query.concat(definePotSize(pot_size), `\n`);
     query = query.concat(defineActions(player_actions, table), '\n');
-    query = query.concat(defineStats(player_positions, table, hero_id), '\n');
+    query = query.concat(defineStats(player_positions, table, hero_name), '\n');
     query = query.concat(defineOutput());
 
     return query;
@@ -92,16 +92,17 @@ function defineActions(player_actions: Array<PlayerAction>, table: Table): strin
     return query
 }
 
-function defineStats(player_positions: Map<string, string>, table: Table, hero_id: string): string {
+function defineStats(player_positions: Map<string, string>, table: Table, hero_name: string): string {
     let query = "Here are the stats of players in the pot, defined in the format {position: Total Hands Played = total_hands, VPIP = vpip_stat, PFR = pfr_stat}:\n"
     let player_ids = Array.from(player_positions.keys());
 
     for (var i = 0; i < player_ids.length; i++)  {
         const player_id = player_ids[i];
-        if (player_id === hero_id) {
+        const player_name = table.getNameFromId(player_id);
+        if (player_name === hero_name) {
             continue;
         }
-        const player_stats = table.getPlayerStatsFromId(player_id);
+        const player_stats = table.getPlayerStatsFromName(player_name);
         const player_pos = table.getPlayerPositionFromId(player_id);
         let curr = `{${player_pos}: Total Hands Played = ${player_stats.getTotalHands()}, VPIP = ${player_stats.computeVPIPStat().toFixed(2)}, PFR = ${player_stats.computePFRStat().toFixed(2)}}`;
         if (i != player_ids.length - 1) {
