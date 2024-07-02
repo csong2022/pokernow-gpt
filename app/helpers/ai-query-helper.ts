@@ -4,7 +4,7 @@ export const playstyleToPrompt: Map<string, string> = new Map<string, string>([
     ["pro", "You are a pro poker player who plays strong ranges preflop and plays aggressively postflop."],
     ["aggressive", "You are an experienced poker player who plays aggressively like a maniac."],
     ["passive", "You are an experienced poker player who plays passively like a nit."],
-    ["neutral", "You are an experienced poker player."]
+    ["neutral", "You are an experienced poker player who plays strong ranges preflop, has a balanced playstyle, and calls all-ins when you have a strong hand"]
 ]);
 
 export function getPromptFromPlaystyle(playstyle: string) {
