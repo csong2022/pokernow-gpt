@@ -144,11 +144,11 @@ export class Bot {
             console.log("Checking for bot's turn or winner of hand.");
 
             res = await this.puppeteer_service.waitForBotTurnOrWinner(this.table.getNumPlayers(), this.game.getMaxTurnLength());
-
             if (res.code == "success") {
                 const data = res.data as string;
                 if (data.includes("action-signal")) {
                     try {
+                        await sleep(2000);
                         processed_logs = await this.pullAndProcessLogs(processed_logs.last_created, processed_logs.first_fetch);
                     } catch (err) {
                         console.log("Failed to pull logs.");
@@ -189,11 +189,14 @@ export class Bot {
         }
 
         try {
+            //TODO: when running multiple bots, ensure that only one bot is trying to process players at end of hand
+            //only one bot should have the magic hat at any given time
+            //pulling logs fails when multiple bots try to pull the logs at the same time
             processed_logs = await this.pullAndProcessLogs(this.first_created, processed_logs.first_fetch);
             await postProcessLogsAfterHand(processed_logs.valid_msgs, this.game);
             await this.table.processPlayers();
         } catch (err) {
-            console.log("Failed to process players.");
+            console.log("Failed to process players:", err);
         }
         
         logResponse(await this.puppeteer_service.waitForHandEnd(), this.debug_mode);
@@ -233,8 +236,8 @@ export class Bot {
             let only_valid = validateAllMsg(msg);
     
             preProcessLogs(only_valid, this.game);
-            let first_seat_number = this.table.getIdToSeatNumber()!.get(this.table.getFirstSeatOrderId())!;
-            this.table.setIdToPosition(first_seat_number)
+            let first_seat_number = this.table.getSeatNumberFromId(this.table.getFirstSeatOrderId());
+            this.table.setIdToPosition(first_seat_number);
             this.table.convertAllOrdersToPosition();
 
             last_created = this.log_service.getFirst(this.log_service.getCreatedAt(data));
