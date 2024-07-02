@@ -1,5 +1,5 @@
 export class PlayerStats {
-    private id: string;
+    private player_name: string;
     private total_hands: number;
     private walks: number;
     private vpip_hands: number;
@@ -7,8 +7,8 @@ export class PlayerStats {
 
     //TODO: player stats should use name not id
     //should have separate table mapping name to id in db that updates everytime new id is detected for particular name
-    constructor(id: string, player_JSON?: any) {
-        this.id = id;
+    constructor(player_name: string, player_JSON?: any) {
+        this.player_name = player_name;
         if (player_JSON) {
             this.total_hands = player_JSON.total_hands;
             this.walks = player_JSON.walks;
@@ -22,8 +22,8 @@ export class PlayerStats {
         }
     }
 
-    public getId(): string {
-        return this.id;
+    public getName(): string {
+        return this.player_name;
     }
     
     public getTotalHands(): number {
@@ -74,7 +74,7 @@ export class PlayerStats {
 
     public toJSON(): any {
         return {
-            "id": this.id,
+            "name": this.player_name,
             "total_hands": this.total_hands,
             "walks": this.walks,
             "vpip_hands": this.vpip_hands,
