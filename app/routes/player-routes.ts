@@ -5,6 +5,6 @@ const router = express.Router();
 
 router.get('/', player_controller.get);
 
-router.delete('/:id', player_controller.remove);
+router.delete('/:name', player_controller.remove);
 
 export default router;

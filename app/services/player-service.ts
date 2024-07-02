@@ -8,12 +8,12 @@ export class PlayerService {
         this.db_service = db_service;
     }
 
-    async get(player_id: string): Promise<string> {
+    async get(player_name: string): Promise<string> {
         const rows = await this.db_service.query(
             `SELECT *
              FROM PlayerStats
-             WHERE id = ?`,
-             [player_id]
+             WHERE name = ?`,
+             [player_name]
         )
         return emptyOrSingleRow(rows);
     }
@@ -21,11 +21,11 @@ export class PlayerService {
     async create(player_stats_JSON: any): Promise<void> {
         await this.db_service.query(
             `INSERT INTO PlayerStats
-             (id, total_hands, walks, vpip_hands, pfr_hands)
+             (name, total_hands, walks, vpip_hands, pfr_hands)
              VALUES
              (?, ?, ?, ?, ?)`,
              [
-                player_stats_JSON.id, 
+                player_stats_JSON.name, 
                 player_stats_JSON.total_hands, 
                 player_stats_JSON.walks, 
                 player_stats_JSON.vpip_hands,
@@ -34,7 +34,7 @@ export class PlayerService {
         )
     }
     
-    async update(player_id: string, player_stats_JSON: any): Promise<void> {
+    async update(player_name: string, player_stats_JSON: any): Promise<void> {
         await this.db_service.query(
             `UPDATE PlayerStats
              SET 
@@ -42,22 +42,22 @@ export class PlayerService {
                 walks = ?,
                 vpip_hands = ?,
                 pfr_hands = ?
-             WHERE id = ?`,
+             WHERE name = ?`,
              [
                 player_stats_JSON.total_hands, 
                 player_stats_JSON.walks, 
                 player_stats_JSON.vpip_hands,
                 player_stats_JSON.pfr_hands,
-                player_id
+                player_name
             ]
         )
     }
     
-    async remove(player_id: string): Promise<void>{
+    async remove(player_name: string): Promise<void>{
         await this.db_service.query(
             `DELETE FROM PlayerStats
-             WHERE id = ?`,
-             [player_id]
+             WHERE name = ?`,
+             [player_name]
         )
     }
 }
