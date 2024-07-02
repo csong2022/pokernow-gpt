@@ -103,6 +103,7 @@ export class PuppeteerService {
             }
         }
         try {
+            await this.page.waitForSelector(".table-player-seat-button", {timeout: this.default_timeout * 4});
             await this.page.$eval(".table-player-seat-button", (button: any) => button.click());
         } catch (err) {
             return {
