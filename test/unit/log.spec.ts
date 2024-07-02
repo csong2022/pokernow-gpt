@@ -12,7 +12,7 @@ import { Game } from "../../app/models/game.ts";
 
 describe('log service test', async () => {
     it("should properly get logs and filter through them", async() => {
-        const log_service = new LogService("pglrRhwA65bP08G-KFoygFwoC");
+        const log_service = new LogService("pglwmlKkOFo27_NuNANl_6Du2");
         await log_service.init();
 
         const db_service = new DBService("./pokernow-gpt-test.db");
@@ -21,7 +21,6 @@ describe('log service test', async () => {
 
         const log = await log_service.fetchData("", "")
         if (log.code === SUCCESS_RESPONSE) {
-            //console.log('success', log.data)
             const res1 = log_service.getMsg(log_service.getData(log));
             console.log("all messages", res1);
 
@@ -43,10 +42,11 @@ describe('log service test', async () => {
             const id_to_table_seat = getIdToTableSeatFromMsg(player_stack_msg);
             console.log("id_to_table_seat", id_to_table_seat);
 
-            const g = new Game("11", new Table(player_service), 10, 5, "NLH", 30);
             const t = new Table(player_service);
+            const g = new Game("11", t, 20, 10, "NLH", 30);
             t.nextHand();
             t.setTableSeatToId(table_seats);
+            console.log("preprocessing logs");
             preProcessLogs(pruneres, g);
             const get_first = t.getFirstSeatOrderId();
             console.log("get_first", get_first);

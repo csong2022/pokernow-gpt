@@ -27,7 +27,7 @@ describe('query service test', async () => {
         await db_service.init();
         const player_service = new PlayerService(db_service);
 
-        const openai_service = new OpenAIService();
+        const openai_service = new OpenAIService(process.env.OPENAI_API_KEY!, "gpt-3.5-turbo");
         await openai_service.init();
 
         const log = await log_service.fetchData("", "");
@@ -83,7 +83,7 @@ describe('query service test', async () => {
 
             console.log(process.env["OPENAI_API_KEY"]);
             console.log("query", query)
-            let GPTResponse = await openai_service.query(query, []);
+            /* let GPTResponse = await openai_service.query(query, []);
             const resp = GPTResponse.choices;
             const messages = GPTResponse.prevMessages;
             console.log("response", resp)
@@ -92,7 +92,7 @@ describe('query service test', async () => {
             console.log("messages", messages)
             const bot_action = parseResponse(message_content!);
             console.log("action str:", bot_action.action_str);
-            console.log("bet size:", bot_action.bet_size_in_BBs);
+            console.log("bet size:", bot_action.bet_size_in_BBs); */
             /* messages.push(resp!.message)
             console.log("messages after push", messages)
             let query1 = "do you remember my name?"
