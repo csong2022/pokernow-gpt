@@ -3,7 +3,6 @@ import { rankBoard } from "phe";
 import { Game } from "../models/game.ts";
 import { PlayerAction } from "../models/player-action.ts";
 import { Table } from "../models/table.ts";
-import { suitToLetter } from "../utils/log-processing-utils.ts";
 
 export function constructQuery(game: Game): string{
     const table = game.getTable();
@@ -29,7 +28,8 @@ export function constructQuery(game: Game): string{
     query = query.concat(defineGameState(street, players_in_pot), '\n');
     query = query.concat(defineCommunityCards(street, runout), '\n')
     query = query.concat(defineHand(hero_cards), '\n');
-    query = query.concat(defineRank(runout, hero_cards));
+    const rank_query = defineRank(street, runout, hero_cards);
+    query = query.concat(rank_query ? rank_query + '\n' : '');
     query = query.concat(defineStacks(player_stacks, player_positions, hero_id), '\n');
     query = query.concat(definePotSize(pot_size), `\n`);
     query = query.concat(defineActions(player_actions, table), '\n');
@@ -50,7 +50,6 @@ function defineGameState(street: string, players_in_pot: number): string {
 function defineCommunityCards(street: string, runout: string): string {
     let query;
     if (street && runout) {
-        runout = Array.from(suitToLetter.entries()).reduce((prev, entry) => prev.replaceAll(...entry), runout);
         query = `The current community cards are: ${runout}`;
     } else {
         query = "There are currently no community cards showing."
@@ -58,13 +57,16 @@ function defineCommunityCards(street: string, runout: string): string {
     return query;
 }
 
-function defineHand(cards: string[]): string {
-    return `My hole cards are: ${cards.join(", ")}`;
+function defineHand(hero_cards: string[]): string {
+    return `My hole cards are: ${hero_cards.join(", ")}`;
 }
 
-export function defineRank(runout: string, cards: string[]): string {
+function defineRank(street: string, runout: string, hero_cards: string[]): string {
+    if (!street) {
+        return '';
+    }
     let query = "The combination of the community cards and hand is: ";
-    cards = cards.concat(convertRunoutToCards(runout));
+    const cards = hero_cards.concat(convertRunoutToCards(runout));
     const rank_num = rankBoard(cards.join(" "));
     switch (rank_num) {
         case 0:

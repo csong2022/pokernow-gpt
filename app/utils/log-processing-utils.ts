@@ -56,7 +56,7 @@ export async function postProcessLogs(logs_queue: Queue<Array<string>>, game: Ga
                 const street = log[0];
                 const runout = log[1];
                 table.setStreet(street.toLowerCase());
-                table.setRunout(runout);
+                table.setRunout(Array.from(suitToLetter.entries()).reduce((prev, entry) => prev.replaceAll(...entry), runout));
             }
         }
     }
