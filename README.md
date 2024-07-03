@@ -96,7 +96,7 @@ As ChatGPT and LLMs/generative models as a whole improve over time, we can and s
    ```sh
    npx tsx app/index.ts
    ```
-7. Follow the command line prompts to join an existing PokerNow game as a player. (ensure that the game is already setup with another player being the host)
+7. Follow the command line prompts to join an existing PokerNow game as a player. (ensure that the game is already setup with another player being the host, you can start a new game by going to https://www.pokernow.club/start-game)
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- SUPPORTED MODELS -->
