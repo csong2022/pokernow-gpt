@@ -1,12 +1,24 @@
-import { Content, GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
+import { Content, GenerativeModel, GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
 import { AIMessage, AIResponse, AIService, BotAction } from "../../interfaces/ai-client-interfaces.ts";
 import { getPromptFromPlaystyle, parseResponse } from "../../helpers/ai-query-helper.ts";
 
 export class GoogleAIService extends AIService {
     private agent!: GoogleGenerativeAI;
+    private model!: GenerativeModel;
 
     init(): void {
         this.agent = new GoogleGenerativeAI(this.getAPIKey());
+
+        const safetySettings = [
+            { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE }
+        ]
+        this.model = this.agent.getGenerativeModel({ 
+            model: this.getModelName(),
+            safetySettings
+        });
     }
     
     //takes an already created query and passes it into chatGPT if it is the first action,
@@ -25,18 +37,7 @@ export class GoogleAIService extends AIService {
         console.log("input:", input)
         const processed_messages = this.processMessages(prev_messages);
 
-        const safetySettings = [
-            { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-            { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-            { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-            { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE }
-        ]
-        const model = this.agent.getGenerativeModel({ 
-            model: this.getModelName(),
-            safetySettings
-        });
-
-        const chat = model.startChat({
+        const chat = this.model.startChat({
             history: processed_messages
         })
 
