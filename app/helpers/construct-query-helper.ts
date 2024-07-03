@@ -61,12 +61,12 @@ function defineHand(hero_cards: string[]): string {
     return `My hole cards are: ${hero_cards.join(", ")}`;
 }
 
-function defineRank(street: string, runout: string, hero_cards: string[]): string {
+export function defineRank(street: string, runout: string, hero_cards: string[]): string {
     if (!street) {
         return '';
     }
     let query = "The combination of the community cards and hand is: ";
-    const cards = hero_cards.concat(convertRunoutToCards(runout));
+    const cards = replaceTenWithLetter(hero_cards.concat(convertRunoutToCards(runout)));
     const rank_num = rankBoard(cards.join(" "));
     switch (rank_num) {
         case 0:
@@ -104,10 +104,21 @@ function convertRunoutToCards(runout: string): string[] {
     const re = RegExp(/([JQKA]|10|[1-9])([shdc])/, 'g');
     const res = new Array<string>;
     const matches = [...runout.matchAll(re)];
-    matches.forEach((element) => 
-        res.push(element[1] + element[2])
-    )
+    matches.forEach((element) => {
+        const value = element[1];
+        const suit = element[2];
+        res.push(value + suit);
+    });
     return res;
+}
+
+function replaceTenWithLetter(cards: string[]): string[] {
+    return cards.map((card) => {
+        if (card.length === 3) {
+            return 'T' + card[2];
+        }
+        return card;
+    });
 }
 
 function defineStacks(player_stacks: Map<string, number>, player_positions: Map<string, string>, hero_id: string): string {
