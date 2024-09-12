@@ -9,11 +9,11 @@ import webdriver_config_json from './configs/webdriver-config.json';
 
 import { DBService } from './services/db-service.ts';
 import { LogService } from './services/log-service.ts';
-import { PlayerService } from './services/player-service.ts';
+import { PlayerService } from './services/api/playerapi-service.ts';
 import { PuppeteerService } from './services/puppeteer-service.ts';
 
 import { AIConfig, BotConfig, WebDriverConfig } from './interfaces/config-interfaces.ts';
-import { AIServiceFactory } from './helpers/ai-service-factory.ts';
+import { AIServiceFactory } from './helpers/aiservice-factory.ts';
 
 const io = prompt();
 const ai_config: AIConfig = ai_config_json;

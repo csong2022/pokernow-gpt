@@ -1,13 +1,13 @@
 import { Table } from "../../app/models/table.ts";
 
 import { DBService } from '../../app/services/db-service.ts';
-import { PlayerService } from '../../app/services/player-service.ts';
+import { PlayerService } from '../../app/services/api/playerapi-service.ts';
 
-import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-utils.ts';
+import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/errorhandling-utils.ts';
 import { LogService } from '../../app/services/log-service.ts';
 
-import { postProcessLogsAfterHand, preProcessLogs } from "../../app/utils/log-processing-utils.ts";
-import { validateAllMsg, getIdToInitialStackFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, getNameToIdFromMsg, getIdToTableSeatFromMsg } from "../../app/utils/message-processing-utils.ts";
+import { postProcessLogsAfterHand, preProcessLogs } from "../../app/utils/logprocessing-utils.ts";
+import { validateAllMsg, getIdToInitialStackFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, getNameToIdFromMsg, getIdToTableSeatFromMsg } from "../../app/utils/messageprocessing-utils.ts";
 import { Game } from "../../app/models/game.ts";
 
 describe('log service test', async () => {

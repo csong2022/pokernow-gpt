@@ -10,15 +10,15 @@ import { Game } from './models/game.ts';
 import { Table } from './models/table.ts';
 
 import { LogService } from './services/log-service.ts';
-import { PlayerService } from './services/player-service.ts';
+import { PlayerService } from './services/api/playerapi-service.ts';
 import { PuppeteerService } from './services/puppeteer-service.ts';
 
-import { constructQuery } from './helpers/construct-query-helper.ts';
+import { constructQuery } from './helpers/constructquery-helper.ts';
 
-import { DebugMode, logResponse } from './utils/error-handling-utils.ts';
-import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from './utils/log-processing-utils.ts';
-import { getIdToInitialStackFromMsg, getIdToNameFromMsg, getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './utils/message-processing-utils.ts';
-import { convertToBBs, convertToValue } from './utils/value-conversion-utils.ts'
+import { DebugMode, logResponse } from './utils/errorhandling-utils.ts';
+import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from './utils/logprocessing-utils.ts';
+import { getIdToInitialStackFromMsg, getIdToNameFromMsg, getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './utils/messageprocessing-utils.ts';
+import { convertToBBs, convertToValue } from './utils/valueconversion-utils.ts'
 
 export class Bot {
     private log_service: LogService;

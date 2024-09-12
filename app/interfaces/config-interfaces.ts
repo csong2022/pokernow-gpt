@@ -1,4 +1,4 @@
-import { DebugMode } from "../utils/error-handling-utils.ts"
+import { DebugMode } from "../utils/errorhandling-utils.ts"
 
 export interface AIConfig {
     provider: string,

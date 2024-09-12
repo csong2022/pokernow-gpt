@@ -2,7 +2,7 @@ import puppeteer from 'puppeteer';
 
 import { computeTimeout, sleep } from '../helpers/bot-helper.ts';
 
-import type { Response } from '../utils/error-handling-utils.ts';
+import type { Response } from '../utils/errorhandling-utils.ts';
 
 interface GameInfo {
     game_type: string,
@@ -201,7 +201,6 @@ export class PuppeteerService {
                 error: new Error("Failed to compute number of players in table.") as E
             }
         }
-    
     }
     
     // wait for bot's turn or winner of hand has been determined
