@@ -47,7 +47,7 @@ export class PuppeteerService {
         return {
             code: "success",
             data: null as D,
-            msg: `Successfully opened PokerNow game with id ${game_id}.`
+            msg: `Successfully opened PokerNow game with id: ${game_id}.`
         }
     }
     

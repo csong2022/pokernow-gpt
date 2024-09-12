@@ -6,7 +6,7 @@ import { Table } from "../../app/models/table.ts";
 import { DBService } from "../../app/services/db-service.ts";
 import { LogService } from "../../app/services/log-service.ts"
 import { OpenAIService } from '../../app/services/ai/openai-service.ts';
-import { PlayerService } from "../../app/services/api/playerapi-service.ts";
+import { PlayerAPIService } from "../../app/services/api/playerapi-service.ts";
 
 import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/errorhandling-utils.ts';
 import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from "../../app/utils/logprocessing-utils.ts";
@@ -20,7 +20,7 @@ describe('query service test', async () => {
 
         const db_service = new DBService("./pokernow-gpt-test.db");
         await db_service.init();
-        const player_service = new PlayerService(db_service);
+        const player_service = new PlayerAPIService(db_service);
 
         const openai_service = new OpenAIService(process.env.OPENAI_API_KEY!, "gpt-3.5-turbo", "pro");
         openai_service.init();

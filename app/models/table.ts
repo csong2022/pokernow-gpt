@@ -2,13 +2,13 @@ import { Player } from "./player.ts"
 import { PlayerAction } from "./playeraction.ts";
 import { PlayerStats } from "./playerstats.ts";
 
-import { PlayerService } from "../services/api/playerapi-service.ts";
+import { PlayerAPIService } from "../services/api/playerapi-service.ts";
 
 import { Queue } from "../utils/datastructures.ts"
 import { getPlayerStacksMsg, getIdToInitialStackFromMsg as getPlayerInitialStacksFromMsg } from "../utils/messageprocessing-utils.ts";
 
 export class Table {
-    private player_service: PlayerService;
+    private player_service: PlayerAPIService;
 
     private num_players: number;
     private players_in_pot: number;
@@ -32,7 +32,7 @@ export class Table {
     private first_seat_order_id: string;
     
 
-    constructor(player_service: PlayerService) {
+    constructor(player_service: PlayerAPIService) {
         this.player_service = player_service;
 
         this.num_players = 0;
