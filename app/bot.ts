@@ -58,12 +58,18 @@ export class Bot {
         this.hand_history = [];
     }
 
+    //TODO:
+    //---
+    //stop SIGNAL/clean up
+    //report bot status
+    //rebuys
+
     public async run() {
         await this.openGame();
         await this.enterTableInProgress();
         // retrieve initial num players
         await this.updateNumPlayers();
-        //TODO: implement loop until STOP SIGNAL (perhaps from UI?)
+        
         while (true) {
             await this.waitForNextHand();
             await this.updateNumPlayers();
@@ -192,8 +198,10 @@ export class Bot {
 
         try {
             //TODO: when running multiple bots, ensure that only one bot is trying to process players at end of hand
-            //only one bot should have the magic hat at any given time
-            //pulling logs fails when multiple bots try to pull the logs at the same time
+            //PROBLEM: multiple child processes will try to emit the same event, but we only want the bot manager to consume each event once (per hand)
+            //IDEA: have bot manager and individual bots keep track of the current hand number, use this to process logs once per hand end and update the hand number afterwards
+            //ex. all child processes report that the hand number is "i" and the bot manager consumes this hand end event for "i" only once then updates the hand number and broadcasts this update to all active child processes
+            //q: is any of this data relative to the current bot or is it generalized for all bots (issues arise if the former is true...)
             processed_logs = await this.pullAndProcessLogs(this.first_created, processed_logs.first_fetch);
             await postProcessLogsAfterHand(processed_logs.valid_msgs, this.game);
             await this.table.processPlayers();
