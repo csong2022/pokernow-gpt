@@ -10,7 +10,7 @@ import { Game } from './models/game.ts';
 import { Table } from './models/table.ts';
 
 import { LogService } from './services/log-service.ts';
-import { PlayerService } from './services/api/playerapi-service.ts';
+import { PlayerAPIService } from './services/api/playerapi-service.ts';
 import { PuppeteerService } from './services/puppeteer-service.ts';
 
 import { constructQuery } from './helpers/constructquery-helper.ts';
@@ -23,7 +23,7 @@ import { convertToBBs, convertToValue } from './utils/valueconversion-utils.ts'
 export class Bot {
     private log_service: LogService;
     private ai_service: AIService;
-    private player_service: PlayerService;
+    private player_service: PlayerAPIService;
     private puppeteer_service: PuppeteerService;
 
     private game_id: string;
@@ -39,7 +39,7 @@ export class Bot {
 
     constructor(log_service: LogService, 
                 ai_service: AIService,
-                player_service: PlayerService,
+                player_service: PlayerAPIService,
                 puppeteer_service: PuppeteerService,
                 game_id: string,
                 debug_mode: DebugMode,
