@@ -3,7 +3,7 @@ import { assert } from "chai";
 import { Table } from "../../app/models/table.ts";
 
 import { DBService } from "../../app/services/db-service.ts";
-import { PlayerService } from "../../app/services/player-service.ts";
+import { PlayerService } from "../../app/services/api/playerapi-service.ts";
 
 const player_name = "chan-abcd";
 const player_JSON = {

@@ -1,9 +1,9 @@
 import db_service from "../services/db-service.ts";
-import { PlayerService } from "../services/player-service.ts";
+import { PlayerService } from "../services/api/playerapi-service.ts";
 
 const player_service = new PlayerService(db_service);
 
-export async function get(req: any, res: any, next: any) {
+export async function get(req: any, res: any, next: any): Promise<void> {
     try {
         res.json(await player_service.get(req.query.name));
     } catch (err) {
@@ -12,7 +12,7 @@ export async function get(req: any, res: any, next: any) {
     }
 }
 
-export async function remove(req: any, res: any, next: any) {
+export async function remove(req: any, res: any, next: any): Promise<void> {
     try {
         res.json(await player_service.remove(req.params.name));
     }  catch (err) {

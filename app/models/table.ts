@@ -1,11 +1,11 @@
 import { Player } from "./player.ts"
-import { PlayerAction } from "./player-action.ts";
-import { PlayerStats } from "./player-stats.ts";
+import { PlayerAction } from "./playeraction.ts";
+import { PlayerStats } from "./playerstats.ts";
 
-import { PlayerService } from "../services/player-service.ts";
+import { PlayerService } from "../services/api/playerapi-service.ts";
 
-import { Queue } from "../utils/data-structures.ts"
-import { getPlayerStacksMsg, getIdToInitialStackFromMsg as getPlayerInitialStacksFromMsg } from "../utils/message-processing-utils.ts";
+import { Queue } from "../utils/datastructures.ts"
+import { getPlayerStacksMsg, getIdToInitialStackFromMsg as getPlayerInitialStacksFromMsg } from "../utils/messageprocessing-utils.ts";
 
 export class Table {
     private player_service: PlayerService;
