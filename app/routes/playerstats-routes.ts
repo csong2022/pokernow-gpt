@@ -1,10 +1,10 @@
 import * as express from 'express';
-import * as player_controller from '../controllers/player-controller.ts';
+import * as playerstats_controller from '../controllers/playerstats-controller.ts';
 
 const router = express.Router();
 
-router.get('/', player_controller.get);
+router.get('/', playerstats_controller.get);
 
-router.delete('/:name', player_controller.remove);
+router.delete('/:name', playerstats_controller.remove);
 
 export default router;
