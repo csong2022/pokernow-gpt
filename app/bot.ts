@@ -10,7 +10,7 @@ import { Game } from './models/game.ts';
 import { Table } from './models/table.ts';
 
 import { LogService } from './services/log-service.ts';
-import { PlayerAPIService } from './services/api/playerapi-service.ts';
+import { PlayerStatsAPIService } from './services/api/playerstats-api-service.ts';
 import { PuppeteerService } from './services/puppeteer-service.ts';
 
 import { constructQuery } from './helpers/constructquery-helper.ts';
@@ -23,7 +23,7 @@ import { convertToBBs, convertToValue } from './utils/valueconversion-utils.ts'
 export class Bot {
     private log_service: LogService;
     private ai_service: AIService;
-    private player_service: PlayerAPIService;
+    private player_service: PlayerStatsAPIService;
     private puppeteer_service: PuppeteerService;
 
     private game_id: string;
@@ -39,7 +39,7 @@ export class Bot {
 
     constructor(log_service: LogService, 
                 ai_service: AIService,
-                player_service: PlayerAPIService,
+                player_service: PlayerStatsAPIService,
                 puppeteer_service: PuppeteerService,
                 game_id: string,
                 debug_mode: DebugMode,
@@ -214,6 +214,7 @@ export class Bot {
     }
 
     private async pullAndProcessLogs(last_created: string, first_fetch: boolean): Promise<ProcessedLogs> {
+        // TOOO: botmanager should fetch the logs on hand end
         const log = await this.log_service.fetchData("", last_created);
         if (log.code === "success") {
             let data = this.log_service.getData(log);
