@@ -116,6 +116,7 @@ export class Bot {
             if (code === "success") {
                 break;
             }
+            //TODO: need to pass the status of the enrollment back into the POST request as status code
             console.log("Please try again.");
         }
         console.log("Waiting for table host to accept ingress request.");

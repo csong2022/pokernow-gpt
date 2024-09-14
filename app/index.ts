@@ -1,6 +1,7 @@
 import EventEmitter from 'events';
 import express from 'express';
-import player_router from './routes/player-routes.ts';
+import bot_router from './routes/bot-routes.ts';
+import playerstats_router from './routes/playerstats-routes.ts';
 import db_service from './services/db-service.ts';
 import bot_manager from './botmanager.ts';
 
@@ -15,7 +16,9 @@ app.get('/', (req: any, res: any) => {
     res.json({'message': 'ok'});
 })
 
-app.use('/player', player_router);
+app.use('/playerstats', playerstats_router);
+
+app.use('/bot', bot_router);
 
 app.post('/game_id', (req: any, res: any) => {
     const data = req.body;

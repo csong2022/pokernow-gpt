@@ -1,4 +1,4 @@
-import { DBService} from '../db-service.ts';
+import { DBService } from '../db-service.ts';
 import { emptyOrSingleRow } from '../../helpers/dbquery-helper.ts'
 
 // handles player related queries
