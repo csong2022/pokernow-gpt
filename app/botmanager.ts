@@ -9,7 +9,7 @@ import webdriver_config_json from './configs/webdriver-config.json';
 
 import { DBService } from './services/db-service.ts';
 import { LogService } from './services/log-service.ts';
-import { PlayerAPIService } from './services/api/playerapi-service.ts';
+import { PlayerStatsAPIService } from './services/api/playerstats-api-service.ts';
 import { PuppeteerService } from './services/puppeteer-service.ts';
 
 import { AIConfig, BotConfig, WebDriverConfig } from './interfaces/config-interfaces.ts';
@@ -40,7 +40,7 @@ const bot_manager = async function(game_id: string): Promise<void> {
     const db_service = new DBService("./app/pokernow-gpt.db");
     await db_service.init();
 
-    const playerapi_service = new PlayerAPIService(db_service);
+    const playerstatsapi_service = new PlayerStatsAPIService(db_service);
 
     const log_service = new LogService(game_id);
     await log_service.init();
@@ -51,7 +51,7 @@ const bot_manager = async function(game_id: string): Promise<void> {
     console.log(`Created AI service: ${ai_config.provider} ${ai_config.model_name} with playstyle: ${ai_config.playstyle}`);
     ai_service.init();
 
-    const bot = new Bot(log_service, ai_service, playerapi_service, puppeteer_service, game_id, bot_config.debug_mode, bot_config.query_retries);
+    const bot = new Bot(log_service, ai_service, playerstatsapi_service, puppeteer_service, game_id, bot_config.debug_mode, bot_config.query_retries);
     await bot.run();
 }
 

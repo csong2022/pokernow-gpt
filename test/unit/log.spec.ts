@@ -1,7 +1,7 @@
 import { Table } from "../../app/models/table.ts";
 
 import { DBService } from '../../app/services/db-service.ts';
-import { PlayerAPIService } from '../../app/services/api/playerapi-service.ts';
+import { PlayerStatsAPIService } from '../../app/services/api/playerstats-api-service.ts';
 
 import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/errorhandling-utils.ts';
 import { LogService } from '../../app/services/log-service.ts';
@@ -17,7 +17,7 @@ describe('log service test', async () => {
 
         const db_service = new DBService("./pokernow-gpt-test.db");
         await db_service.init();
-        const player_service = new PlayerAPIService(db_service);
+        const player_service = new PlayerStatsAPIService(db_service);
 
         const log = await log_service.fetchData("", "")
         if (log.code === SUCCESS_RESPONSE) {
