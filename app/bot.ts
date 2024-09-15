@@ -69,7 +69,7 @@ export class Bot {
         await this.enterTableInProgress();
         // retrieve initial num players
         await this.updateNumPlayers();
-        
+        // -> while the bot is "active"
         while (true) {
             await this.waitForNextHand();
             await this.updateNumPlayers();

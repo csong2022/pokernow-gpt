@@ -18,17 +18,17 @@ export class AIServiceFactory {
         }
         switch(provider) {
             case ("OpenAI"):
-                const openai_auth_key = process.env.OPENAI_API_KEY;
-                if (!openai_auth_key) {
-                    throw new Error(`Invalid ${provider} auth key.`);
+                const open_ai_auth_key = process.env.OPENAI_API_KEY;
+                if (!open_ai_auth_key) {
+                    throw new Error(`Empty ${provider} auth key.`);
                 }
-                return new OpenAIService(openai_auth_key, model_name, playstyle);
+                return new OpenAIService(open_ai_auth_key, model_name, playstyle);
             case ("Google"):
-                const googleai_auth_key = process.env.GOOGLEAI_API_KEY;
-                if (!googleai_auth_key) {
-                    throw new Error (`Invalid ${provider} auth key.`);
+                const google_ai_auth_key = process.env.GOOGLEAI_API_KEY;
+                if (!google_ai_auth_key) {
+                    throw new Error (`Empty ${provider} auth key.`);
                 }
-                return new GoogleAIService(googleai_auth_key, model_name, playstyle);
+                return new GoogleAIService(google_ai_auth_key, model_name, playstyle);
         }
         throw new Error("Failed to create AI service.");
     }

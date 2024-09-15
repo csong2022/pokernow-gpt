@@ -29,7 +29,6 @@ function init(): void {
 // emit event from POST request to initialize new bot_manager in index.ts -> creates bot_manager with specified game_id
 // ---
 // bot manager event emitter
-// emit event from POST request to create new bot in index.ts -> creates new bot with unique bot_id (need to determine what to use as bot_id), maybe also define name and initial stack size here
 
 const bot_manager = async function(game_id: string): Promise<void> {
     init();
@@ -40,7 +39,7 @@ const bot_manager = async function(game_id: string): Promise<void> {
     const db_service = new DBService("./app/pokernow-gpt.db");
     await db_service.init();
 
-    const playerstatsapi_service = new PlayerStatsAPIService(db_service);
+    const playerstats_api_service = new PlayerStatsAPIService(db_service);
 
     const log_service = new LogService(game_id);
     await log_service.init();
@@ -51,7 +50,7 @@ const bot_manager = async function(game_id: string): Promise<void> {
     console.log(`Created AI service: ${ai_config.provider} ${ai_config.model_name} with playstyle: ${ai_config.playstyle}`);
     ai_service.init();
 
-    const bot = new Bot(log_service, ai_service, playerstatsapi_service, puppeteer_service, game_id, bot_config.debug_mode, bot_config.query_retries);
+    const bot = new Bot(log_service, ai_service, playerstats_api_service, puppeteer_service, game_id, bot_config.debug_mode, bot_config.query_retries);
     await bot.run();
 }
 
