@@ -103,13 +103,16 @@ export class Bot {
     private async enterTableInProgress() {
         const io = prompt();
         while (true) {
-            const name = io("What is your desired player name? ");
+            // const name = io("What is your desired player name? ");
+            const name = (Math.random() + 1).toString(36).substring(7);
             console.log(`Your player name will be ${name}.` )
             this.bot_name = name;
     
-            const stack_size = io("What is your desired stack size? ");
+            // const stack_size = io("What is your desired stack size? ");
+            const stack_size = 2000;
             console.log(`Your initial stack size will be ${stack_size}.`)
     
+            await sleep(1000);
             console.log(`Attempting to enter table with name: ${name} and stack size: ${stack_size}.`);
             const code = logResponse(await this.puppeteer_service.sendEnterTableRequest(name, Number(stack_size)), this.debug_mode);
     

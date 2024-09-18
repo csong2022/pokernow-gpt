@@ -1,17 +1,24 @@
 import { DebugMode } from "../utils/errorhandling-utils.ts"
 
-export interface AIConfig {
+interface AIConfig {
     provider: string,
     model_name: string,
     playstyle: string
 }
 
-export interface BotConfig {
+interface BotConfig {
     debug_mode: DebugMode,
     query_retries: number
 }
 
-export interface WebDriverConfig {
+interface WebDriverConfig {
     default_timeout: number,
     headless_flag: boolean
+}
+
+export interface WorkerConfig {
+    game_id: string,
+    ai_config: AIConfig,
+    bot_config: BotConfig,
+    webdriver_config: WebDriverConfig
 }
