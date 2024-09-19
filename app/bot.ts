@@ -1,4 +1,4 @@
-import prompt from 'prompt-sync';
+import crypto from 'crypto';
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
 
 import { sleep } from './helpers/bot-helper.ts';
@@ -15,14 +15,16 @@ import { PuppeteerService } from './services/puppeteer-service.ts';
 
 import { constructQuery } from './helpers/constructquery-helper.ts';
 
-import { DebugMode, logResponse } from './utils/errorhandling-utils.ts';
+import { DebugMode, logResponse, Response } from './utils/errorhandling-utils.ts';
 import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from './utils/logprocessing-utils.ts';
 import { getIdToInitialStackFromMsg, getIdToNameFromMsg, getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './utils/messageprocessing-utils.ts';
 import { convertToBBs, convertToValue } from './utils/valueconversion-utils.ts'
 
 export class Bot {
-    private log_service: LogService;
+    private bot_uuid: crypto.UUID;
+
     private ai_service: AIService;
+    private log_service: LogService;
     private player_service: PlayerStatsAPIService;
     private puppeteer_service: PuppeteerService;
 
@@ -37,16 +39,19 @@ export class Bot {
     private game!: Game;
     private bot_name!: string;
 
-    constructor(log_service: LogService, 
+    constructor(bot_uuid: crypto.UUID,
                 ai_service: AIService,
+                log_service: LogService, 
                 player_service: PlayerStatsAPIService,
                 puppeteer_service: PuppeteerService,
                 game_id: string,
                 debug_mode: DebugMode,
                 query_retries: number) 
     {
-        this.log_service = log_service;
+        this.bot_uuid = bot_uuid;
+
         this.ai_service = ai_service;
+        this.log_service = log_service;
         this.player_service = player_service;
         this.puppeteer_service = puppeteer_service;
 
@@ -65,8 +70,8 @@ export class Bot {
     //rebuys
 
     public async run() {
-        await this.openGame();
-        await this.enterTableInProgress();
+        // await this.openGame();
+        // await this.enterTableInProgress();
         // retrieve initial num players
         await this.updateNumPlayers();
         // -> while the bot is "active"
@@ -82,7 +87,7 @@ export class Bot {
         }
     }
 
-    private async openGame() {
+    async openGame() {
         console.log(`The PokerNow game with id: ${this.game_id} will now open.`);
         
         logResponse(await this.puppeteer_service.navigateToGame(this.game_id), this.debug_mode);
@@ -100,30 +105,24 @@ export class Bot {
         }
     }
 
-    private async enterTableInProgress() {
-        const io = prompt();
-        while (true) {
-            // const name = io("What is your desired player name? ");
-            const name = (Math.random() + 1).toString(36).substring(7);
-            console.log(`Your player name will be ${name}.` )
-            this.bot_name = name;
+    async enterTableInProgress(name: string, stack_size: number): Promise<void> {
+        console.log(`Your player name will be ${name}.` )
+        this.bot_name = name;
     
-            // const stack_size = io("What is your desired stack size? ");
-            const stack_size = 2000;
-            console.log(`Your initial stack size will be ${stack_size}.`)
+        console.log(`Your initial stack size will be ${stack_size}.`)
     
-            await sleep(1000);
-            console.log(`Attempting to enter table with name: ${name} and stack size: ${stack_size}.`);
-            const code = logResponse(await this.puppeteer_service.sendEnterTableRequest(name, Number(stack_size)), this.debug_mode);
+        await sleep(1000);
+        console.log(`Attempting to enter table with name: ${name} and stack size: ${stack_size}.`);
+        const code = logResponse(await this.puppeteer_service.sendEnterTableRequest(name, stack_size), this.debug_mode);
     
-            if (code === "success") {
-                break;
+        if (code === "success") {
+            console.log("Waiting for table host to accept ingress request.");
+            if (logResponse(await this.puppeteer_service.waitForTableEntry(), this.debug_mode) !== "success") {
+                throw new Error("Table ingress request rejected, please try again.")
             }
-            //TODO: need to pass the status of the enrollment back into the POST request as status code
-            console.log("Please try again.");
+        } else {
+            throw new Error("Name is already taken, please try again.")
         }
-        console.log("Waiting for table host to accept ingress request.");
-        logResponse(await this.puppeteer_service.waitForTableEntry(), this.debug_mode);
     }
 
     private async updateNumPlayers() {
