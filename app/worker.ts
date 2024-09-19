@@ -35,14 +35,15 @@ async function createBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_c
     await bot.openGame();
     while (true) {
         try {
+            // need to specify errors
             await bot.enterTableInProgress(name, stack_size);
             parentPort!.postMessage(`${bot_uuid}-entrySuccess`);
             break;
         } catch (err) {
-            // emit event here -> controller consumes event and returns response (error)
-            parentPort!.postMessage(`${bot_uuid}-entryFailure`);
-            // controller emits event -> consume emitted event here
-            // debug only run once
+            // post message to parent (bot_manager) -> bot_manager receives message and emits event -> controller consumes event and returns response (error)
+            parentPort!.postMessage(`${bot_uuid}-entryFailure|${err}`);
+            // controller emits event -> bot_manager consumes event and sends message to child -> child receives message, retry enterTable 
+            // program execution needs to hang here until the emitted event
             break;
         }
     }

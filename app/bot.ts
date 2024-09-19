@@ -113,15 +113,15 @@ export class Bot {
     
         await sleep(1000);
         console.log(`Attempting to enter table with name: ${name} and stack size: ${stack_size}.`);
-        const code = logResponse(await this.puppeteer_service.sendEnterTableRequest(name, stack_size), this.debug_mode);
+        const res = await this.puppeteer_service.sendEnterTableRequest(name, stack_size);
     
-        if (code === "success") {
+        if (res.code === "success") {
             console.log("Waiting for table host to accept ingress request.");
             if (logResponse(await this.puppeteer_service.waitForTableEntry(), this.debug_mode) !== "success") {
                 throw new Error("Table ingress request rejected, please try again.")
             }
         } else {
-            throw new Error("Name is already taken, please try again.")
+            throw res.error;
         }
     }
 
