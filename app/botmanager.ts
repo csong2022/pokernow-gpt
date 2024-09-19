@@ -24,7 +24,14 @@ export async function startWorker(bot_uuid: crypto.UUID, game_id: string, name: 
 
     piscina.on('message', (event) => {
         console.log('Messsage received from worker: ', event);
-        bot_events.emit(event);
+        if (event.startsWith(`${bot_uuid}-entry`)) {
+            const messages = event.split("|");
+            if (messages.length == 1) {
+                bot_events.emit(messages[0]);
+            } else if (messages.length == 2) {
+                bot_events.emit(messages[0], messages[1]);
+            }
+        }
     });
     await piscina.run(worker_config);
     console.log("Created worker with uuid: ", bot_uuid);

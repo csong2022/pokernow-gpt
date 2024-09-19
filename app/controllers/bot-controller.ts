@@ -12,13 +12,12 @@ export async function create(req: any, res: any, next: any): Promise<void> {
             console.log("Successfully entered table: ", bot_uuid);
             res.json({ 'bot_uuid': bot_uuid, 'code': 'ok' });
         })
-        bot_events.once(`${bot_uuid}-entryFailure`, () => {
+        bot_events.once(`${bot_uuid}-entryFailure`, (err) => {
             console.log("Failed to enter table: ", bot_uuid);
-            res.json({ 'bot_uuid': bot_uuid, 'code': 'error'});
+            res.json({ 'bot_uuid': bot_uuid, 'code': 'error', 'message': err});
         })
 
         await startWorker(bot_uuid, data.game_id, data.name, data.stack_size, data.ai_settings);
-        // doesn't return response until status of bot is confirmed?
     } catch (err) {
         console.error(`Error while creating player.`, err.message);
         next(err);
