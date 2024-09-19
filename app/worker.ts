@@ -1,5 +1,4 @@
 import dotenv from 'dotenv';
-import { parentPort } from 'worker_threads';
 
 import { Bot } from './bot.ts'
 
@@ -13,7 +12,7 @@ import { AIServiceFactory } from './helpers/aiservice-factory.ts';
 
 dotenv.config();
 
-async function createBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_config, webdriver_config }: WorkerConfig): Promise<void> {
+async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_config, webdriver_config, port }: WorkerConfig): Promise<void> {
     const puppeteer_service = new PuppeteerService(webdriver_config.default_timeout, webdriver_config.headless_flag);
     await puppeteer_service.init();
 
@@ -37,17 +36,17 @@ async function createBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_c
         try {
             // need to specify errors
             await bot.enterTableInProgress(name, stack_size);
-            parentPort!.postMessage(`${bot_uuid}-entrySuccess`);
+            port.postMessage(`${bot_uuid}-entrySuccess`);
             break;
         } catch (err) {
             // post message to parent (bot_manager) -> bot_manager receives message and emits event -> controller consumes event and returns response (error)
-            parentPort!.postMessage(`${bot_uuid}-entryFailure|${err}`);
+            port.postMessage(`${bot_uuid}-entryFailure|${err}`);
             // controller emits event -> bot_manager consumes event and sends message to child -> child receives message, retry enterTable 
-            // program execution needs to hang here until the emitted event
+            // program execution needs to hang here until the emitted event is received
             break;
         }
     }
     await bot.run();
 }
 
-module.exports = createBot;
+module.exports = startBot;

@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { MessagePort } from 'worker_threads';
 import { DebugMode } from "../utils/errorhandling-utils.ts"
 
 export interface AIConfig {
@@ -24,5 +25,6 @@ export interface WorkerConfig {
     stack_size: number,
     ai_config: AIConfig,
     bot_config: BotConfig,
-    webdriver_config: WebDriverConfig
+    webdriver_config: WebDriverConfig,
+    port: MessagePort
 }
