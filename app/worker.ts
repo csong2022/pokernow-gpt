@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { parentPort } from 'worker_threads';
 
 import { Bot } from './bot.ts'
 
@@ -12,7 +13,7 @@ import { AIServiceFactory } from './helpers/aiservice-factory.ts';
 
 dotenv.config();
 
-async function createBot({game_id, ai_config, bot_config, webdriver_config}: WorkerConfig): Promise<void> {
+async function createBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_config, webdriver_config }: WorkerConfig): Promise<void> {
     const puppeteer_service = new PuppeteerService(webdriver_config.default_timeout, webdriver_config.headless_flag);
     await puppeteer_service.init();
 
@@ -30,7 +31,21 @@ async function createBot({game_id, ai_config, bot_config, webdriver_config}: Wor
     console.log(`Created AI service: ${ai_config.provider} ${ai_config.model_name} with playstyle: ${ai_config.playstyle}`);
     ai_service.init();
 
-    const bot = new Bot(log_service, ai_service, playerstats_api_service, puppeteer_service, game_id, bot_config.debug_mode, bot_config.query_retries);
+    const bot = new Bot(bot_uuid, ai_service, log_service, playerstats_api_service, puppeteer_service, game_id, bot_config.debug_mode, bot_config.query_retries);
+    await bot.openGame();
+    while (true) {
+        try {
+            await bot.enterTableInProgress(name, stack_size);
+            parentPort!.postMessage(`${bot_uuid}-entrySuccess`);
+            break;
+        } catch (err) {
+            // emit event here -> controller consumes event and returns response (error)
+            parentPort!.postMessage(`${bot_uuid}-entryFailure`);
+            // controller emits event -> consume emitted event here
+            // debug only run once
+            break;
+        }
+    }
     await bot.run();
 }
 

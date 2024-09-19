@@ -3,7 +3,6 @@ import puppeteer from 'puppeteer';
 import { computeTimeout, sleep } from '../helpers/bot-helper.ts';
 
 import type { Response } from '../utils/errorhandling-utils.ts';
-import { suitToLetter } from '../utils/logprocessing-utils.ts';
 
 interface GameInfo {
     game_type: string,
