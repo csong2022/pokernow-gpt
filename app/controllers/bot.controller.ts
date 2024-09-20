@@ -1,7 +1,8 @@
 import crypto from 'crypto';
 
-import manager_controller_ee from '../eventemitters/manager-controller.eventemitter.ts';
 import { startWorker } from '../botmanager.ts';
+
+import manager_controller_ee from '../eventemitters/manager-controller.eventemitter.ts';
 
 export async function create(req: any, res: any, next: any): Promise<void> {
     try {

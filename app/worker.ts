@@ -3,14 +3,18 @@ import { MessagePort } from 'worker_threads';
 
 import { Bot } from './bot.ts'
 
+import bot_worker_ee from './eventemitters/bot-worker.eventemitter.ts';
+
+import { AIServiceFactory } from './helpers/ai-service-factory.helper.ts';
+
+import { WorkerConfig } from './interfaces/config.interface.ts';
+import { EntryParams } from './interfaces/message.interface.ts';
+
+
 import { DBService } from './services/db.service.ts';
 import { LogService } from './services/log.service.ts';
 import { PlayerStatsAPIService } from './services/api/playerstatsapi.service.ts';
 import { PuppeteerService } from './services/puppeteer.service.ts';
-
-import { AIServiceFactory } from './helpers/aiservice-factory.ts';
-import { WorkerConfig } from './interfaces/config.interface.ts';
-import { EntryParams } from './interfaces/message.ts';
 
 dotenv.config();
 
@@ -26,9 +30,9 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
     const log_service = new LogService(game_id);
     await log_service.init();
 
-    const aiservice_factory = new AIServiceFactory();
-    aiservice_factory.printSupportedModels();
-    const ai_service = aiservice_factory.createAIService(ai_config.provider, ai_config.model_name, ai_config.playstyle);
+    const ai_service_factory = new AIServiceFactory();
+    ai_service_factory.printSupportedModels();
+    const ai_service = ai_service_factory.createAIService(ai_config.provider, ai_config.model_name, ai_config.playstyle);
     console.log(`Created AI service: ${ai_config.provider} ${ai_config.model_name} with playstyle: ${ai_config.playstyle}`);
     ai_service.init();
 
