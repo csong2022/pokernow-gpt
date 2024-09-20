@@ -5,4 +5,6 @@ const router = express.Router();
 
 router.post('/create', bot_controller.create);
 
+router.post('/create/retry', bot_controller.retry);
+
 export default router;
