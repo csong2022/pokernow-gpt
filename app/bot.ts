@@ -1,24 +1,24 @@
 import crypto from 'crypto';
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
 
-import { sleep } from './helpers/bot-helper.ts';
+import { sleep } from './helpers/bot-timeout.helper.ts';
 
-import { AIService, BotAction, defaultCheckAction, defaultFoldAction } from './interfaces/ai-client-interfaces.ts';
-import { ProcessedLogs } from './interfaces/log-processing-interfaces.ts';
+import { AIService, BotAction, defaultCheckAction, defaultFoldAction } from './interfaces/ai-client.interface.ts';
+import { ProcessedLogs } from './interfaces/log-processing.interface.ts';
 
-import { Game } from './models/game.ts';
-import { Table } from './models/table.ts';
+import { Game } from './models/game.model.ts';
+import { Table } from './models/table.model.ts';
 
-import { LogService } from './services/log-service.ts';
-import { PlayerStatsAPIService } from './services/api/playerstats-api-service.ts';
-import { PuppeteerService } from './services/puppeteer-service.ts';
+import { LogService } from './services/log.service.ts';
+import { PlayerStatsAPIService } from './services/api/playerstatsapi.service.ts';
+import { PuppeteerService } from './services/puppeteer.service.ts';
 
-import { constructQuery } from './helpers/constructquery-helper.ts';
+import { constructQuery } from './helpers/query-construction.helper.ts';
 
-import { DebugMode, ErrorResponse, logResponse, SuccessResponse } from './utils/errorhandling-utils.ts';
-import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from './utils/logprocessing-utils.ts';
-import { getIdToInitialStackFromMsg, getIdToNameFromMsg, getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './utils/messageprocessing-utils.ts';
-import { convertToBBs, convertToValue } from './utils/valueconversion-utils.ts'
+import { DebugMode, ErrorResponse, logResponse, SuccessResponse } from './utils/error-handling.util.ts';
+import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from './utils/log-processing.util.ts';
+import { getIdToInitialStackFromMsg, getIdToNameFromMsg, getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './utils/message-processing.util.ts';
+import { convertToBBs, convertToValue } from './utils/value-conversion.util.ts'
 
 export class Bot {
     private bot_uuid: crypto.UUID;
@@ -206,9 +206,7 @@ export class Bot {
         try {
             //TODO: when running multiple bots, ensure that only one bot is trying to process players at end of hand
             //PROBLEM: multiple child processes will try to emit the same event, but we only want the bot manager to consume each event once (per hand)
-            //IDEA: have bot manager and individual bots keep track of the current hand number, use this to process logs once per hand end and update the hand number afterwards
-            //ex. all child processes report that the hand number is "i" and the bot manager consumes this hand end event for "i" only once then updates the hand number and broadcasts this update to all active child processes
-            //q: is any of this data relative to the current bot or is it generalized for all bots (issues arise if the former is true...)
+            //PROPOSED SOLUTION: bot emits "fetchlog" event with firstcreated attached, botmanager keeps a set of timestamps and only fetches if firstcreated is not in the set
             const log = await this.log_service.fetchData("", this.first_created);
             processed_logs = await this.processLogs(log, processed_logs.first_fetch);
             await postProcessLogsAfterHand(processed_logs.valid_msgs, this.game);

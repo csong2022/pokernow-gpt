@@ -1,5 +1,5 @@
-import db_service from "../services/db-service.ts";
-import { PlayerStatsAPIService } from "../services/api/playerstats-api-service.ts";
+import db_service from "../services/db.service.ts";
+import { PlayerStatsAPIService } from "../services/api/playerstatsapi.service.ts";
 
 const playerstats_api_service = new PlayerStatsAPIService(db_service);
 

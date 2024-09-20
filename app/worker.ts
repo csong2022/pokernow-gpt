@@ -3,14 +3,14 @@ import { MessagePort } from 'worker_threads';
 
 import { Bot } from './bot.ts'
 
-import { DBService } from './services/db-service.ts';
-import { LogService } from './services/log-service.ts';
-import { PlayerStatsAPIService } from './services/api/playerstats-api-service.ts';
-import { PuppeteerService } from './services/puppeteer-service.ts';
+import { DBService } from './services/db.service.ts';
+import { LogService } from './services/log.service.ts';
+import { PlayerStatsAPIService } from './services/api/playerstatsapi.service.ts';
+import { PuppeteerService } from './services/puppeteer.service.ts';
 
 import { AIServiceFactory } from './helpers/aiservice-factory.ts';
-import { WorkerConfig } from './interfaces/config-interfaces.ts';
-import { EntryParams } from './interfaces/message-interfaces.ts';
+import { WorkerConfig } from './interfaces/config.interface.ts';
+import { EntryParams } from './interfaces/message.ts';
 
 dotenv.config();
 

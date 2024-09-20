@@ -1,8 +1,8 @@
 import puppeteer from 'puppeteer';
 
-import { computeTimeout, sleep } from '../helpers/bot-helper.ts';
+import { computeTimeout, sleep } from '../helpers/bot-timeout.helper.ts';
 
-import type { Response } from '../utils/errorhandling-utils.ts';
+import type { Response } from '../utils/error-handling.util.ts';
 
 interface GameInfo {
     game_type: string,

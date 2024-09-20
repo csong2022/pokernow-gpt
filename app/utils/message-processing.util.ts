@@ -1,5 +1,5 @@
-import { Action, Street } from "./logprocessing-utils.ts";
-import { convertToBBs } from "./valueconversion-utils.ts";
+import { Action, Street } from "./log-processing.util.ts";
+import { convertToBBs } from "./value-conversion.util.ts";
 
 export function getPlayer(msg: string): Array<string> {
     const res = new Array<string>;

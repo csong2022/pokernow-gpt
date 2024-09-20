@@ -1,7 +1,7 @@
 import express from 'express';
-import bot_router from './routes/bot-routes.ts';
-import playerstats_router from './routes/playerstats-routes.ts';
-import db_service from './services/db-service.ts';
+import bot_router from './routes/bot.ts';
+import playerstats_router from './routes/playerstats.ts';
+import db_service from './services/db.service.ts';
 
 const app = express();
 const port = 8080;

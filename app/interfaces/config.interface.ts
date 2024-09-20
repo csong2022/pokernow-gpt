@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { MessagePort } from 'worker_threads';
-import { DebugMode } from "../utils/errorhandling-utils.ts"
+import { DebugMode } from "../utils/error-handling.util.ts"
 
 export interface AIConfig {
     provider: string,
