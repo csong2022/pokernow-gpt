@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer';
-import type { Response } from '../utils/error-handling-utils.ts';
-import { Data, Log } from '../interfaces/log-processing-interfaces.ts';
+import type { Response } from '../utils/error-handling.util.ts';
+import { Data, Log } from '../interfaces/log-processing.interface.ts';
 
 export class LogService {
     private game_id: string;

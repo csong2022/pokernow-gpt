@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
-import { AIMessage, AIResponse, AIService, BotAction } from "../../interfaces/ai-client-interfaces.ts";
-import { getPromptFromPlaystyle, parseResponse} from "../../helpers/ai-query-helper.ts";
+import { AIMessage, AIResponse, AIService, BotAction } from "../../interfaces/ai-client.interface.ts";
+import { getPromptFromPlaystyle, parseResponse} from "../../helpers/ai-query.helper.ts";
 
 export class OpenAIService extends AIService {
     private agent!: OpenAI;

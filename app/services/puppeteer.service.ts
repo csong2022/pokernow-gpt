@@ -1,9 +1,8 @@
 import puppeteer from 'puppeteer';
 
-import { computeTimeout, sleep } from '../helpers/bot-helper.ts';
+import { computeTimeout, sleep } from '../helpers/bot-timeout.helper.ts';
 
-import type { Response } from '../utils/error-handling-utils.ts';
-import { suitToLetter } from '../utils/log-processing-utils.ts';
+import type { Response } from '../utils/error-handling.util.ts';
 
 interface GameInfo {
     game_type: string,
@@ -47,7 +46,7 @@ export class PuppeteerService {
         return {
             code: "success",
             data: null as D,
-            msg: `Successfully opened PokerNow game with id ${game_id}.`
+            msg: `Successfully opened PokerNow game with id: ${game_id}.`
         }
     }
     
@@ -202,7 +201,6 @@ export class PuppeteerService {
                 error: new Error("Failed to compute number of players in table.") as E
             }
         }
-    
     }
     
     // wait for bot's turn or winner of hand has been determined
