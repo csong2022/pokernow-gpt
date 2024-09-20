@@ -25,17 +25,16 @@ export async function startWorker(bot_uuid: crypto.UUID, game_id: string, name: 
                                            webdriver_config: webdriver_config_json,
                                            port: channel.port1
                                         };
-    channel.port2.on('message', (message) => {
-        console.log('Messsage received from worker: ', message);
-        if (message.startsWith(`${bot_uuid}-entry`)) {
-            const messages = message.split("|");
-            if (messages.length == 1) {
-                bot_events.emit(messages[0]);
-            } else if (messages.length == 2) {
-                bot_events.emit(messages[0], messages[1]);
-            }
+    const retryentry_listener = (name: string, stack_size: number) => {
+        channel.port2.postMessage({name: name, stack_size: stack_size})
+    };
+    channel.port2.on('message', (message: {event_name: string, msg: string}) => {
+        console.log('Messsage received from worker:', message);
+        if (message.event_name === `${bot_uuid}-entrySuccess`) {
+            bot_events.off(`${bot_uuid}-retryEntry`, retryentry_listener);
         }
+        bot_events.emit(message.event_name, message.msg);
     });
+    bot_events.on(`${bot_uuid}-retryEntry`, retryentry_listener);
     await piscina.run(worker_config, {transferList: [channel.port1]});
-    console.log("Created worker with uuid: ", bot_uuid);
 }

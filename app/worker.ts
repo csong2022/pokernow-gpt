@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { MessagePort } from 'worker_threads';
 
 import { Bot } from './bot.ts'
 
@@ -7,8 +8,9 @@ import { LogService } from './services/log-service.ts';
 import { PlayerStatsAPIService } from './services/api/playerstats-api-service.ts';
 import { PuppeteerService } from './services/puppeteer-service.ts';
 
-import { WorkerConfig } from './interfaces/config-interfaces.ts';
 import { AIServiceFactory } from './helpers/aiservice-factory.ts';
+import { WorkerConfig } from './interfaces/config-interfaces.ts';
+import { EntryParams } from './interfaces/message-interfaces.ts';
 
 dotenv.config();
 
@@ -34,16 +36,20 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
     await bot.openGame();
     while (true) {
         try {
-            // need to specify errors
             await bot.enterTableInProgress(name, stack_size);
-            port.postMessage(`${bot_uuid}-entrySuccess`);
+            port.postMessage({event_name: `${bot_uuid}-entrySuccess`, msg: "success"});
             break;
         } catch (err) {
             // post message to parent (bot_manager) -> bot_manager receives message and emits event -> controller consumes event and returns response (error)
-            port.postMessage(`${bot_uuid}-entryFailure|${err}`);
+            port.postMessage({event_name: `${bot_uuid}-entryFailure`, msg: err.toString()});
             // controller emits event -> bot_manager consumes event and sends message to child -> child receives message, retry enterTable 
             // program execution needs to hang here until the emitted event is received
-            break;
+            const retryentry_task = (port: MessagePort): Promise<EntryParams> => 
+                new Promise((resolve, reject) => 
+                    port.on('message', (message: EntryParams) => resolve(message)));
+            const msg: EntryParams = await retryentry_task(port);
+            name = msg.name;
+            stack_size = msg.stack_size;
         }
     }
     await bot.run();
