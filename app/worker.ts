@@ -33,17 +33,18 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
     ai_service.init();
 
     const bot = new Bot(bot_uuid, ai_service, log_service, playerstats_api_service, puppeteer_service, game_id, bot_config.debug_mode, bot_config.query_retries);
+
     await bot.openGame();
+
+    // should set a maximum number of retries
     while (true) {
         try {
             await bot.enterTableInProgress(name, stack_size);
             port.postMessage({event_name: `${bot_uuid}-entrySuccess`, msg: "success"});
             break;
         } catch (err) {
-            // post message to parent (bot_manager) -> bot_manager receives message and emits event -> controller consumes event and returns response (error)
             port.postMessage({event_name: `${bot_uuid}-entryFailure`, msg: err.toString()});
-            // controller emits event -> bot_manager consumes event and sends message to child -> child receives message, retry enterTable 
-            // program execution needs to hang here until the emitted event is received
+            // this should probably have a setTimeout()
             const retryentry_task = (port: MessagePort): Promise<EntryParams> => 
                 new Promise((resolve, reject) => 
                     port.on('message', (message: EntryParams) => resolve(message)));
@@ -52,6 +53,7 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
             stack_size = msg.stack_size;
         }
     }
+
     await bot.run();
 }
 

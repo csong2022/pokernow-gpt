@@ -15,7 +15,7 @@ import { PuppeteerService } from './services/puppeteer-service.ts';
 
 import { constructQuery } from './helpers/constructquery-helper.ts';
 
-import { DebugMode, logResponse, Response } from './utils/errorhandling-utils.ts';
+import { DebugMode, ErrorResponse, logResponse, SuccessResponse } from './utils/errorhandling-utils.ts';
 import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from './utils/logprocessing-utils.ts';
 import { getIdToInitialStackFromMsg, getIdToNameFromMsg, getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './utils/messageprocessing-utils.ts';
 import { convertToBBs, convertToValue } from './utils/valueconversion-utils.ts'
@@ -75,7 +75,9 @@ export class Bot {
         // retrieve initial num players
         await this.updateNumPlayers();
         // -> while the bot is "active"
-        while (true) {
+        // only play 3 hands for testing purpose
+        let hands_count = 3;
+        while (hands_count > 0) {
             await this.waitForNextHand();
             await this.updateNumPlayers();
             await this.updateGameInfo();
@@ -84,6 +86,7 @@ export class Bot {
             await this.playOneHand();
             this.hand_history = [];
             this.table.nextHand();
+            hands_count--;
         }
     }
 
@@ -159,7 +162,8 @@ export class Bot {
                 if (data.includes("action-signal")) {
                     try {
                         await sleep(2000);
-                        processed_logs = await this.pullAndProcessLogs(processed_logs.last_created, processed_logs.first_fetch);
+                        const log = await this.log_service.fetchData("", processed_logs.last_created);
+                        processed_logs = await this.processLogs(log, processed_logs.first_fetch);
                     } catch (err) {
                         console.log("Failed to pull logs.");
                     }
@@ -206,7 +210,8 @@ export class Bot {
             //IDEA: have bot manager and individual bots keep track of the current hand number, use this to process logs once per hand end and update the hand number afterwards
             //ex. all child processes report that the hand number is "i" and the bot manager consumes this hand end event for "i" only once then updates the hand number and broadcasts this update to all active child processes
             //q: is any of this data relative to the current bot or is it generalized for all bots (issues arise if the former is true...)
-            processed_logs = await this.pullAndProcessLogs(this.first_created, processed_logs.first_fetch);
+            const log = await this.log_service.fetchData("", this.first_created);
+            processed_logs = await this.processLogs(log, processed_logs.first_fetch);
             await postProcessLogsAfterHand(processed_logs.valid_msgs, this.game);
             await this.table.processPlayers();
         } catch (err) {
@@ -217,23 +222,9 @@ export class Bot {
         console.log("Completed a hand.\n");
     }
 
-    private async updateGameInfo() {
-        logResponse(await this.puppeteer_service.waitForGameInfo(), this.debug_mode);
-    
-        console.log("Getting game info.");
-        const res = await this.puppeteer_service.getGameInfo();
-        logResponse(res, this.debug_mode);
-        if (res.code == "success") {
-            const game_info = this.puppeteer_service.convertGameInfo(res.data as string);
-            this.game.updateGameTypeAndBlinds(game_info.small_blind, game_info.big_blind, game_info.game_type);
-        } else {
-            throw new Error ("Failed to get game info.");
-        }
-    }
-
-    private async pullAndProcessLogs(last_created: string, first_fetch: boolean): Promise<ProcessedLogs> {
+    // decouple pulling and processing logs
+    private async processLogs<D, E=Error>(log: SuccessResponse<D> | ErrorResponse<E>, first_fetch: boolean): Promise<ProcessedLogs> {
         // TOOO: botmanager should fetch the logs on hand end
-        const log = await this.log_service.fetchData("", last_created);
         if (log.code === "success") {
             let data = this.log_service.getData(log);
             let msg = this.log_service.getMsg(data);
@@ -272,10 +263,9 @@ export class Bot {
             this.table.setIdToPosition(first_seat_number);
             this.table.convertAllOrdersToPosition();
 
-            last_created = this.log_service.getFirst(this.log_service.getCreatedAt(data));
             return {
                 valid_msgs: only_valid,
-                last_created: last_created,
+                last_created: this.log_service.getFirst(this.log_service.getCreatedAt(data)),
                 first_fetch: first_fetch
             }
         } else {
