@@ -40,7 +40,7 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
 
     await bot.openGame();
 
-    // should set a maximum number of retries
+    //TODO: set a maximum number of retries
     while (true) {
         try {
             await bot.enterTableInProgress(name, stack_size);
@@ -48,7 +48,7 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
             break;
         } catch (err) {
             port.postMessage({event_name: `${bot_uuid}-entryFailure`, msg: err.toString()});
-            // this should probably have a setTimeout()
+            //TODO: add a setTimeout()
             const retryentry_task = (port: MessagePort): Promise<EntryParams> => 
                 new Promise((resolve, reject) => 
                     port.on('message', (message: EntryParams) => resolve(message)));
