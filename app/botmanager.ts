@@ -36,5 +36,6 @@ export async function startWorker(bot_uuid: crypto.UUID, game_id: string, name: 
         bot_events.emit(message.event_name, message.msg);
     });
     bot_events.on(`${bot_uuid}-retryEntry`, retryentry_listener);
+    
     await piscina.run(worker_config, {transferList: [channel.port1]});
 }
