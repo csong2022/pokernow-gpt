@@ -4,12 +4,12 @@ import { Piscina } from 'piscina';
 import { fileURLToPath } from 'url';
 import { MessageChannel } from 'worker_threads';
 
-import bot_events from './botevents.ts';
+import manager_controller_ee from './eventemitters/manager-controller.eventemitter.ts';
 
-import bot_config_json from './configs/bot-config.json';
-import webdriver_config_json from './configs/webdriver-config.json';
+import bot_config_json from './configs/bot.config.json';
+import webdriver_config_json from './configs/webdriver.config.json';
 
-import { AIConfig, WorkerConfig } from './interfaces/config-interfaces.ts';
+import { AIConfig, WorkerConfig } from './interfaces/config.interface.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const piscina = new Piscina({ filename: path.resolve(path.join(__dirname, 'worker.ts')) });
@@ -31,11 +31,11 @@ export async function startWorker(bot_uuid: crypto.UUID, game_id: string, name: 
     channel.port2.on('message', (message: {event_name: string, msg: string}) => {
         console.log('Messsage received from worker:', message);
         if (message.event_name === `${bot_uuid}-entrySuccess`) {
-            bot_events.off(`${bot_uuid}-retryEntry`, retryentry_listener);
+            manager_controller_ee.off(`${bot_uuid}-retryEntry`, retryentry_listener);
         }
-        bot_events.emit(message.event_name, message.msg);
+        manager_controller_ee.emit(message.event_name, message.msg);
     });
-    bot_events.on(`${bot_uuid}-retryEntry`, retryentry_listener);
+    manager_controller_ee.on(`${bot_uuid}-retryEntry`, retryentry_listener);
     
     await piscina.run(worker_config, {transferList: [channel.port1]});
 }

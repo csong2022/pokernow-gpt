@@ -1,9 +1,9 @@
 import { assert } from "chai";
 
-import { Table } from "../../app/models/table.ts";
+import { Table } from "../../app/models/table.model.ts";
 
-import { DBService } from "../../app/services/db-service.ts";
-import { PlayerStatsAPIService } from "../../app/services/api/playerstats-api-service.ts";
+import { DBService } from "../../app/services/db.service.ts";
+import { PlayerStatsAPIService } from "../../app/services/api/playerstatsapi.service.ts";
 
 const player_name = "chan-abcd";
 const player_JSON = {

@@ -1,8 +1,8 @@
 // @ts-ignore
 import { rankBoard } from "phe";
-import { Game } from "../models/game.ts";
-import { PlayerAction } from "../models/playeraction.ts";
-import { Table } from "../models/table.ts";
+import { Game } from "../models/game.model.ts";
+import { PlayerAction } from "../models/playeraction.model.ts";
+import { Table } from "../models/table.model.ts";
 
 export function constructQuery(game: Game): string {
     const table = game.getTable();

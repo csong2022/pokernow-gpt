@@ -1,6 +1,6 @@
 import { Content, GenerativeModel, GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
-import { AIMessage, AIResponse, AIService, BotAction } from "../../interfaces/ai-client-interfaces.ts";
-import { getPromptFromPlaystyle, parseResponse } from "../../helpers/aiquery-helper.ts";
+import { AIMessage, AIResponse, AIService, BotAction } from "../../interfaces/ai-client.interface.ts";
+import { getPromptFromPlaystyle, parseResponse } from "../../helpers/ai-query.helper.ts";
 
 export class GoogleAIService extends AIService {
     private agent!: GoogleGenerativeAI;
