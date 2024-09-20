@@ -1,5 +1,5 @@
 import * as express from 'express';
-import * as playerstats_controller from '../controllers/playerstats-controller.ts';
+import * as playerstats_controller from '../controllers/playerstats.controller.ts';
 
 const router = express.Router();
 

@@ -1,6 +1,8 @@
 import express from 'express';
-import bot_router from './routes/bot.ts';
-import playerstats_router from './routes/playerstats.ts';
+
+import bot_router from './routes/bot.route.ts';
+import playerstats_router from './routes/playerstats.route.ts';
+
 import db_service from './services/db.service.ts';
 
 const app = express();

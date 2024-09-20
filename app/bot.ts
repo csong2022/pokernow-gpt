@@ -1,7 +1,10 @@
 import crypto from 'crypto';
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
 
+import bot_worker_ee from './eventemitters/bot-worker.eventemitter.ts';
+
 import { sleep } from './helpers/bot-timeout.helper.ts';
+import { constructQuery } from './helpers/query-construction.helper.ts';
 
 import { AIService, BotAction, defaultCheckAction, defaultFoldAction } from './interfaces/ai-client.interface.ts';
 import { ProcessedLogs } from './interfaces/log-processing.interface.ts';
@@ -12,8 +15,6 @@ import { Table } from './models/table.model.ts';
 import { LogService } from './services/log.service.ts';
 import { PlayerStatsAPIService } from './services/api/playerstatsapi.service.ts';
 import { PuppeteerService } from './services/puppeteer.service.ts';
-
-import { constructQuery } from './helpers/query-construction.helper.ts';
 
 import { DebugMode, ErrorResponse, logResponse, SuccessResponse } from './utils/error-handling.util.ts';
 import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from './utils/log-processing.util.ts';
@@ -64,19 +65,16 @@ export class Bot {
     }
 
     //TODO:
-    //---
-    //stop SIGNAL/clean up
+    //stop SIGNAL -> clean up
     //report bot status
     //rebuys
 
     public async run() {
-        // await this.openGame();
-        // await this.enterTableInProgress();
         // retrieve initial num players
         await this.updateNumPlayers();
-        // -> while the bot is "active"
-        // only play 3 hands for testing purpose
-        let hands_count = 3;
+        // TODO: loop while the bot is "active"
+        // only play 20 hands for testing purpose
+        let hands_count = 20;
         while (hands_count > 0) {
             await this.waitForNextHand();
             await this.updateNumPlayers();
@@ -219,9 +217,7 @@ export class Bot {
         console.log("Completed a hand.\n");
     }
 
-    // decouple pulling and processing logs
     private async processLogs<D, E=Error>(log: SuccessResponse<D> | ErrorResponse<E>, first_fetch: boolean): Promise<ProcessedLogs> {
-        // TOOO: botmanager should fetch the logs on hand end
         if (log.code === "success") {
             let data = this.log_service.getData(log);
             let msg = this.log_service.getMsg(data);
