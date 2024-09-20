@@ -149,8 +149,6 @@ export class Bot {
         }
         while (true) {
             var res;
-            // wait for the bot's turn -> perform actions
-            // OR winner is detected -> pull all the logs
             console.log("Checking for bot's turn or winner of hand.");
 
             res = await this.puppeteer_service.waitForBotTurnOrWinner(this.table.getNumPlayers(), this.game.getMaxTurnLength());
@@ -166,7 +164,6 @@ export class Bot {
                     }
                     console.log("Performing bot's turn.");
 
-                    // get hand and stack size
                     const pot_size = await this.getPotSize();
                     const hand = await this.getHand();
                     const stack_size = await this.getStackSize();
@@ -174,10 +171,9 @@ export class Bot {
                     this.table.setPot(convertToBBs(pot_size, this.game.getBigBlind()));
                     await this.updateHero(hand, convertToBBs(stack_size, this.game.getBigBlind()));
 
-                    // post process logs and construct query
                     await postProcessLogs(this.table.getLogsQueue(), this.game);
                     const query = constructQuery(this.game);
-                    // query chatGPT and make action
+
                     try {
                         const bot_action = await this.queryBotAction(query, this.query_retries);
                         this.table.resetPlayerActions();
@@ -322,7 +318,6 @@ export class Bot {
             this.hand_history = ai_response.prev_messages;
 
             if (await this.isValidBotAction(ai_response.bot_action)) {
-                // only push to hand history if the choice made is valid
                 if (ai_response.curr_message) {
                     this.hand_history.push(ai_response.curr_message);
                 }
