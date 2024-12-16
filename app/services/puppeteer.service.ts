@@ -52,7 +52,7 @@ export class PuppeteerService {
     
     async waitForGameInfo<D, E=Error>(): Response<D, E> {
         try {
-            await this.page.waitForSelector('.game-infos > .blind-value-ctn > .blind-value > span', {timeout: this.default_timeout * 30});
+            await this.page.waitForSelector('.game-infos > .blind-value-ctn > .blind-value', {timeout: this.default_timeout * 30});
         } catch (err) {
             return {
                 code: "error",
@@ -69,7 +69,7 @@ export class PuppeteerService {
     async getGameInfo<D, E=Error>(): Response<D, E> {
         var game_info;
         try {
-            game_info = await this.page.$eval(".game-infos > .blind-value-ctn > .blind-value > span", (span: any) => span.textContent);
+            game_info = await this.page.$eval(".game-infos > .blind-value-ctn > .blind-value", (div: any) => div.textContent);
         } catch (err) {
             return {
                 code: "error",
@@ -84,7 +84,7 @@ export class PuppeteerService {
     }
     
     convertGameInfo(game_info: string): GameInfo {
-        const re = RegExp("([A-Z]+)\\s~\\s([0-9]+)\\s\/\\s([0-9]+)");
+        const re = RegExp("([A-Z]+)~\\s([0-9]+)\\s\/\\s([0-9]+)");
         const matches = re.exec(game_info);
         if (matches && matches.length == 4) {
             return {game_type: matches[1], big_blind: Number(matches[3]), small_blind: Number(matches[2])};

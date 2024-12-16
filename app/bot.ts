@@ -78,6 +78,7 @@ export class Bot {
         while (hands_count > 0) {
             await this.waitForNextHand();
             await this.updateNumPlayers();
+            await this.updateGameInfo();
             console.log("Number of players in game:", this.table.getNumPlayers());
             this.table.setPlayersInPot(this.table.getNumPlayers());
             await this.playOneHand();
