@@ -67,6 +67,7 @@ export class Bot {
         while (true) {
             await this.waitForNextHand();
             await this.updateNumPlayers();
+            await this.updateGameInfo();
             console.log("Number of players in game:", this.table.getNumPlayers());
             this.table.setPlayersInPot(this.table.getNumPlayers());
             await this.playOneHand();
@@ -203,6 +204,20 @@ export class Bot {
         
         logResponse(await this.puppeteer_service.waitForHandEnd(), this.debug_mode);
         console.log("Completed a hand.\n");
+    }
+
+    private async updateGameInfo() {
+        logResponse(await this.puppeteer_service.waitForGameInfo(), this.debug_mode);
+    
+        console.log("Getting game info.");
+        const res = await this.puppeteer_service.getGameInfo();
+        logResponse(res, this.debug_mode);
+        if (res.code == "success") {
+            const game_info = this.puppeteer_service.convertGameInfo(res.data as string);
+            this.game.updateGameTypeAndBlinds(game_info.small_blind, game_info.big_blind, game_info.game_type);
+        } else {
+            throw new Error ("Failed to get game info.");
+        }
     }
 
     private async pullAndProcessLogs(last_created: string, first_fetch: boolean): Promise<ProcessedLogs> {
