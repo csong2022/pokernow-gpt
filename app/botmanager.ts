@@ -4,8 +4,8 @@ import { Piscina } from 'piscina';
 import { fileURLToPath } from 'url';
 import { MessageChannel } from 'worker_threads';
 
-import bot_config_json from './configs/bot.config.json';
-import webdriver_config_json from './configs/webdriver.config.json';
+import bot_config_json from './configs/bot.config.json' with { type: "json" };;
+import webdriver_config_json from './configs/webdriver.config.json' with { type: "json" };
 
 import manager_controller_ee from './eventemitters/manager-controller.eventemitter.ts';
 
