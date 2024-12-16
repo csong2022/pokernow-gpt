@@ -133,6 +133,20 @@ export class Bot {
         }
     }
 
+    private async updateGameInfo() {
+        logResponse(await this.puppeteer_service.waitForGameInfo(), this.debug_mode);
+    
+        console.log("Getting game info.");
+        const res = await this.puppeteer_service.getGameInfo();
+        logResponse(res, this.debug_mode);
+        if (res.code == "success") {
+            const game_info = this.puppeteer_service.convertGameInfo(res.data as string);
+            this.game.updateGameTypeAndBlinds(game_info.small_blind, game_info.big_blind, game_info.game_type);
+        } else {
+            throw new Error ("Failed to get game info.");
+        }
+    }
+    
     private async waitForNextHand() {
         console.log("Waiting for next hand to start.")
         await this.puppeteer_service.waitForNextHand(this.table.getNumPlayers(), this.game.getMaxTurnLength());
