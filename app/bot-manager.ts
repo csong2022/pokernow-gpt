@@ -3,9 +3,9 @@ import prompt from 'prompt-sync';
 
 import { Bot } from './bot.ts'
 
-import ai_config_json from './configs/ai-config.json';
-import bot_config_json from './configs/bot-config.json';
-import webdriver_config_json from './configs/webdriver-config.json';
+import ai_config_json from './configs/ai-config.json' with { type: "json" };
+import bot_config_json from './configs/bot-config.json' with { type: "json" };
+import webdriver_config_json from './configs/webdriver-config.json' with { type: "json" };
 
 import { DBService } from './services/db-service.ts';
 import { LogService } from './services/log-service.ts';
