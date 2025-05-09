@@ -1,5 +1,5 @@
 {
-    "provider": "Google",
-    "model_name": "gemini-1.5-pro",
+    "provider": "OpenAI",
+    "model_name": "gpt-3.5-turbo",
     "playstyle": "neutral"
 }
