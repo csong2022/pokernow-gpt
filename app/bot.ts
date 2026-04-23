@@ -21,6 +21,8 @@ import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from './uti
 import { getIdToInitialStackFromMsg, getIdToNameFromMsg, getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './utils/message-processing.util.ts';
 import { convertToBBs, convertToValue } from './utils/value-conversion.util.ts'
 
+type ProcessPlayersGuard = (first_created: string) => Promise<boolean>;
+
 export class Bot {
     private bot_uuid: crypto.UUID;
 
@@ -74,7 +76,7 @@ export class Bot {
         this.active = false;
     }
 
-    public async run() {
+    public async run(process_players_guard?: ProcessPlayersGuard) {
         await this.updateNumPlayers();
         while (this.active) {
             await this.waitForNextHand();
@@ -82,7 +84,7 @@ export class Bot {
             await this.updateGameInfo();
             console.log("Number of players in game:", this.table.getNumPlayers());
             this.table.setPlayersInPot(this.table.getNumPlayers());
-            await this.playOneHand();
+            await this.playOneHand(process_players_guard);
             this.hand_history = [];
             this.table.nextHand();
         }
@@ -156,7 +158,7 @@ export class Bot {
     // wait for any player action to start
     // check if it is the player's turn -> perform actions
     // check if there is a winner -> perform end of hand actions
-    private async playOneHand() {
+    private async playOneHand(process_players_guard?: ProcessPlayersGuard) {
         let processed_logs = {
             valid_msgs: new Array<Array<string>>,
             last_created: this.first_created,
@@ -213,13 +215,15 @@ export class Bot {
         }
 
         try {
-            //TODO: when running multiple bots, ensure that only one bot is trying to process players at end of hand
-            //PROBLEM: multiple child processes will try to emit the same event, but we only want the bot manager to consume each event once (per hand)
-            //PROPOSED SOLUTION: bot emits "fetchlog" event with firstcreated attached, botmanager keeps a set of timestamps and only fetches if firstcreated is not in the set
             const log = await this.log_service.fetchData("", this.first_created);
             processed_logs = await this.processLogs(log, processed_logs.first_fetch);
-            await postProcessLogsAfterHand(processed_logs.valid_msgs, this.game);
-            await this.table.processPlayers();
+            const should_process = process_players_guard
+                ? await process_players_guard(this.first_created)
+                : true;
+            if (should_process) {
+                await postProcessLogsAfterHand(processed_logs.valid_msgs, this.game);
+                await this.table.processPlayers();
+            }
         } catch (err) {
             console.log("Failed to process players:", err);
         }

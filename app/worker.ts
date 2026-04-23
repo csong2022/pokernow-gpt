@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import EventEmitter from 'events';
 import { MessagePort } from 'worker_threads';
 
 import { Bot } from './bot.ts'
@@ -8,7 +9,7 @@ import bot_worker_ee from './eventemitters/bot-worker.eventemitter.ts';
 import { AIServiceFactory } from './helpers/ai-service-factory.helper.ts';
 
 import { WorkerConfig } from './interfaces/config.interface.ts';
-import { EntryParams, StopSignal } from './interfaces/message.interface.ts';
+import { EntryParams, ProcessPlayersResponse, RequestProcessPlayers } from './interfaces/message.interface.ts';
 
 
 import { DBService } from './services/db.service.ts';
@@ -45,11 +46,6 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
         try {
             await bot.enterTableInProgress(name, stack_size);
             port.postMessage({event_name: `${bot_uuid}-entrySuccess`, msg: "success"});
-            port.on('message', (message: StopSignal) => {
-                if (message.event_name === 'stop') {
-                    bot.stop();
-                }
-            });
             break;
         } catch (err) {
             port.postMessage({event_name: `${bot_uuid}-entryFailure`, msg: err.toString()});
@@ -63,7 +59,19 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
         }
     }
 
-    await bot.run();
+    const port_ee = new EventEmitter();
+    port.on('message', (message: { event_name: string }) => {
+        port_ee.emit(message.event_name, message);
+    });
+    port_ee.on('stop', () => bot.stop());
+
+    const process_players_guard = (first_created: string): Promise<boolean> =>
+        new Promise((resolve) => {
+            port.postMessage({ event_name: 'requestProcessPlayers', first_created } as RequestProcessPlayers);
+            port_ee.once('processPlayersResponse', (msg: ProcessPlayersResponse) => resolve(msg.allowed));
+        });
+
+    await bot.run(process_players_guard);
 }
 
 export default startBot;

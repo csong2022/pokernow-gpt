@@ -1,28 +1,24 @@
-import { Database, open } from 'sqlite'
-import sqlite3 from 'sqlite3';
+import Database from 'better-sqlite3';
 
 export class DBService {
     private file_name: string;
-    private db!: Database<sqlite3.Database, sqlite3.Statement>;
+    private db!: Database.Database;
 
     constructor(file_name: string) {
         this.file_name = file_name;
     }
 
-    async init(): Promise<void> {
-        this.db = await open<sqlite3.Database, sqlite3.Statement>({
-            filename: this.file_name,
-            driver: sqlite3.Database
-        })
+    init(): void {
+        this.db = new Database(this.file_name);
     }
-    
-    async createTables(): Promise<void> {
-        await this.createPlayerTable();
+
+    createTables(): void {
+        this.createPlayerTable();
     }
-    
-    async createPlayerTable(): Promise<void> {
+
+    createPlayerTable(): void {
         try {
-            await this.db.exec(`
+            this.db.exec(`
                 CREATE TABLE IF NOT EXISTS PlayerStats (
                     name TEXT PRIMARY KEY NOT NULL,
                     total_hands INT NOT NULL,
@@ -37,21 +33,13 @@ export class DBService {
             console.log("Failed to create player table", err.message);
         }
     }
-    
-    async close(): Promise<void> {
-        await this.db.close();
-    }
-    
 
-    async query(sql: string, params: Array<any>): Promise<Array<string>> {
-        var rows : string[] = [];
-        await this.db.each(sql, params, (err: any, row: string) => {
-            if (err) {
-                throw new Error(err.message);
-            }
-            rows.push(row);
-        });
-        return rows;
+    close(): void {
+        this.db.close();
+    }
+
+    query(sql: string, params: Array<any>): Array<any> {
+        return this.db.prepare(sql).all(params);
     }
 }
 
