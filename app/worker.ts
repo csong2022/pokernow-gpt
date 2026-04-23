@@ -8,7 +8,7 @@ import bot_worker_ee from './eventemitters/bot-worker.eventemitter.ts';
 import { AIServiceFactory } from './helpers/ai-service-factory.helper.ts';
 
 import { WorkerConfig } from './interfaces/config.interface.ts';
-import { EntryParams } from './interfaces/message.interface.ts';
+import { EntryParams, StopSignal } from './interfaces/message.interface.ts';
 
 
 import { DBService } from './services/db.service.ts';
@@ -45,13 +45,18 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
         try {
             await bot.enterTableInProgress(name, stack_size);
             port.postMessage({event_name: `${bot_uuid}-entrySuccess`, msg: "success"});
+            port.on('message', (message: StopSignal) => {
+                if (message.event_name === 'stop') {
+                    bot.stop();
+                }
+            });
             break;
         } catch (err) {
             port.postMessage({event_name: `${bot_uuid}-entryFailure`, msg: err.toString()});
             //TODO: add a setTimeout()
-            const retryentry_task = (port: MessagePort): Promise<EntryParams> => 
-                new Promise((resolve, reject) => 
-                    port.on('message', (message: EntryParams) => resolve(message)));
+            const retryentry_task = (port: MessagePort): Promise<EntryParams> =>
+                new Promise((resolve, reject) =>
+                    port.once('message', (message: EntryParams) => resolve(message)));
             const msg: EntryParams = await retryentry_task(port);
             name = msg.name;
             stack_size = msg.stack_size;
@@ -61,4 +66,4 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
     await bot.run();
 }
 
-module.exports = startBot;
+export default startBot;

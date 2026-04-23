@@ -33,6 +33,7 @@ export class Bot {
     private debug_mode: DebugMode;
     private query_retries: number;
 
+    private active: boolean;
     private first_created: string;
     private hand_history: ChatCompletionMessageParam | any;
 
@@ -60,22 +61,22 @@ export class Bot {
         this.debug_mode = debug_mode;
         this.query_retries = query_retries;
 
+        this.active = true;
         this.first_created = "";
         this.hand_history = [];
     }
 
     //TODO:
-    //stop SIGNAL -> clean up
     //report bot status
     //rebuys
 
+    public stop(): void {
+        this.active = false;
+    }
+
     public async run() {
-        // retrieve initial num players
         await this.updateNumPlayers();
-        // TODO: loop while the bot is "active"
-        // only play 20 hands for testing purpose
-        let hands_count = 20;
-        while (hands_count > 0) {
+        while (this.active) {
             await this.waitForNextHand();
             await this.updateNumPlayers();
             await this.updateGameInfo();
@@ -84,7 +85,6 @@ export class Bot {
             await this.playOneHand();
             this.hand_history = [];
             this.table.nextHand();
-            hands_count--;
         }
     }
 

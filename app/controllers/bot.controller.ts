@@ -23,9 +23,20 @@ export async function create(req: any, res: any, next: any): Promise<void> {
         manager_controller_ee.once(`${bot_uuid}-entrySuccess`, entrysuccess_listener);
         manager_controller_ee.once(`${bot_uuid}-entryFailure`, entryfailure_listener);
 
-        await startWorker(bot_uuid, data.game_id, data.name, data.stack_size, data.ai_settings);
+        startWorker(bot_uuid, data.game_id, data.name, data.stack_size, data.ai_settings);
     } catch (err) {
         console.error(`Error while creating player.`, err.message);
+        next(err);
+    }
+}
+
+export async function stop(req: any, res: any, next: any): Promise<void> {
+    try {
+        const bot_uuid = req.body.bot_uuid;
+        manager_controller_ee.emit(`${bot_uuid}-stop`);
+        res.json({ bot_uuid: bot_uuid, code: 'ok' });
+    } catch (err) {
+        console.error(`Error while stopping bot.`, err.message);
         next(err);
     }
 }

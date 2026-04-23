@@ -7,4 +7,6 @@ router.post('/create', bot_controller.create);
 
 router.post('/create/retry', bot_controller.retry);
 
+router.post('/stop', bot_controller.stop);
+
 export default router;
