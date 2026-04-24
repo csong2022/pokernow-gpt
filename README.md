@@ -19,6 +19,7 @@
       <a href="#getting-started">Getting Started</a>
       <ul>
         <li><a href="#installation">Installation</a></li>
+        <li><a href="#running-the-bot">Running the Bot</a></li>
       </ul>
     </li>
     <li>
@@ -71,7 +72,7 @@ As ChatGPT and LLMs/generative models as a whole improve over time, we can and s
 
 ### Installation
 
-1. Get an Open AI API Key at [(https://platform.openai.com/docs/overview)](https://platform.openai.com/docs/overview)
+1. Get an OpenAI API Key at [https://platform.openai.com/docs/overview](https://platform.openai.com/docs/overview) and/or a Google AI API Key at [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey)
 2. Clone the repo
    ```sh
    git clone https://github.com/csong2022/pokernow-gpt.git
@@ -80,23 +81,71 @@ As ChatGPT and LLMs/generative models as a whole improve over time, we can and s
    ```sh
    npm install
    ```
-4. Create a .env file in the base project directory ./pokernow-gpt and define your API Key
-   ```js
-   OPENAI_API_KEY = 'YOUR API KEY';
-   GOOGLEAI_API_KEY = 'YOUR API KEY';
+4. Create a `.env` file in the base project directory `./pokernow-gpt` and define your API key(s)
    ```
-5. Update app/configs/ai-config.json to your desired provider and model_name (see supported models below for reference)
-   ```json
-   {
-     "provider": "PROVIDER",
-     "model_name": "MODEL"
-   }
+   OPENAI_API_KEY=YOUR_API_KEY
+   GOOGLEAI_API_KEY=YOUR_API_KEY
    ```
-6. Run the app
-   ```sh
-   npx tsx app/index.ts
-   ```
-7. Follow the command line prompts to join an existing PokerNow game as a player. (ensure that the game is already setup with another player being the host, you can start a new game by going to https://www.pokernow.club/start-game)
+5. (Optional) Adjust bot and webdriver settings in `app/configs/bot.config.json` and `app/configs/webdriver.config.json`.
+
+### Running the Bot
+
+The app exposes a REST API on `http://localhost:8080`. Start the server:
+
+```sh
+npx tsx app/index.ts
+```
+
+Before creating a bot, make sure the PokerNow game is already set up with another player acting as host (you can start a new game at [https://www.pokernow.club/start-game](https://www.pokernow.club/start-game)).
+
+#### Create a bot (join a game)
+
+Send a `POST` request to `/bot/create`. The bot will open a headless browser, navigate to the game, and request a seat. The response resolves once the host accepts (or rejects) the ingress request.
+
+```sh
+curl -X POST http://localhost:8080/bot/create \
+  -H "Content-Type: application/json" \
+  -d '{
+    "game_id": "pglXXXXXXXXXXXX",
+    "name": "Bot1",
+    "stack_size": 1000,
+    "ai_settings": {
+      "provider": "Google",
+      "model_name": "gemini-2.5-pro",
+      "playstyle": "neutral"
+    }
+  }'
+```
+
+The `game_id` is the string at the end of the PokerNow URL: `pokernow.club/games/<game_id>`. On success the response returns a `bot_uuid` — save it to stop or retry the bot later.
+
+```json
+{ "bot_uuid": "xxxx-xxxx-xxxx-xxxx", "code": "ok" }
+```
+
+#### Retry table entry
+
+If the host rejected the ingress request, retry with a different name and/or stack size:
+
+```sh
+curl -X POST http://localhost:8080/bot/create/retry \
+  -H "Content-Type: application/json" \
+  -d '{
+    "bot_uuid": "xxxx-xxxx-xxxx-xxxx",
+    "name": "Bot2",
+    "stack_size": 500
+  }'
+```
+
+#### Stop a bot
+
+The bot exits after the current hand finishes.
+
+```sh
+curl -X POST http://localhost:8080/bot/stop \
+  -H "Content-Type: application/json" \
+  -d '{ "bot_uuid": "xxxx-xxxx-xxxx-xxxx" }'
+```
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- SUPPORTED MODELS -->
@@ -107,9 +156,9 @@ providers
 
 models
 ---
-OpenAI: "gpt-3.5-turbo", "gpt-4-turbo", "gpt-4o"
+OpenAI: "gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini"
 
-Google: "gemini-1.5-flash", "gemini-1.0-pro", "gemini-1.5-pro"
+Google: "gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.5-pro"
 
 <!-- LICENSE -->
 ## License
