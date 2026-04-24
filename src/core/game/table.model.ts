@@ -1,11 +1,11 @@
-import { Player } from "./player.model.ts"
-import { PlayerAction } from "./playeraction.model.ts";
-import { PlayerStats } from "./playerstats.model.ts";
+import { Player } from "../player/player.model.ts"
+import { PlayerAction } from "../player/playeraction.model.ts";
+import { PlayerStats } from "../player/playerstats.model.ts";
 
-import { PlayerStatsAPIService } from "../services/api/playerstatsapi.service.ts";
+import { PlayerStatsAPIService } from "../../services/db/playerstatsapi.service.ts";
 
-import { Queue } from "../utils/data-structures.util.ts"
-import { getPlayerStacksMsg, getIdToInitialStackFromMsg as getPlayerInitialStacksFromMsg } from "../utils/message-processing.util.ts";
+import { Queue } from "../../utils/data-structures.util.ts"
+import { getPlayerStacksMsg, getIdToInitialStackFromMsg as getPlayerInitialStacksFromMsg } from "../poker/message-processing.util.ts";
 
 export class Table {
     private player_service: PlayerStatsAPIService;

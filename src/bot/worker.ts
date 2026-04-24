@@ -6,16 +6,15 @@ import { Bot } from './bot.ts'
 
 import bot_worker_ee from './eventemitters/bot-worker.eventemitter.ts';
 
-import { AIServiceFactory } from './helpers/ai-service-factory.helper.ts';
+import { AIServiceFactory } from '../services/ai/ai-service-factory.helper.ts';
 
-import { WorkerConfig } from './interfaces/config.interface.ts';
-import { EntryParams, ProcessPlayersResponse, RequestProcessPlayers } from './interfaces/message.interface.ts';
+import { WorkerConfig } from '../interfaces/config.interface.ts';
+import { EntryParams, ProcessPlayersResponse, RequestProcessPlayers } from '../interfaces/message.interface.ts';
 
-
-import { DBService } from './services/db.service.ts';
-import { LogService } from './services/log.service.ts';
-import { PlayerStatsAPIService } from './services/api/playerstatsapi.service.ts';
-import { PuppeteerService } from './services/puppeteer.service.ts';
+import { DBService } from '../services/db/db.service.ts';
+import { LogService } from '../services/logs/log.service.ts';
+import { PlayerStatsAPIService } from '../services/db/playerstatsapi.service.ts';
+import { PuppeteerService } from '../services/puppeteer/puppeteer.service.ts';
 
 dotenv.config();
 
@@ -23,7 +22,7 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
     const puppeteer_service = new PuppeteerService(webdriver_config.default_timeout, webdriver_config.headless_flag);
     await puppeteer_service.init();
 
-    const db_service = new DBService("./app/pokernow-gpt.db");
+    const db_service = new DBService("./pokernow-gpt.db");
     await db_service.init();
 
     const playerstats_api_service = new PlayerStatsAPIService(db_service);

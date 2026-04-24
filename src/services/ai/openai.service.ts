@@ -1,8 +1,8 @@
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
-import { AIService, BotAction } from "../../interfaces/ai-client.interface.ts";
-import { getPromptFromPlaystyle, parseResponse} from "../../helpers/ai-query.helper.ts";
-import { withTimeout } from "../../helpers/bot-timeout.helper.ts";
+import { AIService, BotAction } from "./ai-client.interface.ts";
+import { getPromptFromPlaystyle, parseResponse} from "./ai-query.helper.ts";
+import { withTimeout } from "../../utils/bot-timeout.helper.ts";
 
 const AI_QUERY_TIMEOUT_MS = 30000;
 

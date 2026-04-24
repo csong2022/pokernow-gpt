@@ -52,6 +52,6 @@ export class DBService {
     }
 }
 
-const db_service = new DBService("./app/pokernow-gpt.db");
+const db_service = new DBService("./pokernow-gpt.db");
 
 export default db_service;
