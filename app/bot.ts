@@ -2,8 +2,8 @@ import crypto from 'crypto';
 
 import bot_worker_ee from './eventemitters/bot-worker.eventemitter.ts';
 
-import { sleep } from './helpers/bot-timeout.helper.ts';
-import { constructQuery } from './helpers/query-construction.helper.ts';
+import { sleep, TimeoutError } from './helpers/bot-timeout.helper.ts';
+import { constructHandSetup, constructTurnUpdate } from './helpers/query-construction.helper.ts';
 
 import { AIService, BotAction, defaultCheckAction, defaultFoldAction } from './interfaces/ai-client.interface.ts';
 import { ProcessedLogs } from './interfaces/log-processing.interface.ts';
@@ -172,6 +172,8 @@ export class Bot {
     // check if it is the player's turn -> perform actions
     // check if there is a winner -> perform end of hand actions
     private async playOneHand(process_players_guard?: ProcessPlayersGuard) {
+        this.ai_service.resetHand();
+        let is_first_turn_of_hand = true;
         let is_dealer = false;
         logResponse(await this.puppeteer_service.openLogPanel(), this.debug_mode);
         try {
@@ -199,8 +201,16 @@ export class Bot {
 
         if (!is_dealer) {
             try {
-                const init_log = await this.log_service.fetchData(this.hand_number, "");
+                let init_log = await this.log_service.fetchData(this.hand_number, "");
                 processed_logs = await this.processLogs(init_log, true);
+
+                if (!this.table.getNameToId().has(this.bot_name)) {
+                    const retry_hand = this.hand_number + 1;
+                    console.log(`Bot "${this.bot_name}" not in Player stacks for hand ${this.hand_number}; retrying with hand ${retry_hand}.`);
+                    this.hand_number = retry_hand;
+                    init_log = await this.log_service.fetchData(this.hand_number, "");
+                    processed_logs = await this.processLogs(init_log, true);
+                }
             } catch (err) {
                 console.log("Failed to pull initial hand logs:", err);
             }
@@ -216,8 +226,18 @@ export class Bot {
                 if (data.includes("action-signal")) {
                     try {
                         await sleep(2000);
-                        const log = await this.log_service.fetchData(this.hand_number, processed_logs.last_created);
-                        const new_logs = await this.processLogs(log, processed_logs.first_fetch);
+                        const was_first_fetch = processed_logs.first_fetch;
+                        let log = await this.log_service.fetchData(this.hand_number, processed_logs.last_created);
+                        let new_logs = await this.processLogs(log, was_first_fetch);
+
+                        if (was_first_fetch && !this.table.getNameToId().has(this.bot_name)) {
+                            const retry_hand = this.hand_number + 1;
+                            console.log(`Bot "${this.bot_name}" not in Player stacks for hand ${this.hand_number}; retrying with hand ${retry_hand}.`);
+                            this.hand_number = retry_hand;
+                            log = await this.log_service.fetchData(this.hand_number, "");
+                            new_logs = await this.processLogs(log, true);
+                        }
+
                         processed_logs = {
                             ...new_logs,
                             last_created: new_logs.last_created || processed_logs.last_created
@@ -233,21 +253,31 @@ export class Bot {
                         const stack_size = await this.getStackSize();
 
                         this.table.setPot(convertToBBs(pot_size, this.game.getBigBlind()));
-                        await this.updateHero(hand, convertToBBs(stack_size, this.game.getBigBlind()));
+                        const hero_ready = await this.updateHero(hand, convertToBBs(stack_size, this.game.getBigBlind()));
+                        if (!hero_ready) {
+                            console.log("Hero state not ready; skipping turn and waiting for it to time out.");
+                        } else {
+                            await postProcessLogs(this.table.getLogsQueue(), this.game);
+                            const query = is_first_turn_of_hand
+                                ? constructHandSetup(this.game) + '\n\n' + constructTurnUpdate(this.game)
+                                : constructTurnUpdate(this.game);
+                            is_first_turn_of_hand = false;
 
-                        await postProcessLogs(this.table.getLogsQueue(), this.game);
-                        const query = constructQuery(this.game);
-
-                        const bot_action = await this.queryBotAction(query, this.query_retries);
-                        this.table.resetPlayerActions();
-                        await this.performBotAction(bot_action);
+                            const bot_action = await this.queryBotAction(query, this.query_retries);
+                            this.table.resetPlayerActions();
+                            await this.performBotAction(bot_action);
+                        }
                     } catch (err) {
                         console.log("Error during bot turn, falling back to default action:", err);
                         try {
-                            const fallback = (await this.isValidBotAction(defaultCheckAction))
-                                ? defaultCheckAction
-                                : defaultFoldAction;
-                            await this.performBotAction(fallback);
+                            if (!this.game.getHero()) {
+                                console.log("Hero not initialized; cannot attempt fallback action.");
+                            } else {
+                                const fallback = (await this.isValidBotAction(defaultCheckAction))
+                                    ? defaultCheckAction
+                                    : defaultFoldAction;
+                                await this.performBotAction(fallback);
+                            }
                         } catch (fallback_err) {
                             console.log("Failed to perform fallback action:", fallback_err);
                         }
@@ -266,15 +296,19 @@ export class Bot {
         logResponse(res, this.debug_mode);
         if (res.code === "success") {
             console.log("Ending stack size:", res.data);
+            if (Number(res.data) === 0) {
+                console.log(`Bot "${this.bot_name}" has busted — stopping after this hand.`);
+                this.active = false;
+            }
         }
 
         try {
-            const log = await this.log_service.fetchData(this.hand_number, this.first_created);
-            processed_logs = await this.processLogs(log, processed_logs.first_fetch);
             const should_process = process_players_guard
                 ? await process_players_guard(this.first_created)
                 : true;
             if (should_process) {
+                const log = await this.log_service.fetchData(this.hand_number, this.first_created);
+                processed_logs = await this.processLogs(log, processed_logs.first_fetch);
                 await postProcessLogsAfterHand(processed_logs.valid_msgs, this.game);
                 await this.table.processPlayers();
             }
@@ -365,14 +399,25 @@ export class Bot {
         return stack_size;
     }
 
-    private async updateHero(hand: string[], stack_size: number): Promise<void> {
+    private async updateHero(hand: string[], stack_size: number): Promise<boolean> {
         const hero = this.game.getHero();
         if (!hero) {
-            this.game.createAndSetHero(this.table.getIdFromName(this.bot_name), hand, stack_size);
+            let bot_id: string;
+            try {
+                bot_id = this.table.getIdFromName(this.bot_name);
+            } catch {
+                console.log(
+                    `Cannot create hero — bot name "${this.bot_name}" not in name_to_id map. Known mappings:`,
+                    Array.from(this.table.getNameToId().entries())
+                );
+                return false;
+            }
+            this.game.createAndSetHero(bot_id, hand, stack_size);
         } else {
             hero.setHand(hand);
             hero.setStackSize(stack_size);
         }
+        return true;
     }
 
     private async queryBotAction(query: string, retries: number, retry_counter: number = 0): Promise<BotAction> {
@@ -395,6 +440,12 @@ export class Bot {
             console.log("Invalid bot action, retrying query.");
             return await this.queryBotAction(query, retries, retry_counter + 1);
         } catch (err) {
+            if (err instanceof TimeoutError) {
+                console.log("AI query timed out, defaulting to safe action.");
+                return (await this.isValidBotAction(defaultCheckAction))
+                    ? defaultCheckAction
+                    : defaultFoldAction;
+            }
             console.log("Error while querying AI service:", err, "retrying query.");
             return await this.queryBotAction(query, retries, retry_counter + 1);
         }

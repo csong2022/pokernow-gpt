@@ -312,17 +312,34 @@ export class PuppeteerService {
     
     async getPotSize<D, E=Error>(): Response<D, E> {
         try {
-            await this.page.waitForSelector(".table > .table-pot-size > .main-value");
-            const pot_size_str = await this.page.$eval(".table > .table-pot-size > .main-value", (p: any) => p.textContent);
+            await this.page.waitForSelector(".table-pot-size", {timeout: this.default_timeout * 4});
+            const pot_text = await this.page.$eval(".table-pot-size", (el: Element) => {
+                const add_on_el = el.querySelector(".add-on-container");
+                if (add_on_el) {
+                    return (
+                        add_on_el.querySelector(".normal-value")?.textContent ??
+                        add_on_el.querySelector(".chips-value")?.textContent ??
+                        ""
+                    );
+                }
+                return (
+                    el.querySelector(".main-value .normal-value")?.textContent ??
+                    el.querySelector(".main-value .chips-value")?.textContent ??
+                    el.querySelector(".main-value")?.textContent ??
+                    ""
+                );
+            });
+            const match = pot_text.match(/[\d.]+/);
+            const total = match ? parseFloat(match[0]) : 0;
             return {
                 code: "success",
-                data: pot_size_str as D,
-                msg: "Successfully retrieved table pot size."
+                data: total as D,
+                msg: `Successfully retrieved table pot size: ${total}.`
             }
         } catch (err) {
             return {
                 code: "error",
-                error: new Error("Failed to retrieve table pot size.") as E
+                error: new Error(`Failed to retrieve table pot size: ${err}`) as E
             }
         }
     }

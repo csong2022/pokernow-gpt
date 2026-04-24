@@ -6,53 +6,55 @@ import { Table } from "../models/table.model.ts";
 
 const RUNOUT_CARD_RE = /([JQKA]|10|[1-9])([shdc])/g;
 
-export function constructQuery(game: Game): string {
+// Sent once at the start of each hand — contains the state that stays fixed mid-hand
+// (position, hole cards, opponent initial stacks, opponent stats, table size).
+export function constructHandSetup(game: Game): string {
     const table = game.getTable();
-
-    const street = table.getStreet();
-    const runout = table.getRunout();
 
     const hero_id = game.getHero()!.getPlayerId();
     const hero_name = table.getNameFromId(hero_id);
-    const hero_stack = game.getHero()!.getStackSize();
     const hero_position = table.getPlayerPositionFromId(hero_id);
     const hero_cards = game.getHero()!.getHand();
 
     const num_players = table.getNumPlayers();
     const player_stacks = table.getPlayerInitialStacks();
-    const pot_size = table.getPot();
-    const player_actions = table.getPlayerActions();
     const player_positions = table.getPlayerPositions();
 
     const { stacks_section, stats_section } = defineStacksAndStats(player_positions, player_stacks, table, hero_id, hero_name);
 
     const sections: string[] = [
-        defineObjective(hero_position, hero_stack),
-        defineGameState(street, num_players),
-        defineCommunityCards(street, runout),
+        `New No Limit Hold'em hand. I'm in the ${hero_position} position. It is ${num_players}-handed.`,
         defineHand(hero_cards),
+        stacks_section,
+        stats_section,
+        "I'll send the state on each of my decision points in this hand. Respond each time with only {action, bet_size_in_BBs BB} — no explanations.",
+    ];
+    return sections.join('\n');
+}
+
+// Sent on every bot turn — just what has changed since the last turn.
+export function constructTurnUpdate(game: Game): string {
+    const table = game.getTable();
+
+    const street = table.getStreet();
+    const runout = table.getRunout();
+    const hero_cards = game.getHero()!.getHand();
+    const hero_stack = game.getHero()!.getStackSize();
+    const pot_size = table.getPot();
+    const player_actions = table.getPlayerActions();
+
+    const sections: string[] = [
+        `Street: ${street ? street : "preflop"}. My stack: ${hero_stack} BB. Pot: ${pot_size} BB.`,
+        defineCommunityCards(street, runout),
     ];
 
     const rank_query = defineRank(street, runout, hero_cards);
     if (rank_query) sections.push(rank_query);
 
-    sections.push(
-        stacks_section,
-        definePotSize(pot_size),
-        defineActions(player_actions, table),
-        stats_section,
-        defineOutput()
-    );
+    sections.push(defineActions(player_actions, table));
+    sections.push("What's my action?");
 
     return sections.join('\n');
-}
-
-function defineObjective(position: string, stack_size: number): string {
-    return `Help me decide my action in No Limit Hold'em poker. I'm in the ${position} position with a stack size of ${stack_size} BB.`;
-}
-
-function defineGameState(street: string, players_in_pot: number): string {
-    return `It is ${players_in_pot}-handed, and the current street is: ${street ? street : "preflop"}.`
 }
 
 function defineCommunityCards(street: string, runout: string): string {
@@ -155,17 +157,9 @@ function defineStacksAndStats(
     };
 }
 
-function definePotSize(pot_size_in_BBs: number): string {
-    return `The current pot size before any actions were made in the street is ${pot_size_in_BBs} BB.`;
-}
-
 function defineActions(player_actions: Array<PlayerAction>, table: Table): string {
     const entries = player_actions.map(action =>
         `{${table.getPlayerPositionFromId(action.getPlayerId())} ${action.toString()}}`
     );
-    return "Here are the previous actions in this street, defined in the format {position action bet_size_in_BBs}:\n" + entries.join(", ");
-}
-
-function defineOutput(): string {
-    return "Do not provide an explanation, respond in this format: {action, bet_size_in_BBs BB}";
+    return "Actions this street (position action bet_size_in_BBs):\n" + entries.join(", ");
 }

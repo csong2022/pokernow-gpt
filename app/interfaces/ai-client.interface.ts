@@ -12,6 +12,7 @@ export abstract class AIService {
     }
 
     abstract init(): void;
+    abstract resetHand(): void;
     abstract query(input: string): Promise<BotAction>;
 
     getAPIKey(): string {

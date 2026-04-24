@@ -71,7 +71,14 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
             port_ee.once('processPlayersResponse', (msg: ProcessPlayersResponse) => resolve(msg.allowed));
         });
 
-    await bot.run(process_players_guard);
+    try {
+        await bot.run(process_players_guard);
+    } finally {
+        console.log(`Bot "${name}" shutting down — closing resources.`);
+        try { await puppeteer_service.closeBrowser(); } catch (err) { console.log("Error closing puppeteer browser:", err); }
+        try { await log_service.closeBrowser(); } catch (err) { console.log("Error closing log service browser:", err); }
+        try { db_service.close(); } catch (err) { console.log("Error closing db:", err); }
+    }
 }
 
 export default startBot;

@@ -1,4 +1,4 @@
-import { GenerativeModel, GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
+import { ChatSession, GenerativeModel, GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
 import { AIService, BotAction } from "../../interfaces/ai-client.interface.ts";
 import { getPromptFromPlaystyle, parseResponse } from "../../helpers/ai-query.helper.ts";
 import { withTimeout } from "../../helpers/bot-timeout.helper.ts";
@@ -15,6 +15,7 @@ const SAFETY_SETTINGS = [
 export class GoogleAIService extends AIService {
     private agent!: GoogleGenerativeAI;
     private model!: GenerativeModel;
+    private chat: ChatSession | null = null;
 
     init(): void {
         this.agent = new GoogleGenerativeAI(this.getAPIKey());
@@ -30,17 +31,24 @@ export class GoogleAIService extends AIService {
         });
     }
 
+    resetHand(): void {
+        this.chat = null;
+    }
+
     async query(input: string): Promise<BotAction> {
         const tag = `[${this.getBotName()}]`;
         console.log(tag, "input:", input);
 
+        if (!this.chat) {
+            this.chat = this.model.startChat();
+        }
+
         const result = await withTimeout(
-            this.model.generateContent(input),
+            this.chat.sendMessage(input),
             AI_QUERY_TIMEOUT_MS,
             "Google AI query"
         );
         const text_content = result.response.text();
-
         return text_content ? parseResponse(text_content) : { action_str: "", bet_size_in_BBs: 0 };
     }
 }

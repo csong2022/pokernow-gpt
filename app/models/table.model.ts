@@ -278,7 +278,9 @@ export class Table {
         throw new Error(`Could not retrieve name for player with id: ${player_id}.`)
     }
     public setIdToName(map: Map<string, string>): void {
-        this.id_to_name = map;
+        for (const [id, name] of map) {
+            this.id_to_name.set(id, name);
+        }
     }
 
     public getIdFromName(player_name: string): string {
@@ -288,8 +290,13 @@ export class Table {
         }
         throw new Error(`Could not retrieve id for player with name: ${player_name}.`)
     }
+    public getNameToId(): Map<string, string> {
+        return this.name_to_id;
+    }
     public setNameToId(map: Map<string, string>): void {
-        this.name_to_id = map;
+        for (const [name, id] of map) {
+            this.name_to_id.set(name, id);
+        }
     }
 
     public getPlayerCache(): Map<string, Player> {
