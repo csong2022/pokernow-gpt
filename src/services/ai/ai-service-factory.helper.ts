@@ -1,6 +1,6 @@
-import { AIService } from "../interfaces/ai-client.interface.ts";
-import { GoogleAIService } from "../services/ai/googleai.service.ts";
-import { OpenAIService } from "../services/ai/openai.service.ts";
+import { AIService } from "./ai-client.interface.ts";
+import { GoogleAIService } from "./googleai.service.ts";
+import { OpenAIService } from "./openai.service.ts";
 
 export class AIServiceFactory {
     private supportedModels: Map<string, string[]>;

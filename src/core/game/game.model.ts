@@ -1,6 +1,6 @@
-import { Hero } from "./player.model.ts";
-import { Player } from "./player.model.ts";
-import { PlayerStats } from "./playerstats.model.ts";
+import { Hero } from "../player/player.model.ts";
+import { Player } from "../player/player.model.ts";
+import { PlayerStats } from "../player/playerstats.model.ts";
 import { Table } from "./table.model.ts";
 
 export class Game {

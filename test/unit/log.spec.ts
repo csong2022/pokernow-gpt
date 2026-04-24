@@ -1,14 +1,14 @@
-import { Table } from "../../app/models/table.model.ts";
+import { Table } from "../../src/core/game/table.model.ts";
 
-import { DBService } from '../../app/services/db.service.ts';
-import { PlayerStatsAPIService } from '../../app/services/api/playerstatsapi.service.ts';
+import { DBService } from '../../src/services/db/db.service.ts';
+import { PlayerStatsAPIService } from '../../src/services/db/playerstatsapi.service.ts';
 
-import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling.util.ts';
-import { LogService } from '../../app/services/log.service.ts';
+import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../src/utils/error-handling.util.ts';
+import { LogService } from '../../src/services/logs/log.service.ts';
 
-import { postProcessLogsAfterHand, preProcessLogs } from "../../app/utils/log-processing.util.ts";
-import { validateAllMsg, getIdToInitialStackFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, getNameToIdFromMsg, getIdToTableSeatFromMsg } from "../../app/utils/message-processing.util.ts";
-import { Game } from "../../app/models/game.model.ts";
+import { postProcessLogsAfterHand, preProcessLogs } from "../../src/core/poker/log-processing.util.ts";
+import { validateAllMsg, getIdToInitialStackFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, getNameToIdFromMsg, getIdToTableSeatFromMsg } from "../../src/core/poker/message-processing.util.ts";
+import { Game } from "../../src/core/game/game.model.ts";
 
 describe('log service test', async () => {
     it("should properly get logs and filter through them", async() => {

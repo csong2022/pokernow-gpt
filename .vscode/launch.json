@@ -9,7 +9,7 @@
             "type": "node",
             "request": "launch",
 
-            "program": "${workspaceFolder}/app/index.ts",
+            "program": "${workspaceFolder}/src/index.ts",
 
             "runtimeExecutable": "tsx",
 

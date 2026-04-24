@@ -1,7 +1,7 @@
 import puppeteer from 'puppeteer';
-import type { Response } from '../utils/error-handling.util.ts';
-import { Data, Log } from '../interfaces/log-processing.interface.ts';
-import { sleep } from '../helpers/bot-timeout.helper.ts';
+import type { Response } from '../../utils/error-handling.util.ts';
+import { Data, Log } from '../../core/poker/log-processing.interface.ts';
+import { sleep } from '../../utils/bot-timeout.helper.ts';
 
 const MAX_429_RETRIES = 3;
 

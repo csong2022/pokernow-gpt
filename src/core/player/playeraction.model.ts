@@ -1,4 +1,4 @@
-import { Action } from "../utils/log-processing.util.ts";
+import { Action } from "../poker/log-processing.util.ts";
 
 export class PlayerAction {
     private player_id: string;

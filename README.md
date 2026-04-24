@@ -86,14 +86,14 @@ As ChatGPT and LLMs/generative models as a whole improve over time, we can and s
    OPENAI_API_KEY=YOUR_API_KEY
    GOOGLEAI_API_KEY=YOUR_API_KEY
    ```
-5. (Optional) Adjust bot and webdriver settings in `app/configs/bot.config.json` and `app/configs/webdriver.config.json`.
+5. (Optional) Adjust bot and webdriver settings in `src/config/bot.config.json` and `src/config/webdriver.config.json`.
 
 ### Running the Bot
 
 The app exposes a REST API on `http://localhost:8080`. Start the server:
 
 ```sh
-npx tsx app/index.ts
+npx tsx src/index.ts
 ```
 
 Before creating a bot, make sure the PokerNow game is already set up with another player acting as host (you can start a new game at [https://www.pokernow.club/start-game](https://www.pokernow.club/start-game)).

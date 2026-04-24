@@ -2,23 +2,23 @@ import crypto from 'crypto';
 
 import bot_worker_ee from './eventemitters/bot-worker.eventemitter.ts';
 
-import { sleep, TimeoutError } from './helpers/bot-timeout.helper.ts';
-import { constructHandSetup, constructTurnUpdate } from './helpers/query-construction.helper.ts';
+import { sleep, TimeoutError } from '../utils/bot-timeout.helper.ts';
+import { constructHandSetup, constructTurnUpdate } from '../core/poker/query-construction.helper.ts';
 
-import { AIService, BotAction, defaultCheckAction, defaultFoldAction } from './interfaces/ai-client.interface.ts';
-import { ProcessedLogs } from './interfaces/log-processing.interface.ts';
+import { AIService, BotAction, defaultCheckAction, defaultFoldAction } from '../services/ai/ai-client.interface.ts';
+import { ProcessedLogs } from '../core/poker/log-processing.interface.ts';
 
-import { Game } from './models/game.model.ts';
-import { Table } from './models/table.model.ts';
+import { Game } from '../core/game/game.model.ts';
+import { Table } from '../core/game/table.model.ts';
 
-import { LogService } from './services/log.service.ts';
-import { PlayerStatsAPIService } from './services/api/playerstatsapi.service.ts';
-import { PuppeteerService } from './services/puppeteer.service.ts';
+import { LogService } from '../services/logs/log.service.ts';
+import { PlayerStatsAPIService } from '../services/db/playerstatsapi.service.ts';
+import { PuppeteerService } from '../services/puppeteer/puppeteer.service.ts';
 
-import { DebugMode, ErrorResponse, logResponse, SuccessResponse } from './utils/error-handling.util.ts';
-import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from './utils/log-processing.util.ts';
-import { getIdToInitialStackFromMsg, getIdToNameFromMsg, getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './utils/message-processing.util.ts';
-import { convertToBBs, convertToValue } from './utils/value-conversion.util.ts'
+import { DebugMode, ErrorResponse, logResponse, SuccessResponse } from '../utils/error-handling.util.ts';
+import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from '../core/poker/log-processing.util.ts';
+import { getIdToInitialStackFromMsg, getIdToNameFromMsg, getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from '../core/poker/message-processing.util.ts';
+import { convertToBBs, convertToValue } from '../core/poker/value-conversion.util.ts'
 
 type ProcessPlayersGuard = (first_created: string) => Promise<boolean>;
 
