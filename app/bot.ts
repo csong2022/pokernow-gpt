@@ -1,5 +1,4 @@
 import crypto from 'crypto';
-import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
 
 import bot_worker_ee from './eventemitters/bot-worker.eventemitter.ts';
 
@@ -37,7 +36,7 @@ export class Bot {
 
     private active: boolean;
     private first_created: string;
-    private hand_history: ChatCompletionMessageParam | any;
+    private hand_number: number;
 
     private table!: Table;
     private game!: Game;
@@ -65,7 +64,7 @@ export class Bot {
 
         this.active = true;
         this.first_created = "";
-        this.hand_history = [];
+        this.hand_number = 1;
     }
 
     //TODO:
@@ -77,6 +76,18 @@ export class Bot {
     }
 
     public async run(process_players_guard?: ProcessPlayersGuard) {
+        logResponse(await this.puppeteer_service.openLogPanel(), this.debug_mode);
+        try {
+            const hand_info_res = await this.puppeteer_service.getStartingHandInfo();
+            if (hand_info_res.code === "success" && hand_info_res.data.hand_number > 0) {
+                this.hand_number = hand_info_res.data.hand_number;
+                console.log("Initialized hand number from log:", this.hand_number);
+            } else {
+                console.log("No hand info in log yet, defaulting hand number to 1.");
+            }
+        } finally {
+            logResponse(await this.puppeteer_service.closeLogPanel(), this.debug_mode);
+        }
         await this.updateNumPlayers();
         while (this.active) {
             await this.waitForNextHand();
@@ -85,7 +96,8 @@ export class Bot {
             console.log("Number of players in game:", this.table.getNumPlayers());
             this.table.setPlayersInPot(this.table.getNumPlayers());
             await this.playOneHand(process_players_guard);
-            this.hand_history = [];
+            this.hand_number++;
+            this.first_created = "";
             this.table.nextHand();
         }
     }
@@ -159,11 +171,34 @@ export class Bot {
     // check if it is the player's turn -> perform actions
     // check if there is a winner -> perform end of hand actions
     private async playOneHand(process_players_guard?: ProcessPlayersGuard) {
+        let is_dealer = false;
+        logResponse(await this.puppeteer_service.openLogPanel(), this.debug_mode);
+        try {
+            const hand_info_res = await this.puppeteer_service.getStartingHandInfo();
+            if (hand_info_res.code === "success") {
+                const bot_id = this.table.getIdFromName(this.bot_name);
+                is_dealer = hand_info_res.data.dealer_id === bot_id;
+                console.log(`Hand #${this.hand_number}, bot is dealer: ${is_dealer}`);
+            }
+        } finally {
+            logResponse(await this.puppeteer_service.closeLogPanel(), this.debug_mode);
+        }
+
         let processed_logs = {
             valid_msgs: new Array<Array<string>>,
-            last_created: this.first_created,
+            last_created: "",
             first_fetch: true
         }
+
+        if (!is_dealer) {
+            try {
+                const init_log = await this.log_service.fetchData(this.hand_number, "");
+                processed_logs = await this.processLogs(init_log, true);
+            } catch (err) {
+                console.log("Failed to pull initial hand logs:", err);
+            }
+        }
+
         while (true) {
             var res;
             console.log("Checking for bot's turn or winner of hand.");
@@ -174,10 +209,14 @@ export class Bot {
                 if (data.includes("action-signal")) {
                     try {
                         await sleep(2000);
-                        const log = await this.log_service.fetchData("", processed_logs.last_created);
-                        processed_logs = await this.processLogs(log, processed_logs.first_fetch);
+                        const log = await this.log_service.fetchData(this.hand_number, processed_logs.last_created);
+                        const new_logs = await this.processLogs(log, processed_logs.first_fetch);
+                        processed_logs = {
+                            ...new_logs,
+                            last_created: new_logs.last_created || processed_logs.last_created
+                        };
                     } catch (err) {
-                        console.log("Failed to pull logs.");
+                        console.log("Failed to pull logs:", err);
                     }
                     console.log("Performing bot's turn.");
 
@@ -215,7 +254,7 @@ export class Bot {
         }
 
         try {
-            const log = await this.log_service.fetchData("", this.first_created);
+            const log = await this.log_service.fetchData(this.hand_number, this.first_created);
             processed_logs = await this.processLogs(log, processed_logs.first_fetch);
             const should_process = process_players_guard
                 ? await process_players_guard(this.first_created)
@@ -240,6 +279,12 @@ export class Bot {
                 data = this.log_service.pruneLogsBeforeCurrentHand(data);
                 msg = this.log_service.getMsg(data);
                 this.table.setPlayerInitialStacksFromMsg(msg, this.game.getBigBlind());
+
+                const handMsg = msg.find(m => m.includes("starting hand #"));
+                if (handMsg) {
+                    const match = handMsg.match(/starting hand #(\d+)/);
+                    if (match) this.hand_number = parseInt(match[1]);
+                }
 
                 first_fetch = false;
                 this.first_created = this.log_service.getLast(this.log_service.getCreatedAt(data));
@@ -277,7 +322,7 @@ export class Bot {
                 first_fetch: first_fetch
             }
         } else {
-            throw new Error("Failed to pull logs.");
+            throw log.error;
         }
     }
 
@@ -333,13 +378,9 @@ export class Bot {
         }
         try {
             await sleep(2000);
-            const ai_response = await this.ai_service.query(query, this.hand_history);
-            this.hand_history = ai_response.prev_messages;
+            const ai_response = await this.ai_service.query(query, []);
 
             if (await this.isValidBotAction(ai_response.bot_action)) {
-                if (ai_response.curr_message) {
-                    this.hand_history.push(ai_response.curr_message);
-                }
                 return ai_response.bot_action;
             }
             console.log("Invalid bot action, retrying query.");

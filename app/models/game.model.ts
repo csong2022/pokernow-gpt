@@ -69,3 +69,4 @@ export class Game {
         this.big_blind = big_blind;
         this.game_type = game_type;
     }
+}

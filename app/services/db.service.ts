@@ -39,7 +39,12 @@ export class DBService {
     }
 
     query(sql: string, params: Array<any>): Array<any> {
-        return this.db.prepare(sql).all(params);
+        const stmt = this.db.prepare(sql);
+        if (stmt.reader) {
+            return stmt.all(params);
+        }
+        stmt.run(params);
+        return [];
     }
 }
 

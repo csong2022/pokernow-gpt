@@ -6,7 +6,7 @@ export class LogService {
     private game_id: string;
     private browser!: puppeteer.Browser;
     private page!: puppeteer.Page;
-    
+
     constructor(game_id: string) {
         this.game_id = game_id;
     }
@@ -17,38 +17,46 @@ export class LogService {
             headless: true
         });
         this.page = await this.browser.newPage();
+        await this.page.setCacheEnabled(false);
     }
 
     async closeBrowser(): Promise<void> {
         await this.browser.close();
     }
 
-    async fetchData<D, E=Error>(before: string = "", after: string = ""): Response<D, E> {
-        const url = `https://www.pokernow.club/games/${this.game_id}/log?before_at=${before}&after_at=${after}&mm=false&v=2`;
-        await this.page.goto(url);
+    async fetchData<D, E=Error>(hand_number: number = 0, after: string = ""): Response<D, E> {
+        const after_param = after ? `&after_at=${after}` : "";
+        const url = `https://www.pokernow.com/api/games/${this.game_id}/log_v3?hand_number=${hand_number}${after_param}`;
+        console.log(url);
         try {
-            await this.page.waitForSelector("body > pre", {timeout: 4000});
-            const logs_str = await this.page.$eval("body > pre", pre => pre.textContent);
+            const res = await this.page.goto(url);
+            if (!res || !res.ok()) {
+                return {
+                    code: "error",
+                    error: new Error(`Log API returned ${res?.status()}: ${res?.statusText()}`) as E
+                }
+            }
+            const data = await res.json() as D;
             return {
                 code: "success",
-                data: JSON.parse(logs_str!) as D,
+                data,
                 msg: "Successfully got logs."
             }
         } catch (err) {
             return {
                 code: "error",
-                error: new Error("Failed to retrieve the text content of the api call.") as E
+                error: new Error(`Failed to fetch logs: ${err}`) as E
             }
         }
     }
-    
+
     getData(log: any): Data {
-        const data = log.data as JSON;
-        const str = JSON.stringify(data);
-        const res = JSON.parse(str) as Data;
-        return res;
+        const entries = (log.data ?? []) as Array<{ msg: string; createdAt: string }>;
+        return {
+            logs: entries.map(e => ({ at: "", created_at: e.createdAt, msg: e.msg }))
+        };
     }
-    
+
     getMsg(data: Data): Array<string> {
         const res = new Array<string>;
         data.logs.forEach((element) => {
@@ -56,7 +64,7 @@ export class LogService {
         });
         return res;
     }
-    
+
     getCreatedAt(data: Data): Array<string> {
         const res = new Array<string>;
         data.logs.forEach((element) => {
@@ -64,17 +72,16 @@ export class LogService {
         });
         return res;
     }
-    
+
     getLast(arr: Array<string>): string {
         return arr[arr.length - 1];
     }
-    
+
     getFirst(arr: Array<string>): string {
         return arr[0];
     }
-    
+
     pruneLogsBeforeCurrentHand(data: Data): Data {
-        //starts from the top of logs
         const log_arr = new Array<Log>;
         let i = 0;
         while ((i < data.logs.length) && !(data.logs[i].msg.includes("starting hand #"))) {

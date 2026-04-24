@@ -10,6 +10,11 @@ interface GameInfo {
     small_blind: number,
 }
 
+interface StartingHandInfo {
+    hand_number: number,
+    dealer_id: string,
+}
+
 export class PuppeteerService {
     private default_timeout: number;
     private headless_flag: boolean;
@@ -136,6 +141,64 @@ export class PuppeteerService {
         }
     }
     
+    async openLogPanel<D, E=Error>(): Response<D, E> {
+        try {
+            const existing = await this.page.$('.modal-button-close');
+            if (existing) {
+                await existing.click();
+                await sleep(500);
+            }
+            await this.page.waitForSelector('.show-log-button', {timeout: this.default_timeout * 4});
+            await this.page.evaluate(() => {
+                const btn = document.querySelector('.show-log-button');
+                if (btn) {
+                    btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+                    btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+                    btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+                }
+            });
+            await this.page.waitForSelector('.modal-button-close', {timeout: this.default_timeout * 4});
+            return { code: "success", data: null as D, msg: "Log panel opened." };
+        } catch (err) {
+            return { code: "error", error: new Error(`Failed to open log panel: ${err}`) as E };
+        }
+    }
+
+    async closeLogPanel<D, E=Error>(): Response<D, E> {
+        try {
+            const button = await this.page.$('.modal-button-close');
+            if (!button) {
+                return { code: "success", data: null as D, msg: "Log panel already closed." };
+            }
+            await button.click();
+            return { code: "success", data: null as D, msg: "Log panel closed." };
+        } catch (err) {
+            return { code: "error", error: new Error(`Failed to close log panel: ${err}`) as E };
+        }
+    }
+
+    async getStartingHandInfo<E=Error>(): Response<StartingHandInfo, E> {
+        try {
+            const el = await this.page.$('.start-game.entry-ctn');
+            if (!el) {
+                return { code: "error", error: new Error("No starting hand entry found in log.") as E };
+            }
+            const info = await el.evaluate((node: Element) => {
+                const content = node.querySelector('.content span')?.textContent ?? '';
+                const abbr = node.querySelector('abbr');
+                const dealer_id = abbr?.getAttribute('title')?.replace('Player ID: ', '') ?? '';
+                const match = content.match(/starting hand #(\d+)/);
+                return {
+                    hand_number: match ? parseInt(match[1]) : 0,
+                    dealer_id
+                };
+            });
+            return { code: "success", data: info, msg: "Got starting hand info." };
+        } catch (err) {
+            return { code: "error", error: new Error("Failed to get starting hand info.") as E };
+        }
+    }
+
     async waitForTableEntry<D, E=Error>(): Response<D, E> {
         try {
             await this.page.waitForSelector(".you-player", {timeout: this.default_timeout * 120});

@@ -1,6 +1,9 @@
 import { Content, GenerativeModel, GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
 import { AIMessage, AIResponse, AIService, BotAction } from "../../interfaces/ai-client.interface.ts";
 import { getPromptFromPlaystyle, parseResponse } from "../../helpers/ai-query.helper.ts";
+import { withTimeout } from "../../helpers/bot-timeout.helper.ts";
+
+const AI_QUERY_TIMEOUT_MS = 30000;
 
 export class GoogleAIService extends AIService {
     private agent!: GoogleGenerativeAI;
@@ -41,7 +44,7 @@ export class GoogleAIService extends AIService {
             history: processed_messages
         })
 
-        const result = await chat.sendMessage(input);
+        const result = await withTimeout(chat.sendMessage(input), AI_QUERY_TIMEOUT_MS, "Google AI query");
         const response = result.response;
         const text_content = response.text();
 
