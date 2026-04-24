@@ -1,18 +1,9 @@
-export interface AIMessage {
-    text_content: string,
-    metadata: any
-}
-
-export interface AIResponse {
-    bot_action: BotAction,
-    prev_messages: AIMessage[],
-    curr_message: AIMessage
-}
-
 export abstract class AIService {
     private api_key: string;
     private model_name: string;
     private playstyle: string;
+    private bot_name: string = "";
+    protected playstyle_prompt: string = "";
 
     constructor(api_key: string, model: string, playstyle: string) {
         this.api_key = api_key;
@@ -21,8 +12,8 @@ export abstract class AIService {
     }
 
     abstract init(): void;
-    abstract query(input: string, prev_messages: AIMessage[]): Promise<any>;
-    abstract processMessages(messages: AIMessage[]): Array<any>;
+    abstract resetHand(): void;
+    abstract query(input: string): Promise<BotAction>;
 
     getAPIKey(): string {
         return this.api_key;
@@ -34,6 +25,14 @@ export abstract class AIService {
 
     getPlaystyle(): string {
         return this.playstyle;
+    }
+
+    setBotName(bot_name: string): void {
+        this.bot_name = bot_name;
+    }
+
+    getBotName(): string {
+        return this.bot_name;
     }
 }
 

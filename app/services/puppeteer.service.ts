@@ -121,14 +121,24 @@ export class PuppeteerService {
         await this.page.keyboard.type(stack_size.toString())
         await this.page.$eval(".selected > div > form > button", (button: any) => button.click());
         try {
-            await this.page.waitForSelector(".alert-1-buttons > button", {timeout: this.default_timeout});
-            await this.page.$eval(".alert-1-buttons > button", (button: any) => button.click());
+            const handle = await this.page.waitForSelector(
+                [".alert-1-buttons > button", ".you-player"].join(','),
+                {timeout: this.default_timeout * 4}
+            );
+            if (!handle) {
+                throw new Error("No response element appeared.");
+            }
+            const is_alert = await handle.evaluate((el: Element) => el.matches(".alert-1-buttons > button"));
+            if (is_alert) {
+                await handle.click();
+            }
         } catch (err) {
             var message = "Table ingress unsuccessful."
             if (await this.page.$(".selected > div > form > div:nth-child(1) > .error-message")) {
                 message = "Player name must be unique to game.";
             }
-            await this.page.$eval(".selected > button", (button: any) => button.click());
+            const cancel_btn = await this.page.$(".selected > button");
+            if (cancel_btn) await cancel_btn.click();
             return {
                 code: "error",
                 error: new Error(message) as E
@@ -302,17 +312,34 @@ export class PuppeteerService {
     
     async getPotSize<D, E=Error>(): Response<D, E> {
         try {
-            await this.page.waitForSelector(".table > .table-pot-size > .main-value");
-            const pot_size_str = await this.page.$eval(".table > .table-pot-size > .main-value", (p: any) => p.textContent);
+            await this.page.waitForSelector(".table-pot-size", {timeout: this.default_timeout * 4});
+            const pot_text = await this.page.$eval(".table-pot-size", (el: Element) => {
+                const add_on_el = el.querySelector(".add-on-container");
+                if (add_on_el) {
+                    return (
+                        add_on_el.querySelector(".normal-value")?.textContent ??
+                        add_on_el.querySelector(".chips-value")?.textContent ??
+                        ""
+                    );
+                }
+                return (
+                    el.querySelector(".main-value .normal-value")?.textContent ??
+                    el.querySelector(".main-value .chips-value")?.textContent ??
+                    el.querySelector(".main-value")?.textContent ??
+                    ""
+                );
+            });
+            const match = pot_text.match(/[\d.]+/);
+            const total = match ? parseFloat(match[0]) : 0;
             return {
                 code: "success",
-                data: pot_size_str as D,
-                msg: "Successfully retrieved table pot size."
+                data: total as D,
+                msg: `Successfully retrieved table pot size: ${total}.`
             }
         } catch (err) {
             return {
                 code: "error",
-                error: new Error("Failed to retrieve table pot size.") as E
+                error: new Error(`Failed to retrieve table pot size: ${err}`) as E
             }
         }
     }
