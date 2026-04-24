@@ -38,20 +38,43 @@ export class PlayerStatsAPIService {
     async update(player_name: string, player_stats_JSON: any): Promise<void> {
         await this.db_service.query(
             `UPDATE PlayerStats
-             SET 
+             SET
                 total_hands = ?,
                 walks = ?,
                 vpip_hands = ?,
                 pfr_hands = ?
              WHERE name = ?`,
              [
-                player_stats_JSON.total_hands, 
-                player_stats_JSON.walks, 
+                player_stats_JSON.total_hands,
+                player_stats_JSON.walks,
                 player_stats_JSON.vpip_hands,
                 player_stats_JSON.pfr_hands,
                 player_name
             ]
         )
+    }
+
+    updateMany(updates: Array<{ player_name: string, player_stats_JSON: any }>): void {
+        this.db_service.transaction(() => {
+            for (const { player_name, player_stats_JSON } of updates) {
+                this.db_service.query(
+                    `UPDATE PlayerStats
+                     SET
+                        total_hands = ?,
+                        walks = ?,
+                        vpip_hands = ?,
+                        pfr_hands = ?
+                     WHERE name = ?`,
+                     [
+                        player_stats_JSON.total_hands,
+                        player_stats_JSON.walks,
+                        player_stats_JSON.vpip_hands,
+                        player_stats_JSON.pfr_hands,
+                        player_name
+                    ]
+                );
+            }
+        });
     }
     
     async remove(player_name: string): Promise<void>{

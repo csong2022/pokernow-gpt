@@ -4,6 +4,8 @@ import { Game } from "../models/game.model.ts";
 import { PlayerAction } from "../models/playeraction.model.ts";
 import { Table } from "../models/table.model.ts";
 
+const RUNOUT_CARD_RE = /([JQKA]|10|[1-9])([shdc])/g;
+
 export function constructQuery(game: Game): string {
     const table = game.getTable();
 
@@ -16,27 +18,33 @@ export function constructQuery(game: Game): string {
     const hero_position = table.getPlayerPositionFromId(hero_id);
     const hero_cards = game.getHero()!.getHand();
 
-    const players_in_pot = table.getPlayersInPot();
+    const num_players = table.getNumPlayers();
     const player_stacks = table.getPlayerInitialStacks();
     const pot_size = table.getPot();
     const player_actions = table.getPlayerActions();
     const player_positions = table.getPlayerPositions();
 
-    let query = "";
+    const { stacks_section, stats_section } = defineStacksAndStats(player_positions, player_stacks, table, hero_id, hero_name);
 
-    query = query.concat(defineObjective(hero_position, hero_stack), '\n');
-    query = query.concat(defineGameState(street, players_in_pot), '\n');
-    query = query.concat(defineCommunityCards(street, runout), '\n')
-    query = query.concat(defineHand(hero_cards), '\n');
+    const sections: string[] = [
+        defineObjective(hero_position, hero_stack),
+        defineGameState(street, num_players),
+        defineCommunityCards(street, runout),
+        defineHand(hero_cards),
+    ];
+
     const rank_query = defineRank(street, runout, hero_cards);
-    query = query.concat(rank_query ? rank_query + '\n' : '');
-    query = query.concat(defineStacks(player_stacks, player_positions, hero_id), '\n');
-    query = query.concat(definePotSize(pot_size), `\n`);
-    query = query.concat(defineActions(player_actions, table), '\n');
-    query = query.concat(defineStats(player_positions, table, hero_name), '\n');
-    query = query.concat(defineOutput());
+    if (rank_query) sections.push(rank_query);
 
-    return query;
+    sections.push(
+        stacks_section,
+        definePotSize(pot_size),
+        defineActions(player_actions, table),
+        stats_section,
+        defineOutput()
+    );
+
+    return sections.join('\n');
 }
 
 function defineObjective(position: string, stack_size: number): string {
@@ -101,14 +109,10 @@ export function defineRank(street: string, runout: string, hero_cards: string[])
 }
 
 function convertRunoutToCards(runout: string): string[] {
-    const re = RegExp(/([JQKA]|10|[1-9])([shdc])/, 'g');
     const res = new Array<string>;
-    const matches = [...runout.matchAll(re)];
-    matches.forEach((element) => {
-        const value = element[1];
-        const suit = element[2];
-        res.push(value + suit);
-    });
+    for (const element of runout.matchAll(RUNOUT_CARD_RE)) {
+        res.push(element[1] + element[2]);
+    }
     return res;
 }
 
@@ -121,22 +125,34 @@ function replaceTenWithLetter(cards: string[]): string[] {
     });
 }
 
-function defineStacks(player_stacks: Map<string, number>, player_positions: Map<string, string>, hero_id: string): string {
-    let query = "Here are the initial stack sizes of the other players in the pot, defined in the format {position: stack_size_in_BBs}:\n";
-    const player_ids = Array.from(player_positions.keys());
-    for (var i = 0; i < player_ids.length; i++)  {
-        const player_id = player_ids[i]
-        if (player_id === hero_id) {
-            continue;
-        }
+function defineStacksAndStats(
+    player_positions: Map<string, string>,
+    player_stacks: Map<string, number>,
+    table: Table,
+    hero_id: string,
+    hero_name: string
+): { stacks_section: string, stats_section: string } {
+    const stack_entries: string[] = [];
+    const stat_entries: string[] = [];
+
+    for (const player_id of player_positions.keys()) {
+        if (player_id === hero_id) continue;
         const player_pos = player_positions.get(player_id);
-        const stack_size = player_stacks.get(player_id);
-        query = query.concat(`{${player_pos}: ${stack_size} BBs}`)
-        if (i != player_ids.length - 1) {
-            query = query.concat(", ");
-        }
+        const player_name = table.getNameFromId(player_id);
+        if (player_name === hero_name) continue;
+
+        stack_entries.push(`{${player_pos}: ${player_stacks.get(player_id)} BBs}`);
+
+        const player_stats = table.getPlayerStatsFromName(player_name);
+        stat_entries.push(
+            `{${player_pos}: Total Hands Played = ${player_stats.getTotalHands()}, VPIP = ${player_stats.computeVPIPStat().toFixed(2)}, PFR = ${player_stats.computePFRStat().toFixed(2)}}`
+        );
     }
-    return query;
+
+    return {
+        stacks_section: "Here are the initial stack sizes of the other players in the pot, defined in the format {position: stack_size_in_BBs}:\n" + stack_entries.join(", "),
+        stats_section: "Here are the stats of the other players in the pot, defined in the format {position: Total Hands Played = total_hands, VPIP = vpip_stat, PFR = pfr_stat}:\n" + stat_entries.join("\n"),
+    };
 }
 
 function definePotSize(pot_size_in_BBs: number): string {
@@ -144,38 +160,10 @@ function definePotSize(pot_size_in_BBs: number): string {
 }
 
 function defineActions(player_actions: Array<PlayerAction>, table: Table): string {
-    let query = "Here are the previous actions in this street, defined in the format {position action bet_size_in_BBs}:\n";
-    for (var i = 0; i < player_actions.length; i++)  {
-        let player_pos = table.getPlayerPositionFromId(player_actions[i].getPlayerId());
-        let player_action_string = player_actions[i].toString();
-        let curr = `{${player_pos} ${player_action_string}}`;
-        if (i != player_actions.length - 1) {
-            curr = curr.concat(", ");
-        }
-        query = query.concat(curr);
-    }
-    return query
-}
-
-function defineStats(player_positions: Map<string, string>, table: Table, hero_name: string): string {
-    let query = "Here are the stats of the other players in the pot, defined in the format {position: Total Hands Played = total_hands, VPIP = vpip_stat, PFR = pfr_stat}:\n"
-    let player_ids = Array.from(player_positions.keys());
-
-    for (var i = 0; i < player_ids.length; i++)  {
-        const player_id = player_ids[i];
-        const player_name = table.getNameFromId(player_id);
-        if (player_name === hero_name) {
-            continue;
-        }
-        const player_stats = table.getPlayerStatsFromName(player_name);
-        const player_pos = table.getPlayerPositionFromId(player_id);
-        let curr = `{${player_pos}: Total Hands Played = ${player_stats.getTotalHands()}, VPIP = ${player_stats.computeVPIPStat().toFixed(2)}, PFR = ${player_stats.computePFRStat().toFixed(2)}}`;
-        if (i != player_ids.length - 1) {
-            curr = curr.concat("\n");
-        }
-        query = query.concat(curr);
-    }
-    return query;
+    const entries = player_actions.map(action =>
+        `{${table.getPlayerPositionFromId(action.getPlayerId())} ${action.toString()}}`
+    );
+    return "Here are the previous actions in this street, defined in the format {position action bet_size_in_BBs}:\n" + entries.join(", ");
 }
 
 function defineOutput(): string {

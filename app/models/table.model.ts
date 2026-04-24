@@ -139,29 +139,29 @@ export class Table {
         return this.id_to_action_num.has(player_id);
     }
     public async processPlayers() {
+        const updates: Array<{ player_name: string, player_stats_JSON: any }> = [];
         for (const player_id of this.id_to_action_num.keys()) {
             const player_name = this.getNameFromId(player_id);
             const player = this.name_to_player.get(player_name);
             const player_action = this.id_to_action_num.get(player_id);
-            if (player) {
-                const player_stats = player.getPlayerStats();
-                if (player_stats) {
-                    if (player_action == 2) {
-                        player_stats.setVPIPHands(player_stats.getVPIPHands() + 1);
-                        player_stats.setPFRHands(player_stats.getPFRHands() + 1);
-                    } else if (player_action == 1) {
-                        player_stats.setVPIPHands(player_stats.getVPIPHands() + 1);
-                    }
-                    player_stats.setTotalHands(player_stats.getTotalHands() + 1);
-                    player.updatePlayerStats(player_stats);
-                    await this.player_service.update(player_name, player_stats.toJSON());
-                } else {
-                    throw new Error("Player stats is undefined.");
-                }
-            } else {
+            if (!player) {
                 throw new Error("Player is undefined.");
             }
+            const player_stats = player.getPlayerStats();
+            if (!player_stats) {
+                throw new Error("Player stats is undefined.");
+            }
+            if (player_action == 2) {
+                player_stats.setVPIPHands(player_stats.getVPIPHands() + 1);
+                player_stats.setPFRHands(player_stats.getPFRHands() + 1);
+            } else if (player_action == 1) {
+                player_stats.setVPIPHands(player_stats.getVPIPHands() + 1);
+            }
+            player_stats.setTotalHands(player_stats.getTotalHands() + 1);
+            player.updatePlayerStats(player_stats);
+            updates.push({ player_name, player_stats_JSON: player_stats.toJSON() });
         }
+        this.player_service.updateMany(updates);
     }
 
     public getPlayerInitialStacks(): Map<string, number> {
@@ -309,19 +309,16 @@ export class Table {
         }
     }
     public async cachePlayer(player_name: string, player_id: string): Promise<void> {
-        if (!this.name_to_player.has(player_name)) {
-            const player_stats_str = await this.player_service.get(player_name);
-            // if the player does not currently exist in the database, create a new player in db
-            // otherwise retrieve the existing player from database,
-            // then, add player to player_cache
-            if (!player_stats_str) {
+        const player_stats_str = await this.player_service.get(player_name);
+        if (!player_stats_str) {
+            if (!this.name_to_player.has(player_name)) {
                 const new_player_stats = new PlayerStats(player_name);
                 await this.player_service.create(new_player_stats.toJSON());
                 this.name_to_player.set(player_name, new Player(player_id, new_player_stats));
-            } else {
-                const player_stats_JSON = JSON.parse(JSON.stringify(player_stats_str));
-                this.name_to_player.set(player_name, new Player(player_id, new PlayerStats(player_name, player_stats_JSON)));
             }
+        } else {
+            const player_stats_JSON = JSON.parse(JSON.stringify(player_stats_str));
+            this.name_to_player.set(player_name, new Player(player_id, new PlayerStats(player_name, player_stats_JSON)));
         }
     }
 

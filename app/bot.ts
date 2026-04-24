@@ -123,6 +123,7 @@ export class Bot {
     async enterTableInProgress(name: string, stack_size: number): Promise<void> {
         console.log(`Your player name will be ${name}.` )
         this.bot_name = name;
+        this.ai_service.setBotName(name);
     
         console.log(`Your initial stack size will be ${stack_size}.`)
     
@@ -175,9 +176,15 @@ export class Bot {
         logResponse(await this.puppeteer_service.openLogPanel(), this.debug_mode);
         try {
             const hand_info_res = await this.puppeteer_service.getStartingHandInfo();
-            if (hand_info_res.code === "success") {
-                const bot_id = this.table.getIdFromName(this.bot_name);
-                is_dealer = hand_info_res.data.dealer_id === bot_id;
+            if (hand_info_res.code === "success" && hand_info_res.data.hand_number > 0) {
+                this.hand_number = hand_info_res.data.hand_number;
+                let bot_id: string | undefined;
+                try {
+                    bot_id = this.table.getIdFromName(this.bot_name);
+                } catch {
+                    bot_id = undefined;
+                }
+                is_dealer = bot_id !== undefined && hand_info_res.data.dealer_id === bot_id;
                 console.log(`Hand #${this.hand_number}, bot is dealer: ${is_dealer}`);
             }
         } finally {
@@ -220,22 +227,30 @@ export class Bot {
                     }
                     console.log("Performing bot's turn.");
 
-                    const pot_size = await this.getPotSize();
-                    const hand = await this.getHand();
-                    const stack_size = await this.getStackSize();
-
-                    this.table.setPot(convertToBBs(pot_size, this.game.getBigBlind()));
-                    await this.updateHero(hand, convertToBBs(stack_size, this.game.getBigBlind()));
-
-                    await postProcessLogs(this.table.getLogsQueue(), this.game);
-                    const query = constructQuery(this.game);
-
                     try {
+                        const pot_size = await this.getPotSize();
+                        const hand = await this.getHand();
+                        const stack_size = await this.getStackSize();
+
+                        this.table.setPot(convertToBBs(pot_size, this.game.getBigBlind()));
+                        await this.updateHero(hand, convertToBBs(stack_size, this.game.getBigBlind()));
+
+                        await postProcessLogs(this.table.getLogsQueue(), this.game);
+                        const query = constructQuery(this.game);
+
                         const bot_action = await this.queryBotAction(query, this.query_retries);
                         this.table.resetPlayerActions();
                         await this.performBotAction(bot_action);
                     } catch (err) {
-                        console.log("Failed to query and perform bot action.")
+                        console.log("Error during bot turn, falling back to default action:", err);
+                        try {
+                            const fallback = (await this.isValidBotAction(defaultCheckAction))
+                                ? defaultCheckAction
+                                : defaultFoldAction;
+                            await this.performBotAction(fallback);
+                        } catch (fallback_err) {
+                            console.log("Failed to perform fallback action:", fallback_err);
+                        }
                     }
 
                     console.log("Waiting for bot's turn to end");
@@ -291,22 +306,16 @@ export class Bot {
 
                 let stack_msg = getPlayerStacksMsg(msg);
 
-                let id_to_stack_map = getIdToInitialStackFromMsg(stack_msg, this.game.getBigBlind());
-                this.table.setIdToStack(id_to_stack_map);
-
-                let seat_to_id_map = getTableSeatToIdFromMsg(stack_msg);
-                this.table.setTableSeatToId(seat_to_id_map);
-
-                let id_to_seat_map = getIdToTableSeatFromMsg(stack_msg);
-                this.table.setIdToTableSeat(id_to_seat_map);
-                
-                let id_to_name_map = getIdToNameFromMsg(stack_msg);
-                this.table.setIdToName(id_to_name_map);
-
-                let name_to_id_map = getNameToIdFromMsg(stack_msg);
-                this.table.setNameToId(name_to_id_map);
-
-                await this.table.updateCache();
+                if (stack_msg) {
+                    this.table.setIdToStack(getIdToInitialStackFromMsg(stack_msg, this.game.getBigBlind()));
+                    this.table.setTableSeatToId(getTableSeatToIdFromMsg(stack_msg));
+                    this.table.setIdToTableSeat(getIdToTableSeatFromMsg(stack_msg));
+                    this.table.setIdToName(getIdToNameFromMsg(stack_msg));
+                    this.table.setNameToId(getNameToIdFromMsg(stack_msg));
+                    await this.table.updateCache();
+                } else {
+                    console.log("No Player stacks entry in fetched logs — preserving previous maps.");
+                }
             }
 
             let only_valid = validateAllMsg(msg);
@@ -378,15 +387,15 @@ export class Bot {
         }
         try {
             await sleep(2000);
-            const ai_response = await this.ai_service.query(query, []);
+            const bot_action = await this.ai_service.query(query);
 
-            if (await this.isValidBotAction(ai_response.bot_action)) {
-                return ai_response.bot_action;
+            if (await this.isValidBotAction(bot_action)) {
+                return bot_action;
             }
             console.log("Invalid bot action, retrying query.");
             return await this.queryBotAction(query, retries, retry_counter + 1);
         } catch (err) {
-            console.log("Error while querying ChatGPT:", err, "retrying query.");
+            console.log("Error while querying AI service:", err, "retrying query.");
             return await this.queryBotAction(query, retries, retry_counter + 1);
         }
     }

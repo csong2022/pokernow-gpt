@@ -121,14 +121,24 @@ export class PuppeteerService {
         await this.page.keyboard.type(stack_size.toString())
         await this.page.$eval(".selected > div > form > button", (button: any) => button.click());
         try {
-            await this.page.waitForSelector(".alert-1-buttons > button", {timeout: this.default_timeout});
-            await this.page.$eval(".alert-1-buttons > button", (button: any) => button.click());
+            const handle = await this.page.waitForSelector(
+                [".alert-1-buttons > button", ".you-player"].join(','),
+                {timeout: this.default_timeout * 4}
+            );
+            if (!handle) {
+                throw new Error("No response element appeared.");
+            }
+            const is_alert = await handle.evaluate((el: Element) => el.matches(".alert-1-buttons > button"));
+            if (is_alert) {
+                await handle.click();
+            }
         } catch (err) {
             var message = "Table ingress unsuccessful."
             if (await this.page.$(".selected > div > form > div:nth-child(1) > .error-message")) {
                 message = "Player name must be unique to game.";
             }
-            await this.page.$eval(".selected > button", (button: any) => button.click());
+            const cancel_btn = await this.page.$(".selected > button");
+            if (cancel_btn) await cancel_btn.click();
             return {
                 code: "error",
                 error: new Error(message) as E

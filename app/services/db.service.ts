@@ -46,6 +46,10 @@ export class DBService {
         stmt.run(params);
         return [];
     }
+
+    transaction<T>(fn: () => T): T {
+        return this.db.transaction(fn)();
+    }
 }
 
 const db_service = new DBService("./app/pokernow-gpt.db");
