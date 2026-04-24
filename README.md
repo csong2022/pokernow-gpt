@@ -110,8 +110,8 @@ curl -X POST http://localhost:8080/bot/create \
     "name": "Bot1",
     "stack_size": 1000,
     "ai_settings": {
-      "provider": "Google",
-      "model_name": "gemini-2.5-pro",
+      "provider": "OpenAI",
+      "model_name": "gpt-5.4-mini",
       "playstyle": "neutral"
     }
   }'
