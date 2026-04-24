@@ -156,9 +156,9 @@ providers
 
 models
 ---
-OpenAI: "gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini"
+OpenAI: "gpt-5.4", "gpt-5.4-mini", "gpt-5.4-nano"
 
-Google: "gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.5-pro"
+Google: "gemini-3.1-pro-preview", "gemini-3-flash-preview", "gemini-3.1-flash-lite-preview"
 
 <!-- LICENSE -->
 ## License
