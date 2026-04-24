@@ -1,7 +1,7 @@
-import { Game } from "../models/game.ts";
-import { PlayerAction } from "../models/player-action.ts";
-import { Queue } from "./data-structures.ts";
-import { convertToBBs } from "./value-conversion-utils.ts";
+import { Game } from "../models/game.model.ts";
+import { PlayerAction } from "../models/playeraction.model.ts";
+import { Queue } from "./data-structures.util.ts";
+import { convertToBBs } from "./value-conversion.util.ts";
 
 export enum Action {
     BET = "bets",

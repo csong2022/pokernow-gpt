@@ -1,14 +1,14 @@
-import { Table } from "../../app/models/table.ts";
+import { Table } from "../../app/models/table.model.ts";
 
-import { DBService } from '../../app/services/db-service.ts';
-import { PlayerService } from '../../app/services/player-service.ts';
+import { DBService } from '../../app/services/db.service.ts';
+import { PlayerStatsAPIService } from '../../app/services/api/playerstatsapi.service.ts';
 
-import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-utils.ts';
-import { LogService } from '../../app/services/log-service.ts';
+import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling.util.ts';
+import { LogService } from '../../app/services/log.service.ts';
 
-import { postProcessLogsAfterHand, preProcessLogs } from "../../app/utils/log-processing-utils.ts";
-import { validateAllMsg, getIdToInitialStackFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, getNameToIdFromMsg, getIdToTableSeatFromMsg } from "../../app/utils/message-processing-utils.ts";
-import { Game } from "../../app/models/game.ts";
+import { postProcessLogsAfterHand, preProcessLogs } from "../../app/utils/log-processing.util.ts";
+import { validateAllMsg, getIdToInitialStackFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, getNameToIdFromMsg, getIdToTableSeatFromMsg } from "../../app/utils/message-processing.util.ts";
+import { Game } from "../../app/models/game.model.ts";
 
 describe('log service test', async () => {
     it("should properly get logs and filter through them", async() => {
@@ -17,7 +17,7 @@ describe('log service test', async () => {
 
         const db_service = new DBService("./pokernow-gpt-test.db");
         await db_service.init();
-        const player_service = new PlayerService(db_service);
+        const player_service = new PlayerStatsAPIService(db_service);
 
         const log = await log_service.fetchData("", "")
         if (log.code === SUCCESS_RESPONSE) {

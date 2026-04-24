@@ -1,52 +1,60 @@
-import prompt from 'prompt-sync';
-import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
+import crypto from 'crypto';
 
-import { sleep } from './helpers/bot-helper.ts';
+import bot_worker_ee from './eventemitters/bot-worker.eventemitter.ts';
 
-import { AIService, BotAction, defaultCheckAction, defaultFoldAction } from './interfaces/ai-client-interfaces.ts';
-import { ProcessedLogs } from './interfaces/log-processing-interfaces.ts';
+import { sleep } from './helpers/bot-timeout.helper.ts';
+import { constructQuery } from './helpers/query-construction.helper.ts';
 
-import { Game } from './models/game.ts';
-import { Table } from './models/table.ts';
+import { AIService, BotAction, defaultCheckAction, defaultFoldAction } from './interfaces/ai-client.interface.ts';
+import { ProcessedLogs } from './interfaces/log-processing.interface.ts';
 
-import { LogService } from './services/log-service.ts';
-import { PlayerService } from './services/player-service.ts';
-import { PuppeteerService } from './services/puppeteer-service.ts';
+import { Game } from './models/game.model.ts';
+import { Table } from './models/table.model.ts';
 
-import { constructQuery } from './helpers/construct-query-helper.ts';
+import { LogService } from './services/log.service.ts';
+import { PlayerStatsAPIService } from './services/api/playerstatsapi.service.ts';
+import { PuppeteerService } from './services/puppeteer.service.ts';
 
-import { DebugMode, logResponse } from './utils/error-handling-utils.ts';
-import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from './utils/log-processing-utils.ts';
-import { getIdToInitialStackFromMsg, getIdToNameFromMsg, getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './utils/message-processing-utils.ts';
-import { convertToBBs, convertToValue } from './utils/value-conversion-utils.ts'
+import { DebugMode, ErrorResponse, logResponse, SuccessResponse } from './utils/error-handling.util.ts';
+import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from './utils/log-processing.util.ts';
+import { getIdToInitialStackFromMsg, getIdToNameFromMsg, getIdToTableSeatFromMsg, getNameToIdFromMsg, getPlayerStacksMsg, getTableSeatToIdFromMsg, validateAllMsg } from './utils/message-processing.util.ts';
+import { convertToBBs, convertToValue } from './utils/value-conversion.util.ts'
+
+type ProcessPlayersGuard = (first_created: string) => Promise<boolean>;
 
 export class Bot {
-    private log_service: LogService;
+    private bot_uuid: crypto.UUID;
+
     private ai_service: AIService;
-    private player_service: PlayerService;
+    private log_service: LogService;
+    private player_service: PlayerStatsAPIService;
     private puppeteer_service: PuppeteerService;
 
     private game_id: string;
     private debug_mode: DebugMode;
     private query_retries: number;
 
+    private active: boolean;
     private first_created: string;
-    private hand_history: ChatCompletionMessageParam | any;
+    private hand_number: number;
 
     private table!: Table;
     private game!: Game;
     private bot_name!: string;
 
-    constructor(log_service: LogService, 
+    constructor(bot_uuid: crypto.UUID,
                 ai_service: AIService,
-                player_service: PlayerService,
+                log_service: LogService, 
+                player_service: PlayerStatsAPIService,
                 puppeteer_service: PuppeteerService,
                 game_id: string,
                 debug_mode: DebugMode,
                 query_retries: number) 
     {
-        this.log_service = log_service;
+        this.bot_uuid = bot_uuid;
+
         this.ai_service = ai_service;
+        this.log_service = log_service;
         this.player_service = player_service;
         this.puppeteer_service = puppeteer_service;
 
@@ -54,29 +62,47 @@ export class Bot {
         this.debug_mode = debug_mode;
         this.query_retries = query_retries;
 
+        this.active = true;
         this.first_created = "";
-        this.hand_history = [];
+        this.hand_number = 1;
     }
 
-    public async run() {
-        await this.openGame();
-        await this.enterTableInProgress();
-        // retrieve initial num players
+    //TODO:
+    //report bot status
+    //rebuys
+
+    public stop(): void {
+        this.active = false;
+    }
+
+    public async run(process_players_guard?: ProcessPlayersGuard) {
+        logResponse(await this.puppeteer_service.openLogPanel(), this.debug_mode);
+        try {
+            const hand_info_res = await this.puppeteer_service.getStartingHandInfo();
+            if (hand_info_res.code === "success" && hand_info_res.data.hand_number > 0) {
+                this.hand_number = hand_info_res.data.hand_number;
+                console.log("Initialized hand number from log:", this.hand_number);
+            } else {
+                console.log("No hand info in log yet, defaulting hand number to 1.");
+            }
+        } finally {
+            logResponse(await this.puppeteer_service.closeLogPanel(), this.debug_mode);
+        }
         await this.updateNumPlayers();
-        //TODO: implement loop until STOP SIGNAL (perhaps from UI?)
-        while (true) {
+        while (this.active) {
             await this.waitForNextHand();
             await this.updateNumPlayers();
             await this.updateGameInfo();
             console.log("Number of players in game:", this.table.getNumPlayers());
             this.table.setPlayersInPot(this.table.getNumPlayers());
-            await this.playOneHand();
-            this.hand_history = [];
+            await this.playOneHand(process_players_guard);
+            this.hand_number++;
+            this.first_created = "";
             this.table.nextHand();
         }
     }
 
-    private async openGame() {
+    async openGame() {
         console.log(`The PokerNow game with id: ${this.game_id} will now open.`);
         
         logResponse(await this.puppeteer_service.navigateToGame(this.game_id), this.debug_mode);
@@ -94,26 +120,24 @@ export class Bot {
         }
     }
 
-    private async enterTableInProgress() {
-        const io = prompt();
-        while (true) {
-            const name = io("What is your desired player name? ");
-            console.log(`Your player name will be ${name}.` )
-            this.bot_name = name;
+    async enterTableInProgress(name: string, stack_size: number): Promise<void> {
+        console.log(`Your player name will be ${name}.` )
+        this.bot_name = name;
     
-            const stack_size = io("What is your desired stack size? ");
-            console.log(`Your initial stack size will be ${stack_size}.`)
+        console.log(`Your initial stack size will be ${stack_size}.`)
     
-            console.log(`Attempting to enter table with name: ${name} and stack size: ${stack_size}.`);
-            const code = logResponse(await this.puppeteer_service.sendEnterTableRequest(name, Number(stack_size)), this.debug_mode);
+        await sleep(1000);
+        console.log(`Attempting to enter table with name: ${name} and stack size: ${stack_size}.`);
+        const res = await this.puppeteer_service.sendEnterTableRequest(name, stack_size);
     
-            if (code === "success") {
-                break;
+        if (res.code === "success") {
+            console.log("Waiting for table host to accept ingress request.");
+            if (logResponse(await this.puppeteer_service.waitForTableEntry(), this.debug_mode) !== "success") {
+                throw new Error("Table ingress request rejected, please try again.")
             }
-            console.log("Please try again.");
+        } else {
+            throw res.error;
         }
-        console.log("Waiting for table host to accept ingress request.");
-        logResponse(await this.puppeteer_service.waitForTableEntry(), this.debug_mode);
     }
 
     private async updateNumPlayers() {
@@ -123,6 +147,20 @@ export class Bot {
         }
     }
 
+    private async updateGameInfo() {
+        logResponse(await this.puppeteer_service.waitForGameInfo(), this.debug_mode);
+    
+        console.log("Getting game info.");
+        const res = await this.puppeteer_service.getGameInfo();
+        logResponse(res, this.debug_mode);
+        if (res.code == "success") {
+            const game_info = this.puppeteer_service.convertGameInfo(res.data as string);
+            this.game.updateGameTypeAndBlinds(game_info.small_blind, game_info.big_blind, game_info.game_type);
+        } else {
+            throw new Error ("Failed to get game info.");
+        }
+    }
+    
     private async waitForNextHand() {
         console.log("Waiting for next hand to start.")
         await this.puppeteer_service.waitForNextHand(this.table.getNumPlayers(), this.game.getMaxTurnLength());
@@ -132,16 +170,37 @@ export class Bot {
     // wait for any player action to start
     // check if it is the player's turn -> perform actions
     // check if there is a winner -> perform end of hand actions
-    private async playOneHand() {
+    private async playOneHand(process_players_guard?: ProcessPlayersGuard) {
+        let is_dealer = false;
+        logResponse(await this.puppeteer_service.openLogPanel(), this.debug_mode);
+        try {
+            const hand_info_res = await this.puppeteer_service.getStartingHandInfo();
+            if (hand_info_res.code === "success") {
+                const bot_id = this.table.getIdFromName(this.bot_name);
+                is_dealer = hand_info_res.data.dealer_id === bot_id;
+                console.log(`Hand #${this.hand_number}, bot is dealer: ${is_dealer}`);
+            }
+        } finally {
+            logResponse(await this.puppeteer_service.closeLogPanel(), this.debug_mode);
+        }
+
         let processed_logs = {
             valid_msgs: new Array<Array<string>>,
-            last_created: this.first_created,
+            last_created: "",
             first_fetch: true
         }
+
+        if (!is_dealer) {
+            try {
+                const init_log = await this.log_service.fetchData(this.hand_number, "");
+                processed_logs = await this.processLogs(init_log, true);
+            } catch (err) {
+                console.log("Failed to pull initial hand logs:", err);
+            }
+        }
+
         while (true) {
             var res;
-            // wait for the bot's turn -> perform actions
-            // OR winner is detected -> pull all the logs
             console.log("Checking for bot's turn or winner of hand.");
 
             res = await this.puppeteer_service.waitForBotTurnOrWinner(this.table.getNumPlayers(), this.game.getMaxTurnLength());
@@ -150,13 +209,17 @@ export class Bot {
                 if (data.includes("action-signal")) {
                     try {
                         await sleep(2000);
-                        processed_logs = await this.pullAndProcessLogs(processed_logs.last_created, processed_logs.first_fetch);
+                        const log = await this.log_service.fetchData(this.hand_number, processed_logs.last_created);
+                        const new_logs = await this.processLogs(log, processed_logs.first_fetch);
+                        processed_logs = {
+                            ...new_logs,
+                            last_created: new_logs.last_created || processed_logs.last_created
+                        };
                     } catch (err) {
-                        console.log("Failed to pull logs.");
+                        console.log("Failed to pull logs:", err);
                     }
                     console.log("Performing bot's turn.");
 
-                    // get hand and stack size
                     const pot_size = await this.getPotSize();
                     const hand = await this.getHand();
                     const stack_size = await this.getStackSize();
@@ -164,10 +227,9 @@ export class Bot {
                     this.table.setPot(convertToBBs(pot_size, this.game.getBigBlind()));
                     await this.updateHero(hand, convertToBBs(stack_size, this.game.getBigBlind()));
 
-                    // post process logs and construct query
                     await postProcessLogs(this.table.getLogsQueue(), this.game);
                     const query = constructQuery(this.game);
-                    // query chatGPT and make action
+
                     try {
                         const bot_action = await this.queryBotAction(query, this.query_retries);
                         this.table.resetPlayerActions();
@@ -192,12 +254,15 @@ export class Bot {
         }
 
         try {
-            //TODO: when running multiple bots, ensure that only one bot is trying to process players at end of hand
-            //only one bot should have the magic hat at any given time
-            //pulling logs fails when multiple bots try to pull the logs at the same time
-            processed_logs = await this.pullAndProcessLogs(this.first_created, processed_logs.first_fetch);
-            await postProcessLogsAfterHand(processed_logs.valid_msgs, this.game);
-            await this.table.processPlayers();
+            const log = await this.log_service.fetchData(this.hand_number, this.first_created);
+            processed_logs = await this.processLogs(log, processed_logs.first_fetch);
+            const should_process = process_players_guard
+                ? await process_players_guard(this.first_created)
+                : true;
+            if (should_process) {
+                await postProcessLogsAfterHand(processed_logs.valid_msgs, this.game);
+                await this.table.processPlayers();
+            }
         } catch (err) {
             console.log("Failed to process players:", err);
         }
@@ -206,22 +271,7 @@ export class Bot {
         console.log("Completed a hand.\n");
     }
 
-    private async updateGameInfo() {
-        logResponse(await this.puppeteer_service.waitForGameInfo(), this.debug_mode);
-    
-        console.log("Getting game info.");
-        const res = await this.puppeteer_service.getGameInfo();
-        logResponse(res, this.debug_mode);
-        if (res.code == "success") {
-            const game_info = this.puppeteer_service.convertGameInfo(res.data as string);
-            this.game.updateGameTypeAndBlinds(game_info.small_blind, game_info.big_blind, game_info.game_type);
-        } else {
-            throw new Error ("Failed to get game info.");
-        }
-    }
-
-    private async pullAndProcessLogs(last_created: string, first_fetch: boolean): Promise<ProcessedLogs> {
-        const log = await this.log_service.fetchData("", last_created);
+    private async processLogs<D, E=Error>(log: SuccessResponse<D> | ErrorResponse<E>, first_fetch: boolean): Promise<ProcessedLogs> {
         if (log.code === "success") {
             let data = this.log_service.getData(log);
             let msg = this.log_service.getMsg(data);
@@ -229,6 +279,12 @@ export class Bot {
                 data = this.log_service.pruneLogsBeforeCurrentHand(data);
                 msg = this.log_service.getMsg(data);
                 this.table.setPlayerInitialStacksFromMsg(msg, this.game.getBigBlind());
+
+                const handMsg = msg.find(m => m.includes("starting hand #"));
+                if (handMsg) {
+                    const match = handMsg.match(/starting hand #(\d+)/);
+                    if (match) this.hand_number = parseInt(match[1]);
+                }
 
                 first_fetch = false;
                 this.first_created = this.log_service.getLast(this.log_service.getCreatedAt(data));
@@ -260,14 +316,13 @@ export class Bot {
             this.table.setIdToPosition(first_seat_number);
             this.table.convertAllOrdersToPosition();
 
-            last_created = this.log_service.getFirst(this.log_service.getCreatedAt(data));
             return {
                 valid_msgs: only_valid,
-                last_created: last_created,
+                last_created: this.log_service.getFirst(this.log_service.getCreatedAt(data)),
                 first_fetch: first_fetch
             }
         } else {
-            throw new Error("Failed to pull logs.");
+            throw log.error;
         }
     }
 
@@ -323,14 +378,9 @@ export class Bot {
         }
         try {
             await sleep(2000);
-            const ai_response = await this.ai_service.query(query, this.hand_history);
-            this.hand_history = ai_response.prev_messages;
+            const ai_response = await this.ai_service.query(query, []);
 
             if (await this.isValidBotAction(ai_response.bot_action)) {
-                // only push to hand history if the choice made is valid
-                if (ai_response.curr_message) {
-                    this.hand_history.push(ai_response.curr_message);
-                }
                 return ai_response.bot_action;
             }
             console.log("Invalid bot action, retrying query.");

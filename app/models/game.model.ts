@@ -1,7 +1,7 @@
-import { Hero } from "./player.ts";
-import { Player } from "./player.ts";
-import { PlayerStats } from "./player-stats.ts";
-import { Table } from "./table.ts";
+import { Hero } from "./player.model.ts";
+import { Player } from "./player.model.ts";
+import { PlayerStats } from "./playerstats.model.ts";
+import { Table } from "./table.model.ts";
 
 export class Game {
     private game_id: string;
@@ -63,7 +63,7 @@ export class Game {
     public getTable(): Table {
         return this.table;
     }
-
+  
     public updateGameTypeAndBlinds(small_blind: number, big_blind: number, game_type: string): void {
         this.small_blind = small_blind;
         this.big_blind = big_blind;

@@ -1,9 +1,9 @@
 import { assert } from "chai";
 
-import { Table } from "../../app/models/table.ts";
+import { Table } from "../../app/models/table.model.ts";
 
-import { DBService } from "../../app/services/db-service.ts";
-import { PlayerService } from "../../app/services/player-service.ts";
+import { DBService } from "../../app/services/db.service.ts";
+import { PlayerStatsAPIService } from "../../app/services/api/playerstatsapi.service.ts";
 
 const player_name = "chan-abcd";
 const player_JSON = {
@@ -18,7 +18,7 @@ describe('cachePlayer tests', async() => {
     it("should properly cache player when player does not exist in db", async() => {
         const db_service = new DBService("./test/unit/pokernow-gpt-test.db");
         await db_service.init();
-        const player_service = new PlayerService(db_service);
+        const player_service = new PlayerStatsAPIService(db_service);
 
         const table = new Table(player_service);
         const msg = [player_name, "chan"]
@@ -39,7 +39,7 @@ describe('cachePlayer tests', async() => {
     it("should properly cache player when player already exists in db", async() => {
         const db_service = new DBService("./test/unit/pokernow-gpt-test.db");
         await db_service.init();
-        const player_service = new PlayerService(db_service);
+        const player_service = new PlayerStatsAPIService(db_service);
 
         const table = new Table(player_service);
         const msg = [player_name, "chan"]

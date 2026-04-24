@@ -1,17 +1,17 @@
-import { Game } from "../../app/models/game.ts";
-import { Hero } from "../../app/models/player.ts";
-import { PlayerStats } from "../../app/models/player-stats.ts";
-import { Table } from "../../app/models/table.ts";
+import { Game } from "../../app/models/game.model.ts";
+import { Hero } from "../../app/models/player.model.ts";
+import { PlayerStats } from "../../app/models/playerstats.model.ts";
+import { Table } from "../../app/models/table.model.ts";
 
-import { DBService } from "../../app/services/db-service.ts";
-import { LogService } from "../../app/services/log-service.ts"
-import { OpenAIService } from '../../app/services/ai/openai-service.ts';
-import { PlayerService } from "../../app/services/player-service.ts";
+import { DBService } from "../../app/services/db.service.ts";
+import { LogService } from "../../app/services/log.service.ts"
+import { OpenAIService } from '../../app/services/ai/openai.service.ts';
+import { PlayerStatsAPIService } from "../../app/services/api/playerstatsapi.service.ts";
 
-import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling-utils.ts';
-import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from "../../app/utils/log-processing-utils.ts";
-import { validateAllMsg } from "../../app/utils/message-processing-utils.ts";
-import { defineRank } from "../../app/helpers/construct-query-helper.ts";
+import { SUCCESS_RESPONSE, ERROR_RESPONSE} from '../../app/utils/error-handling.util.ts';
+import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from "../../app/utils/log-processing.util.ts";
+import { validateAllMsg } from "../../app/utils/message-processing.util.ts";
+import { defineRank } from "../../app/helpers/query-construction.helper.ts";
 
 describe('query service test', async () => {
     it("should properly get logs and filter through them", async() => {
@@ -20,7 +20,7 @@ describe('query service test', async () => {
 
         const db_service = new DBService("./pokernow-gpt-test.db");
         await db_service.init();
-        const player_service = new PlayerService(db_service);
+        const player_service = new PlayerStatsAPIService(db_service);
 
         const openai_service = new OpenAIService(process.env.OPENAI_API_KEY!, "gpt-3.5-turbo", "pro");
         openai_service.init();

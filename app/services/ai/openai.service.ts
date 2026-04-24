@@ -1,7 +1,10 @@
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
-import { AIMessage, AIResponse, AIService, BotAction } from "../../interfaces/ai-client-interfaces.ts";
-import { getPromptFromPlaystyle, parseResponse} from "../../helpers/ai-query-helper.ts";
+import { AIMessage, AIResponse, AIService, BotAction } from "../../interfaces/ai-client.interface.ts";
+import { getPromptFromPlaystyle, parseResponse} from "../../helpers/ai-query.helper.ts";
+import { withTimeout } from "../../helpers/bot-timeout.helper.ts";
+
+const AI_QUERY_TIMEOUT_MS = 30000;
 
 export class OpenAIService extends AIService {
     private agent!: OpenAI;
@@ -34,10 +37,14 @@ export class OpenAIService extends AIService {
     
         console.log("prev_messages:", prev_messages);
         const processed_messages = this.processMessages(prev_messages);
-        const completion = await this.agent.chat.completions.create({
-            messages: processed_messages,
-            model: this.getModelName()
-        });
+        const completion = await withTimeout(
+            this.agent.chat.completions.create({
+                messages: processed_messages,
+                model: this.getModelName()
+            }),
+            AI_QUERY_TIMEOUT_MS,
+            "OpenAI query"
+        );
 
         const choice = completion.choices[0];
         const response = choice.message;

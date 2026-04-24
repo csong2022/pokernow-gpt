@@ -1,14 +1,14 @@
-import { AIService } from "../interfaces/ai-client-interfaces.ts";
-import { GoogleAIService } from "../services/ai/googleai-service.ts";
-import { OpenAIService } from "../services/ai/openai-service.ts";
+import { AIService } from "../interfaces/ai-client.interface.ts";
+import { GoogleAIService } from "../services/ai/googleai.service.ts";
+import { OpenAIService } from "../services/ai/openai.service.ts";
 
 export class AIServiceFactory {
     private supportedModels: Map<string, string[]>;
 
     constructor(){
         this.supportedModels = new Map<string, string[]>([
-            ["OpenAI", ["gpt-3.5-turbo", "gpt-4-turbo", "gpt-4o"]],
-            ["Google", ["gemini-1.5-flash", "gemini-1.0-pro", "gemini-1.5-pro"]]
+            ["OpenAI", ["gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini"]],
+            ["Google", ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.5-pro"]]
         ]);
     }
 
@@ -18,17 +18,17 @@ export class AIServiceFactory {
         }
         switch(provider) {
             case ("OpenAI"):
-                const openai_auth_key = process.env.OPENAI_API_KEY;
-                if (!openai_auth_key) {
-                    throw new Error(`Invalid ${provider} auth key.`);
+                const open_ai_auth_key = process.env.OPENAI_API_KEY;
+                if (!open_ai_auth_key) {
+                    throw new Error(`Empty ${provider} auth key.`);
                 }
-                return new OpenAIService(openai_auth_key, model_name, playstyle);
+                return new OpenAIService(open_ai_auth_key, model_name, playstyle);
             case ("Google"):
-                const googleai_auth_key = process.env.GOOGLEAI_API_KEY;
-                if (!googleai_auth_key) {
-                    throw new Error (`Invalid ${provider} auth key.`);
+                const google_ai_auth_key = process.env.GOOGLEAI_API_KEY;
+                if (!google_ai_auth_key) {
+                    throw new Error (`Empty ${provider} auth key.`);
                 }
-                return new GoogleAIService(googleai_auth_key, model_name, playstyle);
+                return new GoogleAIService(google_ai_auth_key, model_name, playstyle);
         }
         throw new Error("Failed to create AI service.");
     }

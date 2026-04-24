@@ -1,7 +1,8 @@
-import { DBService} from './db-service.ts';
-import { emptyOrSingleRow } from '../helpers/db-query-helper.ts'
+import { DBService } from '../db.service.ts';
+import { emptyOrSingleRow } from '../../helpers/db-query.helper.ts'
 
-export class PlayerService {
+// handles player related queries
+export class PlayerStatsAPIService {
     private db_service: DBService;
 
     constructor(db_service: DBService) {
