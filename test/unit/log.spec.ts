@@ -19,7 +19,7 @@ describe('log service test', async () => {
         await db_service.init();
         const player_service = new PlayerStatsAPIService(db_service);
 
-        const log = await log_service.fetchData("", "")
+        const log = await log_service.fetchData(0, "")
         if (log.code === SUCCESS_RESPONSE) {
             const res1 = log_service.getMsg(log_service.getData(log));
             console.log("all messages", res1);

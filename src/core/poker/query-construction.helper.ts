@@ -28,6 +28,7 @@ export function constructHandSetup(game: Game): string {
         stacks_section,
         stats_section,
         "I'll send the state on each of my decision points in this hand. Respond each time with only {action, bet_size_in_BBs BB} — no explanations.",
+        "For bet/raise/all-in, set bet_size_in_BBs to the chips you're putting in. For call, set it to the amount you're matching (the current outstanding bet). For check/fold, set it to 0.",
     ];
     return sections.join('\n');
 }
