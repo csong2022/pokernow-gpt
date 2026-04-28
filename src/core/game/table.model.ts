@@ -356,9 +356,7 @@ export class Table {
         throw new Error(`Could not retrieve name for player with id: ${player_id}.`)
     }
     public setIdToName(map: Map<string, string>): void {
-        for (const [id, name] of map) {
-            this.id_to_name.set(id, name);
-        }
+        this.id_to_name = map;
     }
 
     public getIdFromName(player_name: string): string {
@@ -372,9 +370,7 @@ export class Table {
         return this.name_to_id;
     }
     public setNameToId(map: Map<string, string>): void {
-        for (const [name, id] of map) {
-            this.name_to_id.set(name, id);
-        }
+        this.name_to_id = map;
     }
 
     public getPlayerCache(): Map<string, Player> {
@@ -388,6 +384,7 @@ export class Table {
         throw new Error(`Could not retrieve player stats for player with name: ${player_name}.`);
     }
     public async updateCache(): Promise<void> {
+        this.name_to_player = new Map<string, Player>();
         for (const name of this.name_to_id.keys()) {
             const id = this.name_to_id.get(name)!
             await this.cachePlayer(name, id);

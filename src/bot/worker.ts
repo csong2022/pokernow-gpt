@@ -13,6 +13,7 @@ import { EntryParams, ProcessPlayersResponse, RequestProcessPlayers } from '../i
 
 import { DBService } from '../services/db/db.service.ts';
 import { LogService } from '../services/logs/log.service.ts';
+import { HandOutcomesAPIService } from '../services/db/handoutcomes.service.ts';
 import { PlayerStatsAPIService } from '../services/db/playerstatsapi.service.ts';
 import { PuppeteerService } from '../services/puppeteer/puppeteer.service.ts';
 
@@ -24,8 +25,10 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
 
     const db_service = new DBService("./pokernow-gpt.db");
     await db_service.init();
+    db_service.createTables();
 
     const playerstats_api_service = new PlayerStatsAPIService(db_service);
+    const hand_outcomes_api_service = new HandOutcomesAPIService(db_service);
 
     const log_service = new LogService(game_id);
     await log_service.init();
@@ -36,7 +39,7 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
     console.log(`Created AI service: ${ai_config.provider} ${ai_config.model_name} with playstyle: ${ai_config.playstyle}`);
     ai_service.init();
 
-    const bot = new Bot(bot_uuid, ai_service, log_service, playerstats_api_service, puppeteer_service, game_id, bot_config.debug_mode, bot_config.query_retries);
+    const bot = new Bot(bot_uuid, ai_service, ai_config, log_service, playerstats_api_service, hand_outcomes_api_service, puppeteer_service, game_id, bot_config.debug_mode, bot_config.query_retries);
 
     await bot.openGame();
 

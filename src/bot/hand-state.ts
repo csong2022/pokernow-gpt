@@ -4,7 +4,11 @@ import { ProcessedLogs } from '../core/poker/log-processing.interface.ts';
 
 export class HandState {
     active: boolean = true;
+    bot_uuid: string = "";
     bot_name: string = "";
+    model_provider: string = "";
+    model_name: string = "";
+    game_id: string = "";
     hand_number: number = 1;
     first_created: string = "";
     is_first_turn_of_hand: boolean = true;

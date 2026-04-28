@@ -5,9 +5,11 @@ import { Table } from '../core/game/table.model.ts';
 
 import { AIService } from '../services/ai/ai-client.interface.ts';
 import { LogService } from '../services/logs/log.service.ts';
+import { HandOutcomesAPIService } from '../services/db/handoutcomes.service.ts';
 import { PlayerStatsAPIService } from '../services/db/playerstatsapi.service.ts';
 import { PuppeteerService } from '../services/puppeteer/puppeteer.service.ts';
 
+import { AIConfig } from '../interfaces/config.interface.ts';
 import { sleep } from '../utils/bot-timeout.helper.ts';
 import { DebugMode, logResponse } from '../utils/error-handling.util.ts';
 
@@ -25,6 +27,7 @@ export class Bot {
     private ai_service: AIService;
     private log_service: LogService;
     private player_service: PlayerStatsAPIService;
+    private hand_outcomes_service: HandOutcomesAPIService;
     private puppeteer_service: PuppeteerService;
 
     private state = new HandState();
@@ -36,8 +39,10 @@ export class Bot {
     constructor(
         bot_uuid: crypto.UUID,
         ai_service: AIService,
+        ai_config: AIConfig,
         log_service: LogService,
         player_service: PlayerStatsAPIService,
+        hand_outcomes_service: HandOutcomesAPIService,
         puppeteer_service: PuppeteerService,
         game_id: string,
         debug_mode: DebugMode,
@@ -47,10 +52,16 @@ export class Bot {
         this.ai_service = ai_service;
         this.log_service = log_service;
         this.player_service = player_service;
+        this.hand_outcomes_service = hand_outcomes_service;
         this.puppeteer_service = puppeteer_service;
         this.game_id = game_id;
         this.debug_mode = debug_mode;
         this.query_retries = query_retries;
+
+        this.state.bot_uuid = bot_uuid;
+        this.state.model_provider = ai_config.provider;
+        this.state.model_name = ai_config.model_name;
+        this.state.game_id = game_id;
     }
 
     public stop(): void {
@@ -132,6 +143,7 @@ export class Bot {
             this.puppeteer_service,
             this.log_service,
             this.ai_service,
+            this.hand_outcomes_service,
             this.state,
             this.debug_mode,
             guard,

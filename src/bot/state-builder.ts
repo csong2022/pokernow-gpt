@@ -13,6 +13,7 @@ import {
 import { convertToBBs } from '../core/poker/value-conversion.util.ts';
 
 import { AIService } from '../services/ai/ai-client.interface.ts';
+import { HandOutcomesAPIService } from '../services/db/handoutcomes.service.ts';
 import { LogService } from '../services/logs/log.service.ts';
 import { PuppeteerService } from '../services/puppeteer/puppeteer.service.ts';
 
@@ -28,6 +29,7 @@ export class GameStateBuilder {
         private puppeteer: PuppeteerService,
         private logs: LogService,
         private ai: AIService,
+        private hand_outcomes: HandOutcomesAPIService,
         private state: HandState,
         private debug: DebugMode,
         private guard?: ProcessPlayersGuard,
@@ -243,8 +245,10 @@ export class GameStateBuilder {
     private async endHand(): Promise<void> {
         const stack_res = await this.puppeteer.getStackSize();
         logResponse(stack_res, this.debug);
+        let ending_stack_BB = 0;
         if (stack_res.code === "success") {
             console.log("Ending stack size:", stack_res.data);
+            ending_stack_BB = convertToBBs(Number(stack_res.data), this.state.game.getBigBlind());
             if (Number(stack_res.data) === 0) {
                 console.log(`Bot "${this.state.bot_name}" has busted — stopping after this hand.`);
                 this.state.active = false;
@@ -263,12 +267,51 @@ export class GameStateBuilder {
             console.log("Failed to process players:", err);
         }
 
+        await this.recordHandOutcome(ending_stack_BB);
+
         logResponse(await this.puppeteer.waitForHandEnd(), this.debug);
         console.log("Completed a hand.\n");
 
         this.state.hand_number++;
         this.state.first_created = "";
         this.state.table.nextHand();
+    }
+
+    private async recordHandOutcome(ending_stack_BB: number): Promise<void> {
+        let bot_id: string;
+        let starting_stack_BB: number;
+        try {
+            bot_id = this.state.table.getIdFromName(this.state.bot_name);
+            starting_stack_BB = this.state.table.getPlayerInitialStackFromId(bot_id);
+        } catch {
+            // Bot wasn't seated this hand (joined late, log parse failure, etc.).
+            return;
+        }
+
+        let position: string | null = null;
+        try {
+            position = this.state.table.getPlayerPositionFromId(bot_id);
+        } catch {
+            // Position not yet known — leave null.
+        }
+
+        try {
+            await this.hand_outcomes.insert({
+                hand_id: `${this.state.game_id}:${this.state.hand_number}`,
+                bot_uuid: this.state.bot_uuid,
+                bot_name: this.state.bot_name,
+                model_provider: this.state.model_provider,
+                model_name: this.state.model_name,
+                starting_stack_BB,
+                ending_stack_BB,
+                stack_delta_BB: ending_stack_BB - starting_stack_BB,
+                position,
+                saw_showdown: 0,
+                created_at: Date.now(),
+            });
+        } catch (err) {
+            console.log("Failed to record hand outcome:", err);
+        }
     }
 
     private async processLogs<D, E = Error>(
