@@ -35,11 +35,20 @@ export class ActionExecutor {
                 console.log("Bet Size:", convertToBBs(bet_size, big_blind));
                 logResponse(await this.puppeteer.betOrRaise(bet_size), this.debug);
                 break;
-            case "all-in":
-                bet_size = convertToValue(this.state.game.getHero()!.getStackSize(), big_blind);
+            case "all-in": {
+                // Hero's stack is what's remaining after blinds/prior bets this street; the
+                // raise input expects the TOTAL bet, so we add chips already committed.
+                const remaining = convertToValue(this.state.game.getHero()!.getStackSize(), big_blind);
+                let committed = 0;
+                const current_bet_res = await this.puppeteer.getCurrentBet();
+                if (current_bet_res.code === "success") {
+                    committed = Number(current_bet_res.data) || 0;
+                }
+                bet_size = remaining + committed;
                 console.log("Bet Size:", convertToBBs(bet_size, big_blind));
                 logResponse(await this.puppeteer.betOrRaise(bet_size), this.debug);
                 break;
+            }
             case "call":
                 logResponse(await this.puppeteer.call(), this.debug);
                 break;

@@ -20,6 +20,11 @@ export class Table {
     private player_actions: Array<PlayerAction>;
     
     private id_to_action_num: Map<string, number>;
+    private three_bet_opportunity_ids: Set<string>;
+    private three_bet_ids: Set<string>;
+    private faced_three_bet_ids: Set<string>;
+    private folded_to_three_bet_ids: Set<string>;
+    private id_to_action_counts: Map<string, { bets: number, raises: number, calls: number, folds: number }>;
     private id_to_initial_stacks: Map<string, number>;
     private id_to_position: Map<string, string>;
     private id_to_table_seat: Map<string, number>;
@@ -45,6 +50,11 @@ export class Table {
         this.player_actions = new Array<PlayerAction>;
         
         this.id_to_action_num = new Map<string, number>();
+        this.three_bet_opportunity_ids = new Set<string>();
+        this.three_bet_ids = new Set<string>();
+        this.faced_three_bet_ids = new Set<string>();
+        this.folded_to_three_bet_ids = new Set<string>();
+        this.id_to_action_counts = new Map();
         this.id_to_initial_stacks = new Map<string, number>();
         this.id_to_position = new Map<string, string>();
         this.id_to_table_seat = new Map<string, number>();
@@ -138,6 +148,57 @@ export class Table {
     public existsInIdToActionNum(player_id: string): boolean {
         return this.id_to_action_num.has(player_id);
     }
+
+    public addThreeBetOpportunity(player_id: string): void {
+        this.three_bet_opportunity_ids.add(player_id);
+    }
+    public addThreeBet(player_id: string): void {
+        this.three_bet_ids.add(player_id);
+    }
+    public hadThreeBetOpportunity(player_id: string): boolean {
+        return this.three_bet_opportunity_ids.has(player_id);
+    }
+    public didThreeBet(player_id: string): boolean {
+        return this.three_bet_ids.has(player_id);
+    }
+
+    public addFacedThreeBet(player_id: string): void {
+        this.faced_three_bet_ids.add(player_id);
+    }
+    public addFoldedToThreeBet(player_id: string): void {
+        this.folded_to_three_bet_ids.add(player_id);
+    }
+    public facedThreeBet(player_id: string): boolean {
+        return this.faced_three_bet_ids.has(player_id);
+    }
+    public foldedToThreeBet(player_id: string): boolean {
+        return this.folded_to_three_bet_ids.has(player_id);
+    }
+
+    private getOrInitActionCounts(player_id: string): { bets: number, raises: number, calls: number, folds: number } {
+        let counts = this.id_to_action_counts.get(player_id);
+        if (!counts) {
+            counts = { bets: 0, raises: 0, calls: 0, folds: 0 };
+            this.id_to_action_counts.set(player_id, counts);
+        }
+        return counts;
+    }
+    public incrementBetCount(player_id: string): void {
+        this.getOrInitActionCounts(player_id).bets += 1;
+    }
+    public incrementRaiseCount(player_id: string): void {
+        this.getOrInitActionCounts(player_id).raises += 1;
+    }
+    public incrementCallCount(player_id: string): void {
+        this.getOrInitActionCounts(player_id).calls += 1;
+    }
+    public incrementFoldCount(player_id: string): void {
+        this.getOrInitActionCounts(player_id).folds += 1;
+    }
+    public getActionCounts(player_id: string): { bets: number, raises: number, calls: number, folds: number } {
+        return this.id_to_action_counts.get(player_id) ?? { bets: 0, raises: 0, calls: 0, folds: 0 };
+    }
+
     public async processPlayers() {
         const updates: Array<{ player_name: string, player_stats_JSON: any }> = [];
         for (const player_id of this.id_to_action_num.keys()) {
@@ -158,6 +219,23 @@ export class Table {
                 player_stats.setVPIPHands(player_stats.getVPIPHands() + 1);
             }
             player_stats.setTotalHands(player_stats.getTotalHands() + 1);
+            if (this.three_bet_opportunity_ids.has(player_id)) {
+                player_stats.setThreeBetOpportunities(player_stats.getThreeBetOpportunities() + 1);
+            }
+            if (this.three_bet_ids.has(player_id)) {
+                player_stats.setThreeBetHands(player_stats.getThreeBetHands() + 1);
+            }
+            if (this.faced_three_bet_ids.has(player_id)) {
+                player_stats.setFacedThreeBet(player_stats.getFacedThreeBet() + 1);
+            }
+            if (this.folded_to_three_bet_ids.has(player_id)) {
+                player_stats.setFoldedToThreeBet(player_stats.getFoldedToThreeBet() + 1);
+            }
+            const counts = this.getActionCounts(player_id);
+            player_stats.setTotalBets(player_stats.getTotalBets() + counts.bets);
+            player_stats.setTotalRaises(player_stats.getTotalRaises() + counts.raises);
+            player_stats.setTotalCalls(player_stats.getTotalCalls() + counts.calls);
+            player_stats.setTotalFolds(player_stats.getTotalFolds() + counts.folds);
             player.updatePlayerStats(player_stats);
             updates.push({ player_name, player_stats_JSON: player_stats.toJSON() });
         }
@@ -347,6 +425,11 @@ export class Table {
         this.player_actions = new Array<PlayerAction>();
 
         this.id_to_action_num = new Map<string, number>();
+        this.three_bet_opportunity_ids = new Set<string>();
+        this.three_bet_ids = new Set<string>();
+        this.faced_three_bet_ids = new Set<string>();
+        this.folded_to_three_bet_ids = new Set<string>();
+        this.id_to_action_counts = new Map();
         this.id_to_position = new Map<string, string>();
         this.id_to_initial_stacks = new Map<string, number>();
     }

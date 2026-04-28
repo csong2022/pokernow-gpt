@@ -260,9 +260,9 @@ export class PuppeteerService {
     async getNumPlayers<D, E=Error>(): Response<D, E> {
         try {
             await this.page.waitForSelector(".table-player", {timeout: this.default_timeout});
-            const table_players_count = await this.page.$$eval(".table-player", (divs: any) => divs.length) as number;
-            const table_player_status_count = await this.page.$$eval(".table-player-status-icon", (divs: any) => divs.length) as number;
-            const num_players = table_players_count - table_player_status_count;
+            // Empty seat slots also have the .table-player class (with .table-player-seat
+            // as a marker). Count only the seats that are actually occupied.
+            const num_players = await this.page.$$eval(".table-player:not(.table-player-seat)", (divs: any) => divs.length) as number;
             return {
                 code: "success",
                 data: num_players as D,
@@ -540,16 +540,8 @@ export class PuppeteerService {
     
     async betOrRaise<D, E=Error>(bet_amount: number): Response<D, E> {
         try {
-            const bet_action = await this.page.$eval(".game-decisions-ctn > .action-buttons > .raise", (button: any) => button.textContent);
             await this.page.$eval(".game-decisions-ctn > .action-buttons > .raise", (button: any) => button.click());
-    
-            if (bet_action === "Raise") {
-                const res = await this.getCurrentBet();
-                if (res.code === "success") {
-                    const current_bet = res.data as number;
-                    bet_amount += current_bet;
-                }
-            }
+
             await this.page.waitForSelector(".game-decisions-ctn > form > .raise-bet-value > div > input", {timeout: this.default_timeout});
             await this.page.focus(".game-decisions-ctn > form > .raise-bet-value > div > input");
             await sleep(this.default_timeout);
