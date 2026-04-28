@@ -22,19 +22,27 @@ export class PlayerStatsAPIService {
     async create(player_stats_JSON: any): Promise<void> {
         await this.db_service.query(
             `INSERT INTO PlayerStats
-             (name, total_hands, walks, vpip_hands, pfr_hands)
+             (name, total_hands, walks, vpip_hands, pfr_hands, three_bet_hands, three_bet_opportunities, faced_three_bet, folded_to_three_bet, total_bets, total_raises, total_calls, total_folds)
              VALUES
-             (?, ?, ?, ?, ?)`,
+             (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
              [
-                player_stats_JSON.name, 
-                player_stats_JSON.total_hands, 
-                player_stats_JSON.walks, 
+                player_stats_JSON.name,
+                player_stats_JSON.total_hands,
+                player_stats_JSON.walks,
                 player_stats_JSON.vpip_hands,
-                player_stats_JSON.pfr_hands
+                player_stats_JSON.pfr_hands,
+                player_stats_JSON.three_bet_hands,
+                player_stats_JSON.three_bet_opportunities,
+                player_stats_JSON.faced_three_bet,
+                player_stats_JSON.folded_to_three_bet,
+                player_stats_JSON.total_bets,
+                player_stats_JSON.total_raises,
+                player_stats_JSON.total_calls,
+                player_stats_JSON.total_folds
             ]
         )
     }
-    
+
     async update(player_name: string, player_stats_JSON: any): Promise<void> {
         await this.db_service.query(
             `UPDATE PlayerStats
@@ -42,13 +50,29 @@ export class PlayerStatsAPIService {
                 total_hands = ?,
                 walks = ?,
                 vpip_hands = ?,
-                pfr_hands = ?
+                pfr_hands = ?,
+                three_bet_hands = ?,
+                three_bet_opportunities = ?,
+                faced_three_bet = ?,
+                folded_to_three_bet = ?,
+                total_bets = ?,
+                total_raises = ?,
+                total_calls = ?,
+                total_folds = ?
              WHERE name = ?`,
              [
                 player_stats_JSON.total_hands,
                 player_stats_JSON.walks,
                 player_stats_JSON.vpip_hands,
                 player_stats_JSON.pfr_hands,
+                player_stats_JSON.three_bet_hands,
+                player_stats_JSON.three_bet_opportunities,
+                player_stats_JSON.faced_three_bet,
+                player_stats_JSON.folded_to_three_bet,
+                player_stats_JSON.total_bets,
+                player_stats_JSON.total_raises,
+                player_stats_JSON.total_calls,
+                player_stats_JSON.total_folds,
                 player_name
             ]
         )
@@ -63,13 +87,29 @@ export class PlayerStatsAPIService {
                         total_hands = ?,
                         walks = ?,
                         vpip_hands = ?,
-                        pfr_hands = ?
+                        pfr_hands = ?,
+                        three_bet_hands = ?,
+                        three_bet_opportunities = ?,
+                        faced_three_bet = ?,
+                        folded_to_three_bet = ?,
+                        total_bets = ?,
+                        total_raises = ?,
+                        total_calls = ?,
+                        total_folds = ?
                      WHERE name = ?`,
                      [
                         player_stats_JSON.total_hands,
                         player_stats_JSON.walks,
                         player_stats_JSON.vpip_hands,
                         player_stats_JSON.pfr_hands,
+                        player_stats_JSON.three_bet_hands,
+                        player_stats_JSON.three_bet_opportunities,
+                        player_stats_JSON.faced_three_bet,
+                        player_stats_JSON.folded_to_three_bet,
+                        player_stats_JSON.total_bets,
+                        player_stats_JSON.total_raises,
+                        player_stats_JSON.total_calls,
+                        player_stats_JSON.total_folds,
                         player_name
                     ]
                 );

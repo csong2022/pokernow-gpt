@@ -86,12 +86,10 @@ export class DecisionEngine {
                 res = await this.puppeteer.waitForBetOption();
                 return res.code === "success";
             case "call":
+                // The call amount can exceed the bot's stack when facing a larger bet —
+                // PokerNow caps the call at the bot's remaining chips (effectively all-in).
                 res = await this.puppeteer.waitForCallOption();
-                return (
-                    res.code === "success" &&
-                    bot_action.bet_size_in_BBs > 0 &&
-                    bot_action.bet_size_in_BBs <= curr_stack_size_in_BBs
-                );
+                return res.code === "success" && bot_action.bet_size_in_BBs > 0;
             case "check":
                 res = await this.puppeteer.waitForCheckOption();
                 return res.code === "success" && bot_action.bet_size_in_BBs == 0;

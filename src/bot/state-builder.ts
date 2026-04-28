@@ -35,7 +35,12 @@ export class GameStateBuilder {
 
     async build(): Promise<Game | null> {
         if (this.state.between_hands) {
-            await this.startNewHand();
+            const started = await this.startNewHand();
+            if (!started) {
+                console.log("No new hand detected (likely alone at table). Sleeping before retry.");
+                await sleep(5000);
+                return null;
+            }
             this.state.between_hands = false;
         }
 
@@ -71,7 +76,7 @@ export class GameStateBuilder {
         return this.state.game;
     }
 
-    private async startNewHand(): Promise<void> {
+    private async startNewHand(): Promise<boolean> {
         await this.waitForNextHand();
         await this.updateNumPlayers();
         await this.updateGameInfo();
@@ -115,10 +120,18 @@ export class GameStateBuilder {
                     init_log = await this.logs.fetchData(this.state.hand_number, "");
                     this.state.processed_logs = await this.processLogs(init_log, true);
                 }
+
+                // If the API returned no log entries for this hand, the new hand hasn't
+                // started yet (e.g., alone at the table waiting for an opponent).
+                if (this.state.processed_logs.valid_msgs.length === 0) {
+                    return false;
+                }
             } catch (err) {
                 console.log("Failed to pull initial hand logs:", err);
+                return false;
             }
         }
+        return true;
     }
 
     private async waitForNextHand(): Promise<void> {
@@ -294,14 +307,16 @@ export class GameStateBuilder {
             }
         }
 
-        const only_valid = validateAllMsg(msg);
-        preProcessLogs(only_valid, this.state.game);
+        // API returns logs newest-first; flip once here so all downstream code works
+        // with chronological order.
+        const chronological_logs = validateAllMsg(msg).reverse();
+        preProcessLogs(chronological_logs, this.state.game);
         const first_seat_number = this.state.table.getSeatNumberFromId(this.state.table.getFirstSeatOrderId());
         this.state.table.setIdToPosition(first_seat_number);
         this.state.table.convertAllOrdersToPosition();
 
         return {
-            valid_msgs: only_valid,
+            valid_msgs: chronological_logs,
             last_created: this.logs.getFirst(this.logs.getCreatedAt(data)),
             first_fetch,
         };

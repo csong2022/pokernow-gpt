@@ -105,7 +105,9 @@ export class LogService {
             log_arr.push(data.logs[i]);
             i += 1;
         }
-        log_arr.push(data.logs[i]);
+        if (i < data.logs.length) {
+            log_arr.push(data.logs[i]);
+        }
         return {
             logs: log_arr
         }

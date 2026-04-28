@@ -28,6 +28,7 @@ export function constructHandSetup(game: Game): string {
         stacks_section,
         stats_section,
         "I'll send the state on each of my decision points in this hand. Respond each time with only {action, bet_size_in_BBs BB} — no explanations.",
+        "For bet/raise/all-in, set bet_size_in_BBs to the TOTAL bet size for this street (e.g., raising to 3 BB total = 3, not the increment over a previous raise). For call, set it to the amount you're matching (the current outstanding bet). For check/fold, set it to 0.",
     ];
     return sections.join('\n');
 }
@@ -147,13 +148,13 @@ function defineStacksAndStats(
 
         const player_stats = table.getPlayerStatsFromName(player_name);
         stat_entries.push(
-            `{${player_pos}: Total Hands Played = ${player_stats.getTotalHands()}, VPIP = ${player_stats.computeVPIPStat().toFixed(2)}, PFR = ${player_stats.computePFRStat().toFixed(2)}}`
+            `{${player_pos}: Total Hands Played = ${player_stats.getTotalHands()}, VPIP = ${player_stats.computeVPIPStat().toFixed(2)}, PFR = ${player_stats.computePFRStat().toFixed(2)}, 3-Bet = ${player_stats.computeThreeBetStat().toFixed(2)}, Fold-to-3-Bet = ${player_stats.computeFoldToThreeBetStat().toFixed(2)}, AFq = ${player_stats.computeAggressionFrequency().toFixed(2)}}`
         );
     }
 
     return {
         stacks_section: "Here are the initial stack sizes of the other players in the pot, defined in the format {position: stack_size_in_BBs}:\n" + stack_entries.join(", "),
-        stats_section: "Here are the stats of the other players in the pot, defined in the format {position: Total Hands Played = total_hands, VPIP = vpip_stat, PFR = pfr_stat}:\n" + stat_entries.join("\n"),
+        stats_section: "Here are the stats of the other players in the pot, defined in the format {position: Total Hands Played = total_hands, VPIP = vpip_stat, PFR = pfr_stat, 3-Bet = three_bet_stat, Fold-to-3-Bet = fold_to_three_bet_stat, AFq = aggression_frequency}:\n" + stat_entries.join("\n"),
     };
 }
 
