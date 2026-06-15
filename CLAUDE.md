@@ -172,7 +172,7 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   resolves `id → AIConfig` (`toAIConfig`) and throws `unknown model id: X` on an
   unregistered id. **`scripts/update-models.ts` is the sole writer** (`npm run
   update-models`): fetches each provider's live model list, keeps an allowlisted
-  family (`gpt-5.4*`, `gemini-3*` text-gen, `claude-*-4*`), and merges
+  family (`gpt-5.x*`, `gemini-3*` text-gen, `claude-*-4*`), and merges
   non-clobbering — preserving ids/addedAt/deprecated/costs/reasoning, collapsing
   dated snapshots to a family id, deprecating (never deleting) vanished models,
   and writing deterministically (sorted, fixed key order) so reruns are zero-diff.

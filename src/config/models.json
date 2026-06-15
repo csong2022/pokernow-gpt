@@ -145,6 +145,72 @@
       "deprecated": false
     },
     {
+      "id": "gpt-5.1",
+      "provider": "OpenAI",
+      "apiModelString": "gpt-5.1",
+      "displayName": "gpt-5.1",
+      "reasoning": false,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "gpt-5.1-chat-latest",
+      "provider": "OpenAI",
+      "apiModelString": "gpt-5.1-chat-latest",
+      "displayName": "gpt-5.1-chat-latest",
+      "reasoning": false,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "gpt-5.2",
+      "provider": "OpenAI",
+      "apiModelString": "gpt-5.2",
+      "displayName": "gpt-5.2",
+      "reasoning": false,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "gpt-5.2-chat-latest",
+      "provider": "OpenAI",
+      "apiModelString": "gpt-5.2-chat-latest",
+      "displayName": "gpt-5.2-chat-latest",
+      "reasoning": false,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "gpt-5.2-pro",
+      "provider": "OpenAI",
+      "apiModelString": "gpt-5.2-pro",
+      "displayName": "gpt-5.2-pro",
+      "reasoning": false,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "gpt-5.3-chat-latest",
+      "provider": "OpenAI",
+      "apiModelString": "gpt-5.3-chat-latest",
+      "displayName": "gpt-5.3-chat-latest",
+      "reasoning": false,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
       "id": "gpt-5.4",
       "provider": "OpenAI",
       "apiModelString": "gpt-5.4",
@@ -182,6 +248,28 @@
       "provider": "OpenAI",
       "apiModelString": "gpt-5.4-pro",
       "displayName": "gpt-5.4-pro",
+      "reasoning": false,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "gpt-5.5",
+      "provider": "OpenAI",
+      "apiModelString": "gpt-5.5",
+      "displayName": "gpt-5.5",
+      "reasoning": false,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "gpt-5.5-pro",
+      "provider": "OpenAI",
+      "apiModelString": "gpt-5.5-pro",
+      "displayName": "gpt-5.5-pro",
       "reasoning": false,
       "inputCostPer1M": 0,
       "outputCostPer1M": 0,

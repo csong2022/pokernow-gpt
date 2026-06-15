@@ -3,50 +3,30 @@ import { ClaudeAIService } from "./claudeai.service.ts";
 import { GoogleAIService } from "./googleai.service.ts";
 import { OpenAIService } from "./openai.service.ts";
 
+// Routes a provider to its concrete AIService. Model validity is owned by the
+// model registry (config/models.json), resolved at the composition root — the
+// factory no longer keeps a hardcoded model allowlist (that drifted from the
+// providers' real model sets).
 export class AIServiceFactory {
-    private supportedModels: Map<string, string[]>;
-
-    constructor(){
-        this.supportedModels = new Map<string, string[]>([
-            ["OpenAI", ["gpt-5.4", "gpt-5.4-mini", "gpt-5.4-nano"]],
-            ["Google", ["gemini-3.1-pro-preview", "gemini-3-flash-preview", "gemini-3.1-flash-lite-preview"]],
-            ["Anthropic", ["claude-opus-4-8", "claude-sonnet-4-6", "claude-haiku-4-5"]]
-        ]);
-    }
-
     createAIService(provider: string, model_name: string, playstyle: string = "neutral"): AIService {
-        if (!(this.supportedModels.has(provider) && this.supportedModels.get(provider)!.includes(model_name))) {
-            throw new Error("AI provider or model not supported, please check the list of supported models.")
-        }
-        switch(provider) {
-            case ("OpenAI"):
-                const open_ai_auth_key = process.env.OPENAI_API_KEY;
-                if (!open_ai_auth_key) {
-                    throw new Error(`Empty ${provider} auth key.`);
-                }
-                return new OpenAIService(open_ai_auth_key, model_name, playstyle);
-            case ("Google"):
-                const google_ai_auth_key = process.env.GOOGLEAI_API_KEY;
-                if (!google_ai_auth_key) {
-                    throw new Error (`Empty ${provider} auth key.`);
-                }
-                return new GoogleAIService(google_ai_auth_key, model_name, playstyle);
-            case ("Anthropic"):
-                const claude_ai_auth_key = process.env.CLAUDEAI_API_KEY;
-                if (!claude_ai_auth_key) {
-                    throw new Error(`Empty ${provider} auth key.`);
-                }
-                return new ClaudeAIService(claude_ai_auth_key, model_name, playstyle);
-        }
-        throw new Error("Failed to create AI service.");
-    }
-
-    printSupportedModels(): void {
-        console.log("Supported models:")
-        for (const provider of Array.from(this.supportedModels.keys())) {
-            let out = provider.concat(": ");
-            out = out.concat(this.supportedModels.get(provider)!.join(", "));
-            console.log(out);
+        switch (provider) {
+            case "OpenAI": {
+                const key = process.env.OPENAI_API_KEY;
+                if (!key) throw new Error(`Empty ${provider} auth key.`);
+                return new OpenAIService(key, model_name, playstyle);
+            }
+            case "Google": {
+                const key = process.env.GOOGLEAI_API_KEY;
+                if (!key) throw new Error(`Empty ${provider} auth key.`);
+                return new GoogleAIService(key, model_name, playstyle);
+            }
+            case "Anthropic": {
+                const key = process.env.CLAUDEAI_API_KEY;
+                if (!key) throw new Error(`Empty ${provider} auth key.`);
+                return new ClaudeAIService(key, model_name, playstyle);
+            }
+            default:
+                throw new Error(`Unsupported AI provider: ${provider}`);
         }
     }
 }
