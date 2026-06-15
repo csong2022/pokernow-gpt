@@ -27,8 +27,8 @@ const CORE_DIR = join(REPO_ROOT, "src", "core");
 const FORBIDDEN: ReadonlyArray<string> = [
     "puppeteer.service",
     "log.service",
-    "log-processing",
-    "message-processing",
+    "log-processing.util", // the live parser; log-processing.interface is core
+    "message-processing.util",
     "action-executor",
     "state-builder",
     "http/", // the REST API under src/http

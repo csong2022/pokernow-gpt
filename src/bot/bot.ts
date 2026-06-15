@@ -16,7 +16,7 @@ import { Logger } from '../utils/logger.util.ts';
 
 import { ActionExecutor } from '../live/pokernow/action-executor.ts';
 import { DecisionEngine } from './decision-engine.ts';
-import { HandState } from './hand-state.ts';
+import { HandState } from '../core/game/hand-state.ts';
 import { GameStateBuilder, ProcessPlayersGuard } from '../live/pokernow/state-builder.ts';
 
 export class Bot {

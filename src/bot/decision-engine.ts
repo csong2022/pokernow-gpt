@@ -7,7 +7,7 @@ import { PuppeteerService } from '../live/pokernow/puppeteer.service.ts';
 import { sleep, TimeoutError } from '../utils/bot-timeout.helper.ts';
 import { Logger } from '../utils/logger.util.ts';
 
-import { HandState } from './hand-state.ts';
+import { HandState } from '../core/game/hand-state.ts';
 
 export class DecisionEngine {
     constructor(

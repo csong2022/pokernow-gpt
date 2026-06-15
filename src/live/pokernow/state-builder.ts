@@ -21,7 +21,7 @@ import { sleep } from '../../utils/bot-timeout.helper.ts';
 import { DebugMode, ErrorResponse, logResponse, SuccessResponse } from '../../utils/error-handling.util.ts';
 import { Logger } from '../../utils/logger.util.ts';
 
-import { HandState } from '../../bot/hand-state.ts';
+import { HandState } from '../../core/game/hand-state.ts';
 
 export type ProcessPlayersGuard = (first_created: string) => Promise<boolean>;
 

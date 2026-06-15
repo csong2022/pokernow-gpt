@@ -29,8 +29,8 @@ out).
 
 - `puppeteer.service`
 - `log.service`
-- `log-processing`
-- `message-processing`
+- `log-processing.util` (the live parser; `log-processing.interface` is core)
+- `message-processing.util`
 - `action-executor`
 - `state-builder`
 - anything under `http/` (the REST API)
@@ -65,7 +65,8 @@ building (`state-builder.ts`), and action execution (`action-executor.ts`). The
 live. `Table` no longer parses raw PokerNow messages: the adapter
 (`src/live/pokernow/state-builder.ts`) parses and passes the stack map in via
 `Table.setIdToStack(...)`. Core also no longer imports any DB service — `Table`
-depends on the injected `PlayerStatsRepository` port.
+depends on the injected `PlayerStatsRepository` port. The per-hand runtime state
+container `HandState` now lives in core (`src/core/game/hand-state.ts`).
 
 `npm run check:boundaries` reports **0 violations**. Once the rest of the live
 migration (below) lands, switch CI to `--strict`.
@@ -76,12 +77,14 @@ These are on the seam but not yet flagged/fixed:
 
 1. **Bot lifecycle and HTTP API still outside `live/`** — `src/bot/` (`bot.ts`,
    `worker.ts`, `bot-manager.ts`, eventemitters) and `src/http/*` should migrate
-   into `src/live/` in later commits. (`decision-engine.ts` and `hand-state.ts`
-   are seam cleanups — see items 2–3.)
+   into `src/live/` in later commits. (`decision-engine.ts` is a seam cleanup —
+   see item 2.)
 2. `src/bot/decision-engine.ts` imports `PuppeteerService` (live) alongside core
    query helpers — it straddles the seam and needs splitting.
-3. `src/bot/hand-state.ts` is already clean (core models/interfaces only) — an
-   easy future move into core.
+
+Note: `src/core/poker/log-processing.interface.ts` stays in core (it defines
+`ProcessedLogs`, consumed by core's `HandState`), but its `Data`/`Log` types
+describe the PokerNow log API shape and may belong in live later.
 
 ## Commands
 

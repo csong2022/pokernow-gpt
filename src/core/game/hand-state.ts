@@ -1,6 +1,6 @@
-import { Game } from '../core/game/game.model.ts';
-import { Table } from '../core/game/table.model.ts';
-import { ProcessedLogs } from '../core/poker/log-processing.interface.ts';
+import { Game } from './game.model.ts';
+import { Table } from './table.model.ts';
+import { ProcessedLogs } from '../poker/log-processing.interface.ts';
 
 export class HandState {
     active: boolean = true;

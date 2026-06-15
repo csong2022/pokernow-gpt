@@ -6,7 +6,7 @@ import { PuppeteerService } from './puppeteer.service.ts';
 import { DebugMode, logResponse } from '../../utils/error-handling.util.ts';
 import { Logger } from '../../utils/logger.util.ts';
 
-import { HandState } from '../../bot/hand-state.ts';
+import { HandState } from '../../core/game/hand-state.ts';
 
 export class ActionExecutor {
     constructor(
