@@ -7,11 +7,14 @@ import { TableConfig } from './engine/protocol.ts';
 import { Agent, LLMAgent, StubAgent } from './agent.ts';
 import { HandLog } from './hand-log.ts';
 import { runHands } from './runner.ts';
+import { runDuplicate } from './duplicate-runner.ts';
 
 dotenv.config();
 
 interface Args {
     hands: number;
+    deals: number;
+    duplicate: boolean;
     players: number;
     sb: number;
     bb: number;
@@ -34,8 +37,11 @@ function parseArgs(argv: string[]): Args {
     const hands = num('--hands', 5);
     const players = num('--players', 2);
     const bb = num('--bb', 2);
+    const duplicate = argv.includes('--duplicate');
     return {
         hands,
+        deals: num('--deals', 25),
+        duplicate,
         players,
         bb,
         sb: num('--sb', Math.floor(bb / 2) || 1),
@@ -43,7 +49,7 @@ function parseArgs(argv: string[]): Args {
         stack: num('--stack', 200),
         mode: (get('--mode') as 'cash' | 'tournament') ?? 'cash',
         llm: get('--llm'),
-        out: get('--out') ?? path.join('arena-logs', `hands-${Date.now()}.jsonl`),
+        out: get('--out') ?? path.join('arena-logs', `${duplicate ? 'dup' : 'hands'}-${Date.now()}.jsonl`),
     };
 }
 
@@ -77,11 +83,19 @@ async function main(): Promise<void> {
     const client = new PokerKitClient();
     client.start();
     const log = new HandLog(args.out);
+    const agents = buildAgents(args, gameId);
+    const kind = args.llm ? 'LLM' : 'stub';
 
-    console.log(`Arena: ${args.hands} hands, ${args.players} players, ${args.llm ? 'LLM' : 'stub'} agents -> ${args.out}`);
     try {
-        await runHands({ client, config, agents: buildAgents(args, gameId), hands: args.hands, log });
-        console.log(`Done. Wrote ${args.hands} hand records to ${args.out}`);
+        if (args.duplicate) {
+            console.log(`Arena (duplicate-deck, full rotation): ${args.deals} deals x ${args.players} = ${args.deals * args.players} hands, ${kind} agents -> ${args.out}`);
+            await runDuplicate({ client, config, agents, deals: args.deals, log });
+            console.log(`Done. Wrote ${args.deals * args.players} hand records (${args.deals} deals) to ${args.out}`);
+        } else {
+            console.log(`Arena: ${args.hands} hands, ${args.players} players, ${kind} agents -> ${args.out}`);
+            await runHands({ client, config, agents, hands: args.hands, log });
+            console.log(`Done. Wrote ${args.hands} hand records to ${args.out}`);
+        }
     } finally {
         client.stop();
     }

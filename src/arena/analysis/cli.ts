@@ -9,27 +9,55 @@ function fmt(n: number, digits = 2): string {
     return Number.isFinite(n) ? n.toFixed(digits) : 'n/a';
 }
 
-function ciText(s: ModelSummary): string {
-    if (!s.ci95BBPer100) return 'n/a (n<2)';
-    return `[${fmt(s.ci95BBPer100.low)}, ${fmt(s.ci95BBPer100.high)}]`;
+function ciText(ci: { low: number; high: number } | null): string {
+    if (!ci) return 'n/a (n<2)';
+    return `[${fmt(ci.low)}, ${fmt(ci.high)}]`;
 }
 
-function printTable(models: ModelSummary[]): void {
-    const rows = models.map((s) => [
-        s.model,
-        String(s.hands),
-        fmt(s.bbPer100),
-        fmt(s.mbbPerHand, 1),
-        ciText(s),
-        fmt(s.netBB),
-        `${fmt(s.malformedRate * 100)}% (${s.malformedCount}/${s.decisions})`,
-    ]);
-    const header = ['model', 'hands', 'bb/100', 'mbb/hand', '95% CI (bb/100)', 'net bb', 'malformed'];
+function table(header: string[], rows: string[][]): void {
     const widths = header.map((h, i) => Math.max(h.length, ...rows.map((r) => r[i].length)));
     const line = (cells: string[]) => cells.map((c, i) => c.padEnd(widths[i])).join('  ');
     console.log(line(header));
     console.log(widths.map((w) => '-'.repeat(w)).join('  '));
     for (const r of rows) console.log(line(r));
+}
+
+function printTable(models: ModelSummary[]): void {
+    table(
+        ['model', 'hands', 'bb/100', 'mbb/hand', '95% CI (bb/100)', 'net bb', 'malformed'],
+        models.map((s) => [
+            s.model,
+            String(s.hands),
+            fmt(s.bbPer100),
+            fmt(s.mbbPerHand, 1),
+            ciText(s.ci95BBPer100),
+            fmt(s.netBB),
+            `${fmt(s.malformedRate * 100)}% (${s.malformedCount}/${s.decisions})`,
+        ]),
+    );
+}
+
+// Raw vs duplicate-deck-reduced CI, shown only for duplicate runs.
+function printReducedTable(models: ModelSummary[]): void {
+    const withReduced = models.filter((s) => s.reduced);
+    if (withReduced.length === 0) return;
+    console.log('\nVariance-reduced (duplicate-deck, grouped by deal):');
+    table(
+        ['model', 'deals', 'bb/100', 'raw +/- (bb/100)', 'reduced +/- (bb/100)', 'CI shrink'],
+        withReduced.map((s) => {
+            const rawHalf = s.ci95HalfWidthBBPer100;
+            const redHalf = s.reduced!.ci95HalfWidthBBPer100;
+            const shrink = rawHalf != null && redHalf != null && redHalf > 0 ? `${fmt(rawHalf / redHalf, 1)}x` : 'n/a';
+            return [
+                s.model,
+                String(s.reduced!.deals),
+                fmt(s.reduced!.bbPer100),
+                rawHalf == null ? 'n/a' : fmt(rawHalf),
+                redHalf == null ? 'n/a' : fmt(redHalf),
+                shrink,
+            ];
+        }),
+    );
 }
 
 function main(): void {
@@ -56,6 +84,7 @@ function main(): void {
 
     console.log(`\nAnalyzed ${records.length} hands from ${source}\n`);
     printTable(models);
+    printReducedTable(models);
 
     if (violations.length > 0) {
         console.error(`\n!!! INTEGRITY: ${violations.length} violation(s) — these findings are NOT trustworthy:`);

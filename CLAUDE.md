@@ -123,9 +123,11 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   enforces all rules. It speaks **line-delimited JSON-RPC over stdin/stdout**
   (`{id, method, params}` → `{id, result|error}`, one object per line; stdout is
   protocol-only, diagnostics go to stderr). Methods: `create_game`, `start_hand`
-  (accepts an optional explicit `deck` for future deal control), `get_state`,
-  `apply_action`, `showdown`, `end_game`. Cards are PokerKit short form ("Th");
-  chip amounts are raw.
+  (accepts an optional explicit `deck`), `get_state`, `apply_action`, `showdown`,
+  `end_game`. Cards are PokerKit short form ("Th"); chip amounts are raw. Hole,
+  burn, and board cards are all dealt from the provided deck (burns are manual
+  too) and the deck is persisted for the whole hand, so a given deck string
+  reproduces a hand exactly — the basis for duplicate-deck replay.
 - **The boundary:** `src/arena/engine/pokerkit-client.ts` *spawns* the Python
   process (it does not import it). `src/arena/environment.ts` is the seam;
   `src/arena/state-mapper.ts` maps `state_view` → the core `Game` (normalizing
@@ -133,8 +135,21 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   unchanged. `src/arena/agent.ts` has a `StubAgent` (deterministic legal play) and
   an `LLMAgent` (core decision-engine + a provider via `AIConfig`); illegal model
   actions are clamped to legal min/max or fall back to check-else-fold, each
-  logged as a malformed-action event. `runner.ts` plays hands sequentially and
-  writes one replayable JSONL record per hand via `hand-log.ts`.
+  logged as a malformed-action event. `runner.ts` plays independent hands;
+  `duplicate-runner.ts` is the variance-reduction harness (below). Both share
+  `playDecisionLoop` and write one replayable JSONL record per hand via `hand-log.ts`.
+- **Duplicate-deck variance reduction** (`deck.ts`, `duplicate-runner.ts`): per
+  *deal* one shuffled deck is generated and replayed `P` times (full rotation),
+  rotating which model sits in which seat, so every model plays the same cards in
+  every position. Hands are tagged `deal_id` + `rotation`. Card luck cancels when
+  the analysis groups by deal.
+- **Analysis** (`src/arena/analysis/`, pure offline pass over the JSONL):
+  `npm run analyze <file|dir>` prints per-model bb/100, mbb/hand, 95% CI, net bb,
+  malformed rate, runs integrity guards (chip conservation, seat→model, …), and
+  writes a JSON report to `arena-analysis/`. For duplicate runs it adds a
+  variance-reduced table (same point estimate, tighter CI; reduction is exact
+  only for deterministic strategies — LLM temperature leaves residual decision
+  noise). Imports core types only; never the engine — runs with the engine off.
 - **Python venv setup** (one-time):
   ```sh
   py -m venv engine-py/.venv
@@ -143,9 +158,9 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   ```
   The client auto-selects `Scripts/python.exe` vs `bin/python` by platform. The
   venv and `arena-logs/` are gitignored.
-- **Out of scope (M1):** hand duplication / seeded-variance harness, the analysis
-  layer (bb/100, ratings), concurrency, durable runs. M1 resets stacks to the
-  configured starting stack each hand (clean per-hand deltas; no bust handling).
+- **Out of scope (so far):** GTO/EV-loss scoring, ranking systems, style stats
+  (VPIP/PFR), concurrency, durable runs. Stacks reset to the configured starting
+  stack each hand (clean per-hand deltas; no bust handling).
 
 ## Commands
 
@@ -154,6 +169,10 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   `npx tsx src/arena/index.ts --hands 25 --players 3`
 - Run the arena (LLMs, needs `OPENAI_API_KEY`/`GOOGLEAI_API_KEY` in `.env`):
   `npx tsx src/arena/index.ts --hands 10 --players 2 --llm "OpenAI:gpt-5.4-nano,Google:gemini-3.1-flash-lite-preview"`
+- Run the arena (duplicate-deck variance reduction, full rotation):
+  `npx tsx src/arena/index.ts --duplicate --deals 50 --players 2`
+- Analyze logs (offline; engine not needed):
+  `npm run analyze arena-logs/<file-or-dir>.jsonl`
 - Tests: `npm test` (Mocha, specs in `test/unit/*.spec.ts`; `pretest` runs the
   boundary checker in `--strict`)
 - Type-check: `npx tsc --noEmit` (tsconfig sets `noEmit`; there is no build step)

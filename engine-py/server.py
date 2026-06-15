@@ -20,11 +20,13 @@ import traceback
 
 from pokerkit import NoLimitTexasHoldem, Automation, Mode, Card
 
-# Automate every mechanical step EXCEPT hole/board dealing, which we keep manual
-# so an explicit deck can be injected (deal control for the future duplication
-# harness). Betting decisions are always manual.
+# Automate every mechanical step EXCEPT card burning and hole/board dealing,
+# which we keep manual so an explicit deck can be injected and consumed in full
+# (deal control for the duplication harness). Controlling burns too keeps the
+# whole deck deterministic and collision-free. Betting decisions are always manual.
 AUTOMATIONS = tuple(
-    a for a in Automation if a.name not in ("HOLE_DEALING", "BOARD_DEALING")
+    a for a in Automation
+    if a.name not in ("CARD_BURNING", "HOLE_DEALING", "BOARD_DEALING")
 )
 
 MODES = {"cash": Mode.CASH_GAME, "tournament": Mode.TOURNAMENT}
@@ -57,7 +59,9 @@ def deal_pending(state, deck=None):
         return cards
 
     while True:
-        if state.can_deal_hole():
+        if state.can_burn_card():
+            state.burn_card(take(1))
+        elif state.can_deal_hole():
             # one card per hole-dealing step
             state.deal_hole(take(1))
         elif state.can_deal_board():
@@ -177,6 +181,7 @@ def create_game(params):
         "sb_index": None,
         "bb_index": None,
         "button": None,
+        "deck": None,
     }
     return {"game_id": gid}
 
@@ -199,10 +204,13 @@ def start_hand(params):
     )
     rec["state"] = state
     rec["actions"] = []
+    # Persist the remaining deck for the WHOLE hand so board dealing in later
+    # apply_action calls stays deterministic — required for duplicate-deck replay.
+    rec["deck"] = deck
     sb, bb = blind_indices(state, rec["small_blind"], rec["big_blind"])
     rec["sb_index"], rec["bb_index"] = sb, bb
     rec["button"] = button_index(rec)
-    deal_pending(state, deck)
+    deal_pending(state, rec["deck"])
     rec["holes"] = [[card_str(c) for c in h] for h in state.hole_cards]
     return state_view(gid)
 
@@ -222,7 +230,7 @@ def apply_action(params):
         state.complete_bet_or_raise_to(amount)
     else:
         raise ValueError(f"unknown action {action!r}")
-    deal_pending(state)
+    deal_pending(state, rec["deck"])
     return state_view(gid)
 
 

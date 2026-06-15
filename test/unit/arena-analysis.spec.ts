@@ -3,6 +3,7 @@ import { expect } from "chai";
 
 import { parseHandLogs } from "../../src/arena/analysis/load.ts";
 import { aggregateByModel, checkIntegrity, modelIdOf } from "../../src/arena/analysis/aggregate.ts";
+import { generateDeck, seededRng } from "../../src/arena/deck.ts";
 
 // Hand-crafted fixture: heads-up, bb = 2 every hand, model A in seat 0, B in seat 1.
 // Per-hand chip deltas chosen so the bb math is verifiable by hand:
@@ -98,6 +99,54 @@ describe("arena analysis", () => {
             const v = checkIntegrity([]);
             expect(v).to.have.length(1);
             expect(v[0].kind).to.equal("no-hands");
+        });
+    });
+
+    describe("deck generation", () => {
+        it("produces 52 unique cards", () => {
+            const deck = generateDeck(seededRng(1));
+            const cards = deck.match(/.{2}/g)!;
+            expect(cards).to.have.length(52);
+            expect(new Set(cards).size).to.equal(52);
+        });
+        it("is deterministic for a given seed", () => {
+            expect(generateDeck(seededRng(123))).to.equal(generateDeck(seededRng(123)));
+            expect(generateDeck(seededRng(1))).to.not.equal(generateDeck(seededRng(2)));
+        });
+    });
+
+    describe("variance-reduced (duplicate-deck) aggregation", () => {
+        // 2 deals, full HU rotation (2 hands/deal). Model A's per-hand bb cancels
+        // within each deal (it plays both seats of the same deck under identical
+        // outcomes), so the reduced estimator has ZERO variance while the raw
+        // estimator does not — the whole point of duplicate poker.
+        //   deal 0: A bb = +3 (seat0) then -3 (seat1)  -> deal mean 0
+        //   deal 1: A bb = +1 (seat0) then -1 (seat1)  -> deal mean 0
+        //   raw A obs  = [3, -3, 1, -1] (mean 0, stddev > 0)
+        //   reduced A  = [0, 0]         (mean 0, stddev 0 -> CI half-width 0)
+        const DUP = [
+            { hand: 0, deal_id: 0, rotation: 0, big_blind: 2, agents: ["A#0", "B#1"], deltas: [6, -6], resolved_actions: [], malformed_events: [] },
+            { hand: 1, deal_id: 0, rotation: 1, big_blind: 2, agents: ["B#0", "A#1"], deltas: [6, -6], resolved_actions: [], malformed_events: [] },
+            { hand: 2, deal_id: 1, rotation: 0, big_blind: 2, agents: ["A#0", "B#1"], deltas: [2, -2], resolved_actions: [], malformed_events: [] },
+            { hand: 3, deal_id: 1, rotation: 1, big_blind: 2, agents: ["B#0", "A#1"], deltas: [2, -2], resolved_actions: [], malformed_events: [] },
+        ];
+        const recs = parseHandLogs(DUP.map((r) => JSON.stringify(r)).join("\n"));
+        const byModel = new Map(aggregateByModel(recs).map((s) => [s.model, s]));
+
+        it("keeps the same point estimate but collapses the CI", () => {
+            const a = byModel.get("A")!;
+            expect(a.hands).to.equal(4);              // raw: 4 hands
+            expect(a.bbPer100).to.be.closeTo(0, 1e-9); // point estimate unchanged
+            expect(a.ci95HalfWidthBBPer100!).to.be.greaterThan(100); // raw CI is wide
+            expect(a.reduced).to.not.equal(undefined);
+            expect(a.reduced!.deals).to.equal(2);
+            expect(a.reduced!.bbPer100).to.be.closeTo(0, 1e-9);
+            expect(a.reduced!.ci95HalfWidthBBPer100!).to.be.closeTo(0, 1e-9); // reduced CI ~ 0
+        });
+
+        it("leaves reduced undefined for non-duplicate logs", () => {
+            const plain = aggregateByModel(parseHandLogs(FIXTURE_JSONL));
+            for (const s of plain) expect(s.reduced).to.equal(undefined);
         });
     });
 });

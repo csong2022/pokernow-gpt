@@ -24,10 +24,25 @@ export interface HandRecord {
     malformed_events: MalformedEvent[];
     resolved_actions: ResolvedActionEntry[];
 
+    // duplicate-deck harness tags (absent in plain runs); analysis groups by deal_id
+    deal_id?: number;
+    rotation?: number;
+
     // present in real logs but unused by analysis
     game_id?: string;
     config?: Record<string, unknown>;
     small_blind?: number;
+}
+
+// Variance statistics over a set of per-observation bb results.
+export interface VarianceStats {
+    n: number;
+    bbPer100: number;
+    mbbPerHand: number;
+    stddevBBPerHand: number;
+    standardError: number;
+    ci95BBPer100: { low: number; high: number } | null; // null when n < 2
+    ci95HalfWidthBBPer100: number | null;
 }
 
 export interface ModelSummary {
@@ -44,6 +59,11 @@ export interface ModelSummary {
     ci95HalfWidthBBPer100: number | null;               // 1.96 * SE * 100
     malformedCount: number;
     malformedRate: number;    // malformed / decisions (0 when no decisions)
+
+    // Variance-reduced estimate (duplicate-deck runs only). Same point estimate
+    // as the raw bb/100 but with a tighter CI, since per-deal card luck cancels.
+    // `deals` is the reduced sample size (n). Undefined for plain runs.
+    reduced?: VarianceStats & { deals: number };
 }
 
 export interface IntegrityViolation {
