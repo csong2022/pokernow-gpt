@@ -180,6 +180,15 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   is a level (`none` | `low` | `medium` | `high`, `none` = doesn't reason). New
   models default to cost 0 / reasoning `none` until set by hand (preserved across
   reruns). Humans don't hand-edit the file; re-run the script.
+  The level flows `toAIConfig → AIConfig.reasoning → createAIService → AIService`
+  and each provider service maps it to its own knob: **OpenAI** sets
+  `reasoning_effort` (low/medium/high); **Claude** sets adaptive thinking
+  (`thinking:{type:"adaptive"}` + `output_config.effort`) with a bigger token
+  budget and a defensive retry-without-thinking on the 400 you get from a model
+  that doesn't support it (so only adaptive-capable Claudes — Opus 4.6+/Sonnet
+  4.6 — are non-`none` in the registry; Haiku 4.5 / Sonnet 4.5 / Opus 4.5 are
+  `none`); **Gemini** is a no-op (pinned SDK 0.14.1 has no `thinkingConfig`; the
+  models reason automatically).
 - **Python venv setup** (one-time):
   ```sh
   py -m venv engine-py/.venv

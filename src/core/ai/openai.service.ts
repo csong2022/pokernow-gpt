@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
+import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
 import { AIService, BotAction } from "./ai-client.interface.ts";
 import { getPromptFromPlaystyle, parseResponse} from "./ai-query.helper.ts";
 import { withTimeout } from "../../utils/bot-timeout.helper.ts";
@@ -32,11 +32,17 @@ export class OpenAIService extends AIService {
         }
         this.messages.push({ role: "user", content: input });
 
+        const params: ChatCompletionCreateParamsNonStreaming = {
+            messages: this.messages,
+            model: this.getModelName()
+        };
+        // Reasoning models accept reasoning_effort (low/medium/high). Older SDK
+        // type doesn't include it, so attach untyped; non-reasoning models keep none.
+        const reasoning = this.getReasoning();
+        if (reasoning !== "none") (params as unknown as Record<string, unknown>).reasoning_effort = reasoning;
+
         const completion = await withTimeout(
-            this.agent.chat.completions.create({
-                messages: this.messages,
-                model: this.getModelName()
-            }),
+            this.agent.chat.completions.create(params),
             AI_QUERY_TIMEOUT_MS,
             "OpenAI query"
         );

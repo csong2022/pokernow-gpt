@@ -38,7 +38,7 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
     await log_service.init();
 
     const ai_service_factory = new AIServiceFactory();
-    const ai_service = ai_service_factory.createAIService(ai_config.provider, ai_config.model_name, ai_config.playstyle);
+    const ai_service = ai_service_factory.createAIService(ai_config.provider, ai_config.model_name, ai_config.playstyle, ai_config.reasoning ?? 'none');
     logger.info(`Created AI service: ${ai_config.provider} ${ai_config.model_name} with playstyle: ${ai_config.playstyle}`);
     ai_service.init();
 

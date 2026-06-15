@@ -24,6 +24,7 @@ describe("model registry", () => {
             provider: "Anthropic",
             model_name: "claude-haiku-4-5",
             playstyle: "aggressive",
+            reasoning: "medium",
         });
         expect(toAIConfig(reg, "gpt-5.4-nano").playstyle).to.equal("neutral"); // default
     });

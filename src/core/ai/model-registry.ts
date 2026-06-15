@@ -1,14 +1,13 @@
 import { readFileSync } from 'node:fs';
 
-import { AIConfig } from './ai-config.interface.ts';
+import { AIConfig, ReasoningLevel } from './ai-config.interface.ts';
 
 // A model registry entry. This is DATA loaded at runtime from config/models.json
 // (script-managed; see scripts/update-models.ts) — never import-baked. The stable
 // `id` is the key referenced across the arena; `apiModelString` is the volatile
 // provider surface string and may change underneath a stable id.
-// Reasoning/thinking effort the model is configured to use. "none" = the model
-// does not reason (or reasoning is off). Hand-maintained (not in any list endpoint).
-export type ReasoningLevel = 'none' | 'low' | 'medium' | 'high';
+// Reasoning level the model is configured to use ("none" = doesn't reason).
+// Hand-maintained (not in any list endpoint). ReasoningLevel lives in ai-config.
 export const REASONING_LEVELS: ReasoningLevel[] = ['none', 'low', 'medium', 'high'];
 
 export interface RegistryModel {
@@ -96,5 +95,5 @@ export function resolveModel(registry: ModelRegistry, id: string): RegistryModel
 // registry field, so the caller supplies it).
 export function toAIConfig(registry: ModelRegistry, id: string, playstyle = 'neutral'): AIConfig {
     const model = resolveModel(registry, id);
-    return { provider: model.provider, model_name: model.apiModelString, playstyle };
+    return { provider: model.provider, model_name: model.apiModelString, playstyle, reasoning: model.reasoning };
 }

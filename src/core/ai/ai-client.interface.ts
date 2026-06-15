@@ -1,14 +1,18 @@
+import { ReasoningLevel } from "./ai-config.interface.ts";
+
 export abstract class AIService {
     private api_key: string;
     private model_name: string;
     private playstyle: string;
+    private reasoning: ReasoningLevel;
     private bot_name: string = "";
     protected playstyle_prompt: string = "";
 
-    constructor(api_key: string, model: string, playstyle: string) {
+    constructor(api_key: string, model: string, playstyle: string, reasoning: ReasoningLevel = "none") {
         this.api_key = api_key;
         this.model_name = model;
         this.playstyle = playstyle;
+        this.reasoning = reasoning;
     }
 
     abstract init(): void;
@@ -25,6 +29,10 @@ export abstract class AIService {
 
     getPlaystyle(): string {
         return this.playstyle;
+    }
+
+    getReasoning(): ReasoningLevel {
+        return this.reasoning;
     }
 
     setBotName(bot_name: string): void {

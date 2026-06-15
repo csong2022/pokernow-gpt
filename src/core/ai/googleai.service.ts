@@ -12,6 +12,9 @@ const SAFETY_SETTINGS = [
     { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE }
 ];
 
+// Note: the pinned @google/generative-ai SDK (0.14.1) exposes no thinkingConfig,
+// so the registry `reasoning` level can't be applied here — Gemini 3 models
+// reason automatically. Upgrading to @google/genai would let us set it explicitly.
 export class GoogleAIService extends AIService {
     private agent!: GoogleGenerativeAI;
     private model!: GenerativeModel;
