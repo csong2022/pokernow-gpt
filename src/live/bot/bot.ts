@@ -9,7 +9,7 @@ import { HandOutcomesAPIService } from '../../services/db/handoutcomes.service.t
 import { PlayerStatsAPIService } from '../../services/db/playerstatsapi.service.ts';
 import { PuppeteerService } from '../pokernow/puppeteer.service.ts';
 
-import { AIConfig } from '../../interfaces/config.interface.ts';
+import { AIConfig } from '../../core/ai/ai-config.interface.ts';
 import { sleep } from '../../utils/bot-timeout.helper.ts';
 import { DebugMode, logResponse } from '../../utils/error-handling.util.ts';
 import { Logger } from '../../utils/logger.util.ts';

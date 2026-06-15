@@ -22,8 +22,10 @@ the correct side of the seam.
   - `src/live/http/` — the REST control API (`controllers/`, `routes/`).
   (`src/services/db/` is shared infrastructure and stays outside `live/`; see The
   seam. `src/config/` is live-only but its move is cosmetic.)
-- **arena** — a future multi-LLM benchmark on an owned poker engine. Depends on
-  core. **Not built yet — do not scaffold it.**
+- **arena** (`src/arena/**`) — an LLM-vs-LLM poker benchmark on an owned engine
+  (PokerKit). Implements the SAME seam as live (state-in / action-out) and reuses
+  the core brain (ai, query-construction, decision-engine) verbatim. Depends on
+  core; **never** on live. See "Arena + the Python engine" below.
 
 ## The seam
 
@@ -105,16 +107,53 @@ so all PokerNow-specific code is under `src/live/**` and `core` is fully isolate
   correctness gain — only worth doing if already editing there.
 - `src/interfaces/` should be **split, not bulk-moved**: `message.interface` and
   the `WorkerConfig`/`WebDriverConfig`/`BotConfig` halves are live orchestration
-  (→ `live/`), but `AIConfig` is latent-shared (an arena agent needs the same
-  provider/model/playstyle), so it should go toward core — don't entomb it under
-  `live/`.
+  (→ `live/`). `AIConfig` has already been lifted to `src/core/ai/ai-config.interface.ts`
+  (shared by live and arena); `config.interface.ts` now imports it from core.
 - `src/core/poker/log-processing.interface.ts` stays in core (it defines
   `ProcessedLogs`, consumed by core's `HandState`), but its `Data`/`Log` types
   describe the PokerNow log API shape and may belong in live later.
 
+## Arena + the Python engine
+
+The arena benchmarks LLMs against each other on a real rules engine, **PokerKit**
+(Python), so no poker logic is reimplemented in TS.
+
+- **`engine-py/`** (NOT under `src/`) — a long-lived Python "state-transition
+  oracle" (`server.py`) that owns PokerKit `State` objects keyed by `game_id` and
+  enforces all rules. It speaks **line-delimited JSON-RPC over stdin/stdout**
+  (`{id, method, params}` → `{id, result|error}`, one object per line; stdout is
+  protocol-only, diagnostics go to stderr). Methods: `create_game`, `start_hand`
+  (accepts an optional explicit `deck` for future deal control), `get_state`,
+  `apply_action`, `showdown`, `end_game`. Cards are PokerKit short form ("Th");
+  chip amounts are raw.
+- **The boundary:** `src/arena/engine/pokerkit-client.ts` *spawns* the Python
+  process (it does not import it). `src/arena/environment.ts` is the seam;
+  `src/arena/state-mapper.ts` maps `state_view` → the core `Game` (normalizing
+  chips → BB, "Th" → "10h") so `query-construction` / `decision-engine` are reused
+  unchanged. `src/arena/agent.ts` has a `StubAgent` (deterministic legal play) and
+  an `LLMAgent` (core decision-engine + a provider via `AIConfig`); illegal model
+  actions are clamped to legal min/max or fall back to check-else-fold, each
+  logged as a malformed-action event. `runner.ts` plays hands sequentially and
+  writes one replayable JSONL record per hand via `hand-log.ts`.
+- **Python venv setup** (one-time):
+  ```sh
+  py -m venv engine-py/.venv
+  engine-py/.venv/Scripts/python.exe -m pip install -r engine-py/requirements.txt   # Windows
+  # POSIX: engine-py/.venv/bin/python -m pip install -r engine-py/requirements.txt
+  ```
+  The client auto-selects `Scripts/python.exe` vs `bin/python` by platform. The
+  venv and `arena-logs/` are gitignored.
+- **Out of scope (M1):** hand duplication / seeded-variance harness, the analysis
+  layer (bb/100, ratings), concurrency, durable runs. M1 resets stacks to the
+  configured starting stack each hand (clean per-hand deltas; no bust handling).
+
 ## Commands
 
 - Run the server: `npx tsx src/index.ts` (Express on `http://localhost:8080`)
+- Run the arena (stub agents, no API cost):
+  `npx tsx src/arena/index.ts --hands 25 --players 3`
+- Run the arena (LLMs, needs `OPENAI_API_KEY`/`GOOGLEAI_API_KEY` in `.env`):
+  `npx tsx src/arena/index.ts --hands 10 --players 2 --llm "OpenAI:gpt-5.4-nano,Google:gemini-3.1-flash-lite-preview"`
 - Tests: `npm test` (Mocha, specs in `test/unit/*.spec.ts`; `pretest` runs the
-  boundary checker)
+  boundary checker in `--strict`)
 - Type-check: `npx tsc --noEmit` (tsconfig sets `noEmit`; there is no build step)

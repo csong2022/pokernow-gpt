@@ -138,5 +138,11 @@ dist
 *.db-shm
 *.db-wal
 
+# arena Python engine venv + generated hand logs
+engine-py/.venv/
+arena-logs/
+__pycache__/
+*.pyc
+
 # env file
 *.env

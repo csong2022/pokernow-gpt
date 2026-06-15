@@ -1,12 +1,7 @@
 import crypto from 'crypto';
 import { MessagePort } from 'worker_threads';
 import { DebugMode } from "../utils/error-handling.util.ts"
-
-export interface AIConfig {
-    provider: string,
-    model_name: string,
-    playstyle: string
-}
+import { AIConfig } from "../core/ai/ai-config.interface.ts";
 
 interface BotConfig {
     debug_mode: DebugMode,

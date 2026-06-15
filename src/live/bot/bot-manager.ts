@@ -9,7 +9,8 @@ import webdriver_config_json from '../../config/webdriver.config.json' with { ty
 
 import manager_controller_ee from './eventemitters/manager-controller.eventemitter.ts';
 
-import { AIConfig, WorkerConfig } from '../../interfaces/config.interface.ts';
+import { WorkerConfig } from '../../interfaces/config.interface.ts';
+import { AIConfig } from '../../core/ai/ai-config.interface.ts';
 import { BoundedSet } from '../../utils/data-structures.util.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
