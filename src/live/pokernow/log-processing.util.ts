@@ -1,17 +1,9 @@
-import { Game } from "../game/game.model.ts";
-import { Table } from "../game/table.model.ts";
-import { PlayerAction } from "../player/playeraction.model.ts";
+import { Game } from "../../core/game/game.model.ts";
+import { Table } from "../../core/game/table.model.ts";
+import { PlayerAction } from "../../core/player/playeraction.model.ts";
 import { Queue } from "../../utils/data-structures.util.ts";
-import { convertToBBs } from "./value-conversion.util.ts";
-
-export enum Action {
-    BET = "bets",
-    CALL = "calls",
-    FOLD = "folds",
-    RAISE = "raises",
-    POST = "posts",
-    CHECK = "checks",
-}
+import { convertToBBs } from "../../core/poker/value-conversion.util.ts";
+import { Action } from "../../core/poker/action.enum.ts";
 
 export enum Street {
     PREFLOP = "Preflop",

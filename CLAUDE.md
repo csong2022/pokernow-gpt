@@ -50,25 +50,35 @@ npx tsx scripts/check-boundaries.ts --strict   # CI mode: exit 1 on any violatio
 without blocking. Once the roadmap below is cleared and core is clean, switch CI
 to `--strict`.
 
-## Known violations = migration roadmap
+## Boundary status: core is clean (0 violations)
 
-These exist today and are intentionally **not** fixed (each is a follow-up step):
+The two PokerNow log/message parsers that used to sit in `src/core/poker/` now
+live in **`src/live/pokernow/`** (`log-processing.util.ts`,
+`message-processing.util.ts`) — the first occupants of the `live` adapter root.
+The `Action` domain enum was lifted to `src/core/poker/action.enum.ts` so both
+core (`PlayerAction`) and the live parsers can share it without core depending on
+live. `Table` no longer parses raw PokerNow messages: the adapter
+(`src/bot/state-builder.ts`) parses and passes the stack map in via
+`Table.setIdToStack(...)`.
 
-1. `src/core/poker/log-processing.util.ts` and
-   `src/core/poker/message-processing.util.ts` are **PokerNow-specific parsers
-   physically living inside core**. They should move to `live`. Until then they
-   trigger the violations below.
-2. `src/core/game/table.model.ts` → imports `message-processing.util.ts` (parser)
-   and `src/services/db/playerstatsapi.service.ts` (DB service). Decouple the DB
-   dependency (inject it) and drop the parser import when the parsers move.
-3. `src/core/player/playeraction.model.ts` → imports `log-processing.util.ts`
-   (only for the `Action` type — relocate that type when the parsers move).
+`npm run check:boundaries` reports **0 violations**. Once the rest of the live
+migration (below) lands, switch CI to `--strict`.
 
-Other couplings noted for later (not core, so not flagged, but on the seam):
-- `src/bot/decision-engine.ts` imports `PuppeteerService` (live) alongside core
-  query helpers — it straddles the seam and needs splitting.
-- `src/bot/hand-state.ts` is already clean (core models/interfaces only) — an
-  easy future move into core.
+## Migration roadmap (still outstanding — not yet addressed)
+
+These are on the seam but not yet flagged/fixed:
+
+1. **Rest of the live adapter still under `src/bot/` and `src/services/`** —
+   `puppeteer.service`, `services/logs/log.service`, `action-executor`,
+   `state-builder`, the bot lifecycle, and `http/*` should migrate into
+   `src/live/` in later commits.
+2. `src/core/game/table.model.ts` → imports
+   `src/services/db/playerstatsapi.service.ts` (DB service). Not on the forbidden
+   list, but core depending on a DB service is a smell — inject it instead.
+3. `src/bot/decision-engine.ts` imports `PuppeteerService` (live) alongside core
+   query helpers — it straddles the seam and needs splitting.
+4. `src/bot/hand-state.ts` is already clean (core models/interfaces only) — an
+   easy future move into core.
 
 ## Commands
 

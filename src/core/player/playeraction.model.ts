@@ -1,4 +1,4 @@
-import { Action } from "../poker/log-processing.util.ts";
+import { Action } from "../poker/action.enum.ts";
 
 export class PlayerAction {
     private player_id: string;

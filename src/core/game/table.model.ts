@@ -5,7 +5,6 @@ import { PlayerStats } from "../player/playerstats.model.ts";
 import { PlayerStatsAPIService } from "../../services/db/playerstatsapi.service.ts";
 
 import { Queue } from "../../utils/data-structures.util.ts"
-import { getPlayerStacksMsg, getIdToInitialStackFromMsg as getPlayerInitialStacksFromMsg } from "../poker/message-processing.util.ts";
 
 export class Table {
     private player_service: PlayerStatsAPIService;
@@ -254,9 +253,6 @@ export class Table {
     }
     public setIdToStack(map: Map<string, number>): void {
         this.id_to_initial_stacks = map;
-    }
-    public setPlayerInitialStacksFromMsg(msgs: string[], stakes: number): void {
-        this.id_to_initial_stacks = getPlayerInitialStacksFromMsg(getPlayerStacksMsg(msgs), stakes);
     }
 
     public getPlayerPositions(): Map<string, string> {

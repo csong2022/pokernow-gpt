@@ -1,6 +1,6 @@
 import { Game } from '../core/game/game.model.ts';
 import { ProcessedLogs } from '../core/poker/log-processing.interface.ts';
-import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from '../core/poker/log-processing.util.ts';
+import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from '../live/pokernow/log-processing.util.ts';
 import {
     getIdToInitialStackFromMsg,
     getIdToNameFromMsg,
@@ -9,7 +9,7 @@ import {
     getPlayerStacksMsg,
     getTableSeatToIdFromMsg,
     validateAllMsg,
-} from '../core/poker/message-processing.util.ts';
+} from '../live/pokernow/message-processing.util.ts';
 import { convertToBBs } from '../core/poker/value-conversion.util.ts';
 
 import { AIService } from '../core/ai/ai-client.interface.ts';
@@ -328,7 +328,7 @@ export class GameStateBuilder {
         if (first_fetch) {
             data = this.logs.pruneLogsBeforeCurrentHand(data);
             msg = this.logs.getMsg(data);
-            this.state.table.setPlayerInitialStacksFromMsg(msg, this.state.game.getBigBlind());
+            this.state.table.setIdToStack(getIdToInitialStackFromMsg(getPlayerStacksMsg(msg), this.state.game.getBigBlind()));
 
             const handMsg = msg.find(m => m.includes("starting hand #"));
             if (handMsg) {

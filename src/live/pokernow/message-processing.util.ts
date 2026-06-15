@@ -1,5 +1,6 @@
-import { Action, Street } from "./log-processing.util.ts";
-import { convertToBBs } from "./value-conversion.util.ts";
+import { Street } from "./log-processing.util.ts";
+import { Action } from "../../core/poker/action.enum.ts";
+import { convertToBBs } from "../../core/poker/value-conversion.util.ts";
 
 export function getPlayer(msg: string): Array<string> {
     const res = new Array<string>;
