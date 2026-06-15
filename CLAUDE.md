@@ -20,7 +20,8 @@ the correct side of the seam.
     `bot-manager.ts`, `eventemitters/`). `bot.ts` is the composition root that
     wires core + the pokernow adapter together.
   - `src/live/http/` — the REST control API (`controllers/`, `routes/`).
-  (`src/services/db/` and `src/config/` remain outside `live/` for now.)
+  (`src/services/db/` is shared infrastructure and stays outside `live/`; see The
+  seam. `src/config/` is live-only but its move is cosmetic.)
 - **arena** — a future multi-LLM benchmark on an owned poker engine. Depends on
   core. **Not built yet — do not scaffold it.**
 
@@ -30,34 +31,42 @@ State goes **in** to core; actions come **out**. Today that crossing happens via
 the live adapter's `state-builder` (state in) and `action-executor` (actions
 out).
 
-**Rule: `src/core/**` must never import live/adapter code.** Forbidden modules:
+**The dependency DAG (enforced — see Enforcement):**
 
-- `puppeteer.service`
-- `log.service`
-- `log-processing.util` (the live parser; `log-processing.interface` is core)
-- `message-processing.util`
-- `action-executor`
-- `state-builder`
-- anything under `http/` (the REST API)
-- anything under `services/db/` (DB services)
+- **core** may import only core + `utils` + its own ports. Never `live/`,
+  `arena/`, `services/db/`, or `http/`.
+- **live** may import core + shared infra (`utils`, `services/db`, `config`,
+  `interfaces`). Never `arena/`.
+- **arena** (future) may import core + shared infra. Never `live/` (the PokerNow
+  adapter) or `http/`.
+
+So `services/db` is **shared infrastructure**, not a live concern — both live and
+(eventually) arena persist through it. It deliberately sits outside `live/` so
+arena can use it without reaching across the `arena ↛ live` boundary.
 
 Core persists/reads player stats through the `PlayerStatsRepository` port
 (`src/core/player/playerstats-repository.interface.ts`), which the DB service
-implements and which is injected into `Table` — so core never imports a DB service.
+implements and which is injected into `Table` — so core never imports a DB
+service. (`log-processing.interface` stays in core; only the `*.util` parsers
+are live.)
 
 ## Enforcement
 
-A lightweight checker scans every import under `src/core` and flags references to
-the forbidden modules. No ESLint dependency — it runs on the existing `tsx`.
+A lightweight checker (`scripts/check-boundaries.ts`, no ESLint — runs on the
+existing `tsx`) holds a **per-layer rule table**: each layer declares the import
+substrings it may not reference, and the checker scans every layer that exists.
+This enforces the whole DAG above, not just the core seam — a stray
+`arena -> live` import will fail the day `src/arena` lands, with no extra wiring
+(rules for absent layers sit dormant).
 
 ```sh
 npm run check:boundaries          # report mode: print violations, exit 0
 npm run check:boundaries:strict   # strict mode: exit 1 on any violation
 ```
 
-Core is clean, so the boundary is now **enforced**: `pretest` runs
-`check:boundaries:strict`, so `npm test` (and CI) fails on any `core -> live`
-import. Use the plain `check:boundaries` for a non-failing report while working.
+The boundary is **enforced**: `pretest` runs `check:boundaries:strict`, so
+`npm test` (and CI) fails on any forbidden cross-layer import. Use the plain
+`check:boundaries` for a non-failing report while working.
 
 ## Boundary status: core is clean (0 violations)
 
@@ -87,13 +96,21 @@ so all PokerNow-specific code is under `src/live/**` and `core` is fully isolate
 
 ## Remaining cleanups (optional, not on the critical path)
 
-- `src/services/db/` and `src/config/` still sit at `src/` root; they're
-  infrastructure shared by live, and could move under `src/live/` later.
+- `src/services/db/` is **shared infrastructure** — keep it at `src/` root (or
+  rename to `src/persistence/`); do NOT move it under `live/`, or arena would
+  have to reach across the `arena ↛ live` boundary to persist. `HandOutcomes`
+  (keyed by model) is in fact the data store arena's benchmark would populate.
+- `src/config/` is live-only today (both JSONs are imported solely by
+  `live/bot/bot-manager.ts`); moving it under `live/` is harmless tidying, no
+  correctness gain — only worth doing if already editing there.
+- `src/interfaces/` should be **split, not bulk-moved**: `message.interface` and
+  the `WorkerConfig`/`WebDriverConfig`/`BotConfig` halves are live orchestration
+  (→ `live/`), but `AIConfig` is latent-shared (an arena agent needs the same
+  provider/model/playstyle), so it should go toward core — don't entomb it under
+  `live/`.
 - `src/core/poker/log-processing.interface.ts` stays in core (it defines
   `ProcessedLogs`, consumed by core's `HandState`), but its `Data`/`Log` types
   describe the PokerNow log API shape and may belong in live later.
-- `src/interfaces/` (`config.interface`, `message.interface`) are live/worker
-  concerns and could move under `src/live/` later.
 
 ## Commands
 

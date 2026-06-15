@@ -1,43 +1,62 @@
 /**
- * Core import-boundary checker.
+ * Import-boundary checker for the core / live / arena layout.
  *
- * Enforces the seam in the core/live/arena layout: `src/core/**` (the
- * environment-agnostic poker brain) must never import PokerNow-specific /
- * adapter ("live") modules. See CLAUDE.md for the layout and rule.
- *
- * Scans every import specifier under src/core and flags any that reference a
- * forbidden adapter module.
+ * Each layer declares which import paths it may NOT reference; the checker scans
+ * every layer that exists and flags violations. This enforces the dependency
+ * DAG, not just the core seam — so a future `arena -> live` import is caught the
+ * day `src/arena` appears, without anyone having to wire it up. See CLAUDE.md.
  *
  *   npx tsx scripts/check-boundaries.ts            # report mode: print, exit 0
  *   npx tsx scripts/check-boundaries.ts --strict   # CI mode:     fail on any violation
  *
- * Report mode is the default for now because known violations exist and serve
- * as the migration roadmap (see CLAUDE.md). Switch CI to --strict once core
- * is clean.
+ * Layers whose directory doesn't exist yet (e.g. arena) are skipped, so their
+ * rules sit dormant until the code lands.
  */
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REPO_ROOT = fileURLToPath(new URL("..", import.meta.url));
-const CORE_DIR = join(REPO_ROOT, "src", "core");
 
-// Substrings that mark a PokerNow-specific / adapter ("live") module. Core may
-// not import any of these.
-const FORBIDDEN: ReadonlyArray<string> = [
-    "puppeteer.service",
-    "log.service",
-    "log-processing.util", // the live parser; log-processing.interface is core
-    "message-processing.util",
-    "action-executor",
-    "state-builder",
-    "http/", // the REST API under src/http
-    "services/db/", // DB services — core depends on the PlayerStatsRepository port instead
+interface LayerRule {
+    name: string;
+    dir: string;           // absolute path to the layer's source root
+    forbidden: string[];   // import-specifier substrings this layer may not reference
+}
+
+// The dependency DAG. core is the pure poker brain (talks to adapters only via
+// injected ports); live and arena are environment adapters that may use shared
+// infrastructure (utils, services/db) and core, but never each other.
+const RULES: ReadonlyArray<LayerRule> = [
+    {
+        // core depends only on core + utils + its own ports.
+        name: "core",
+        dir: join(REPO_ROOT, "src", "core"),
+        forbidden: [
+            "live/",          // the PokerNow adapter (puppeteer/log/parsers/state-builder/...)
+            "arena/",         // the future owned-engine adapter
+            "services/db/",   // DB services — core uses the PlayerStatsRepository port instead
+            "http/",          // the REST API
+        ],
+    },
+    {
+        // live is the PokerNow adapter; it may use core + shared infra, not arena.
+        name: "live",
+        dir: join(REPO_ROOT, "src", "live"),
+        forbidden: ["arena/"],
+    },
+    {
+        // arena (when it exists) is a sibling adapter; it must not reach into the
+        // PokerNow adapter. It MAY use core + shared infra (utils, services/db).
+        name: "arena",
+        dir: join(REPO_ROOT, "src", "arena"),
+        forbidden: ["live/", "http/"],
+    },
 ];
 
 const IMPORT_RE = /(?:import|export)\b[^'"]*?from\s*['"]([^'"]+)['"]|import\s*['"]([^'"]+)['"]/g;
 
-type Violation = { file: string; specifier: string; matched: string };
+type Violation = { layer: string; file: string; specifier: string; matched: string };
 
 function walk(dir: string, out: string[] = []): string[] {
     for (const entry of readdirSync(dir)) {
@@ -50,18 +69,22 @@ function walk(dir: string, out: string[] = []): string[] {
 
 function findViolations(): Violation[] {
     const violations: Violation[] = [];
-    for (const file of walk(CORE_DIR)) {
-        const src = readFileSync(file, "utf8");
-        for (const match of src.matchAll(IMPORT_RE)) {
-            const specifier = match[1] ?? match[2];
-            if (!specifier) continue;
-            const matched = FORBIDDEN.find((f) => specifier.includes(f));
-            if (matched) {
-                violations.push({
-                    file: relative(REPO_ROOT, file).replace(/\\/g, "/"),
-                    specifier,
-                    matched,
-                });
+    for (const rule of RULES) {
+        if (!existsSync(rule.dir)) continue; // dormant until the layer exists
+        for (const file of walk(rule.dir)) {
+            const src = readFileSync(file, "utf8");
+            for (const match of src.matchAll(IMPORT_RE)) {
+                const specifier = match[1] ?? match[2];
+                if (!specifier) continue;
+                const matched = rule.forbidden.find((f) => specifier.includes(f));
+                if (matched) {
+                    violations.push({
+                        layer: rule.name,
+                        file: relative(REPO_ROOT, file).replace(/\\/g, "/"),
+                        specifier,
+                        matched,
+                    });
+                }
             }
         }
     }
@@ -72,19 +95,20 @@ const strict = process.argv.includes("--strict");
 const violations = findViolations();
 
 if (violations.length === 0) {
-    console.log("✓ core boundary clean: no src/core import references a live/adapter module.");
+    const layers = RULES.filter((r) => existsSync(r.dir)).map((r) => r.name).join(", ");
+    console.log(`✓ boundaries clean: no forbidden cross-layer imports (checked: ${layers}).`);
     process.exit(0);
 }
 
-console.log(`Found ${violations.length} core boundary violation(s):\n`);
+console.log(`Found ${violations.length} boundary violation(s):\n`);
 for (const v of violations) {
-    console.log(`  ${v.file}`);
+    console.log(`  [${v.layer}] ${v.file}`);
     console.log(`    → imports "${v.specifier}"  (forbidden: ${v.matched})`);
 }
 console.log(
     strict
-        ? "\n✗ --strict: failing because core imports live/adapter code."
-        : "\nReport mode (exit 0). These are the known migration roadmap items; run with --strict to fail.",
+        ? "\n✗ --strict: failing because a layer imports across a forbidden boundary."
+        : "\nReport mode (exit 0). Run with --strict to fail the build.",
 );
 
 process.exit(strict ? 1 : 0);
