@@ -6,6 +6,7 @@
   "scripts": {
     "check:boundaries": "tsx scripts/check-boundaries.ts",
     "check:boundaries:strict": "tsx scripts/check-boundaries.ts --strict",
+    "analyze": "tsx src/arena/analysis/cli.ts",
     "pretest": "npm run check:boundaries:strict",
     "test": "mocha -r dotenv/config --timeout 5000"
   },

@@ -141,6 +141,7 @@ dist
 # arena Python engine venv + generated hand logs
 engine-py/.venv/
 arena-logs/
+arena-analysis/
 __pycache__/
 *.pyc
 
