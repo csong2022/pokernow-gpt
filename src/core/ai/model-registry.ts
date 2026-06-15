@@ -6,12 +6,17 @@ import { AIConfig } from './ai-config.interface.ts';
 // (script-managed; see scripts/update-models.ts) — never import-baked. The stable
 // `id` is the key referenced across the arena; `apiModelString` is the volatile
 // provider surface string and may change underneath a stable id.
+// Reasoning/thinking effort the model is configured to use. "none" = the model
+// does not reason (or reasoning is off). Hand-maintained (not in any list endpoint).
+export type ReasoningLevel = 'none' | 'low' | 'medium' | 'high';
+export const REASONING_LEVELS: ReasoningLevel[] = ['none', 'low', 'medium', 'high'];
+
 export interface RegistryModel {
     id: string;
     provider: string;
     apiModelString: string;
     displayName: string;
-    reasoning: boolean;
+    reasoning: ReasoningLevel;
     inputCostPer1M: number;
     outputCostPer1M: number;
     addedAt: string;
@@ -59,7 +64,9 @@ export function parseRegistry(text: string, source = 'config/models.json'): Mode
         str('apiModelString');
         str('displayName');
         str('addedAt');
-        bool('reasoning');
+        if (!REASONING_LEVELS.includes(m?.reasoning)) {
+            fail(source, `${where}: field "reasoning" must be one of ${REASONING_LEVELS.join(' | ')}`);
+        }
         bool('deprecated');
         cost('inputCostPer1M');
         cost('outputCostPer1M');

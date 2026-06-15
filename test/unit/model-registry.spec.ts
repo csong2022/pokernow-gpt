@@ -6,8 +6,8 @@ import { parseRegistry, resolveModel, toAIConfig } from "../../src/core/ai/model
 const VALID = JSON.stringify({
     _managedBy: "scripts/update-models.ts",
     models: [
-        { id: "claude-haiku-4-5", provider: "Anthropic", apiModelString: "claude-haiku-4-5", displayName: "Claude Haiku 4.5", reasoning: true, inputCostPer1M: 1, outputCostPer1M: 5, addedAt: "2026-06-15", deprecated: false },
-        { id: "gpt-5.4-nano", provider: "OpenAI", apiModelString: "gpt-5.4-nano", displayName: "GPT-5.4 Nano", reasoning: false, inputCostPer1M: 0, outputCostPer1M: 0, addedAt: "2026-06-15", deprecated: false },
+        { id: "claude-haiku-4-5", provider: "Anthropic", apiModelString: "claude-haiku-4-5", displayName: "Claude Haiku 4.5", reasoning: "medium", inputCostPer1M: 1, outputCostPer1M: 5, addedAt: "2026-06-15", deprecated: false },
+        { id: "gpt-5.4-nano", provider: "OpenAI", apiModelString: "gpt-5.4-nano", displayName: "GPT-5.4 Nano", reasoning: "none", inputCostPer1M: 0, outputCostPer1M: 0, addedAt: "2026-06-15", deprecated: false },
     ],
 });
 
@@ -34,7 +34,7 @@ describe("model registry", () => {
     });
 
     describe("loud validation", () => {
-        const base = () => ({ id: "m", provider: "P", apiModelString: "m", displayName: "M", reasoning: false, inputCostPer1M: 0, outputCostPer1M: 0, addedAt: "2026-06-15", deprecated: false });
+        const base = () => ({ id: "m", provider: "P", apiModelString: "m", displayName: "M", reasoning: "none", inputCostPer1M: 0, outputCostPer1M: 0, addedAt: "2026-06-15", deprecated: false });
         const wrap = (models: any[]) => JSON.stringify({ models });
 
         it("rejects a missing required field, naming the entry", () => {
@@ -45,9 +45,9 @@ describe("model registry", () => {
             const m: any = base(); m.inputCostPer1M = -1;
             expect(() => parseRegistry(wrap([m]))).to.throw(/inputCostPer1M.*>= 0/);
         });
-        it("rejects a non-boolean reasoning flag", () => {
+        it("rejects an invalid reasoning level", () => {
             const m: any = base(); m.reasoning = "yes";
-            expect(() => parseRegistry(wrap([m]))).to.throw(/reasoning.*boolean/);
+            expect(() => parseRegistry(wrap([m]))).to.throw(/reasoning.*none \| low \| medium \| high/);
         });
         it("rejects duplicate ids", () => {
             expect(() => parseRegistry(wrap([base(), base()]))).to.throw(/duplicate model id "m"/);

@@ -172,7 +172,7 @@ async function main(): Promise<void> {
                 provider,
                 apiModelString: fam.apiModelString,
                 displayName: fam.displayName,
-                reasoning: false,
+                reasoning: 'none', // hand-set to a level (low/medium/high) later
                 inputCostPer1M: 0,
                 outputCostPer1M: 0,
                 addedAt: TODAY,

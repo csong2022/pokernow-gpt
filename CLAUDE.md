@@ -176,8 +176,10 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   non-clobbering — preserving ids/addedAt/deprecated/costs/reasoning, collapsing
   dated snapshots to a family id, deprecating (never deleting) vanished models,
   and writing deterministically (sorted, fixed key order) so reruns are zero-diff.
-  Costs and `reasoning` aren't in any list endpoint → hand-maintained (new models
-  default to cost 0 / reasoning false). Humans don't hand-edit; re-run the script.
+  Costs and `reasoning` aren't in any list endpoint → hand-maintained; `reasoning`
+  is a level (`none` | `low` | `medium` | `high`, `none` = doesn't reason). New
+  models default to cost 0 / reasoning `none` until set by hand (preserved across
+  reruns). Humans don't hand-edit the file; re-run the script.
 - **Python venv setup** (one-time):
   ```sh
   py -m venv engine-py/.venv
