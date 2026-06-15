@@ -1,4 +1,5 @@
 import { AIService } from "./ai-client.interface.ts";
+import { ClaudeAIService } from "./claudeai.service.ts";
 import { GoogleAIService } from "./googleai.service.ts";
 import { OpenAIService } from "./openai.service.ts";
 
@@ -8,7 +9,8 @@ export class AIServiceFactory {
     constructor(){
         this.supportedModels = new Map<string, string[]>([
             ["OpenAI", ["gpt-5.4", "gpt-5.4-mini", "gpt-5.4-nano"]],
-            ["Google", ["gemini-3.1-pro-preview", "gemini-3-flash-preview", "gemini-3.1-flash-lite-preview"]]
+            ["Google", ["gemini-3.1-pro-preview", "gemini-3-flash-preview", "gemini-3.1-flash-lite-preview"]],
+            ["Anthropic", ["claude-opus-4-8", "claude-sonnet-4-6", "claude-haiku-4-5"]]
         ]);
     }
 
@@ -29,6 +31,12 @@ export class AIServiceFactory {
                     throw new Error (`Empty ${provider} auth key.`);
                 }
                 return new GoogleAIService(google_ai_auth_key, model_name, playstyle);
+            case ("Anthropic"):
+                const claude_ai_auth_key = process.env.CLAUDEAI_API_KEY;
+                if (!claude_ai_auth_key) {
+                    throw new Error(`Empty ${provider} auth key.`);
+                }
+                return new ClaudeAIService(claude_ai_auth_key, model_name, playstyle);
         }
         throw new Error("Failed to create AI service.");
     }
