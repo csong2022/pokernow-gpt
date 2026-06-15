@@ -2,12 +2,12 @@ import { Player } from "../player/player.model.ts"
 import { PlayerAction } from "../player/playeraction.model.ts";
 import { PlayerStats } from "../player/playerstats.model.ts";
 
-import { PlayerStatsAPIService } from "../../services/db/playerstatsapi.service.ts";
+import { PlayerStatsRepository } from "../player/playerstats-repository.interface.ts";
 
 import { Queue } from "../../utils/data-structures.util.ts"
 
 export class Table {
-    private player_service: PlayerStatsAPIService;
+    private player_service: PlayerStatsRepository;
 
     private num_players: number;
     private players_in_pot: number;
@@ -36,7 +36,7 @@ export class Table {
     private first_seat_order_id: string;
     
 
-    constructor(player_service: PlayerStatsAPIService) {
+    constructor(player_service: PlayerStatsRepository) {
         this.player_service = player_service;
 
         this.num_players = 0;

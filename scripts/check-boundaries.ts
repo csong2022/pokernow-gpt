@@ -32,6 +32,7 @@ const FORBIDDEN: ReadonlyArray<string> = [
     "action-executor",
     "state-builder",
     "http/", // the REST API under src/http
+    "services/db/", // DB services — core depends on the PlayerStatsRepository port instead
 ];
 
 const IMPORT_RE = /(?:import|export)\b[^'"]*?from\s*['"]([^'"]+)['"]|import\s*['"]([^'"]+)['"]/g;

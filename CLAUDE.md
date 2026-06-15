@@ -34,9 +34,11 @@ out).
 - `action-executor`
 - `state-builder`
 - anything under `http/` (the REST API)
+- anything under `services/db/` (DB services)
 
-(Note: `src/services/db/` is not yet on the forbidden list, but core importing a
-DB service is still a smell — see the roadmap below.)
+Core persists/reads player stats through the `PlayerStatsRepository` port
+(`src/core/player/playerstats-repository.interface.ts`), which the DB service
+implements and which is injected into `Table` — so core never imports a DB service.
 
 ## Enforcement
 
@@ -62,7 +64,8 @@ building (`state-builder.ts`), and action execution (`action-executor.ts`). The
 (`PlayerAction`) and the live parsers can share it without core depending on
 live. `Table` no longer parses raw PokerNow messages: the adapter
 (`src/live/pokernow/state-builder.ts`) parses and passes the stack map in via
-`Table.setIdToStack(...)`.
+`Table.setIdToStack(...)`. Core also no longer imports any DB service — `Table`
+depends on the injected `PlayerStatsRepository` port.
 
 `npm run check:boundaries` reports **0 violations**. Once the rest of the live
 migration (below) lands, switch CI to `--strict`.
@@ -74,13 +77,10 @@ These are on the seam but not yet flagged/fixed:
 1. **Bot lifecycle and HTTP API still outside `live/`** — `src/bot/` (`bot.ts`,
    `worker.ts`, `bot-manager.ts`, eventemitters) and `src/http/*` should migrate
    into `src/live/` in later commits. (`decision-engine.ts` and `hand-state.ts`
-   are seam cleanups — see items 3–4.)
-2. `src/core/game/table.model.ts` → imports
-   `src/services/db/playerstatsapi.service.ts` (DB service). Not on the forbidden
-   list, but core depending on a DB service is a smell — inject it instead.
-3. `src/bot/decision-engine.ts` imports `PuppeteerService` (live) alongside core
+   are seam cleanups — see items 2–3.)
+2. `src/bot/decision-engine.ts` imports `PuppeteerService` (live) alongside core
    query helpers — it straddles the seam and needs splitting.
-4. `src/bot/hand-state.ts` is already clean (core models/interfaces only) — an
+3. `src/bot/hand-state.ts` is already clean (core models/interfaces only) — an
    easy future move into core.
 
 ## Commands
