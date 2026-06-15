@@ -10,6 +10,11 @@ export class DBService {
 
     init(): void {
         this.db = new Database(this.file_name);
+        // WAL: readers don't block writers (matters when N workers share the file).
+        // busy_timeout: wait up to 5s for a held lock instead of failing immediately.
+        // Both are no-ops on :memory: databases.
+        this.db.pragma('journal_mode = WAL');
+        this.db.pragma('busy_timeout = 5000');
     }
 
     createTables(): void {

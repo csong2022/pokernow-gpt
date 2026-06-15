@@ -135,6 +135,8 @@ dist
 
 # sqlite3 db file
 *.db
+*.db-shm
+*.db-wal
 
 # env file
 *.env

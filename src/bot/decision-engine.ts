@@ -1,10 +1,11 @@
 import { Game } from '../core/game/game.model.ts';
 import { constructHandSetup, constructTurnUpdate } from '../core/poker/query-construction.helper.ts';
 
-import { AIService, BotAction, defaultCheckAction, defaultFoldAction } from '../services/ai/ai-client.interface.ts';
+import { AIService, BotAction, defaultCheckAction, defaultFoldAction } from '../core/ai/ai-client.interface.ts';
 import { PuppeteerService } from '../services/puppeteer/puppeteer.service.ts';
 
 import { sleep, TimeoutError } from '../utils/bot-timeout.helper.ts';
+import { Logger } from '../utils/logger.util.ts';
 
 import { HandState } from './hand-state.ts';
 
@@ -13,6 +14,7 @@ export class DecisionEngine {
         private ai: AIService,
         private puppeteer: PuppeteerService,
         private state: HandState,
+        private logger: Logger,
         private query_retries: number,
     ) {}
 
@@ -25,7 +27,7 @@ export class DecisionEngine {
 
             return await this.queryWithRetries(query, this.query_retries);
         } catch (err) {
-            console.log("Error during decision, falling back to default action:", err);
+            this.logger.error("Error during decision, falling back to default action:", err);
             return await this.fallback();
         }
     }
@@ -33,7 +35,7 @@ export class DecisionEngine {
     private async queryWithRetries(query: string, retries: number, retry_counter: number = 0): Promise<BotAction> {
         if (retry_counter > retries) {
             const fallback = await this.fallback();
-            console.log(`Failed to query bot action, exceeded the retry limit after ${retries} attempts. Defaulting to ${fallback.action_str}.`);
+            this.logger.error(`Failed to query bot action, exceeded the retry limit after ${retries} attempts. Defaulting to ${fallback.action_str}.`);
             return fallback;
         }
         try {
@@ -42,14 +44,14 @@ export class DecisionEngine {
             if (await this.isValidBotAction(action)) {
                 return action;
             }
-            console.log("Invalid bot action, retrying query.");
+            this.logger.warn("Invalid bot action, retrying query.");
             return await this.queryWithRetries(query, retries, retry_counter + 1);
         } catch (err) {
             if (err instanceof TimeoutError) {
-                console.log("AI query timed out, defaulting to safe action.");
+                this.logger.warn("AI query timed out, defaulting to safe action.");
                 return await this.fallback();
             }
-            console.log("Error while querying AI service:", err, "retrying query.");
+            this.logger.error("Error while querying AI service:", err, "retrying query.");
             return await this.queryWithRetries(query, retries, retry_counter + 1);
         }
     }
@@ -62,12 +64,12 @@ export class DecisionEngine {
     }
 
     private async isValidBotAction(bot_action: BotAction): Promise<boolean> {
-        console.log("Attempted Bot Action:", bot_action);
+        this.logger.info("Attempted Bot Action:", bot_action);
         const valid_actions: string[] = ["bet", "raise", "call", "check", "fold", "all-in"];
         const hero = this.state.game.getHero();
         if (!hero) return false;
         const curr_stack_size_in_BBs = hero.getStackSize();
-        console.log("Bot Stack in BBs:", curr_stack_size_in_BBs);
+        this.logger.info("Bot Stack in BBs:", curr_stack_size_in_BBs);
 
         if (!bot_action.action_str || !valid_actions.includes(bot_action.action_str)) return false;
 

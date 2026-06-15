@@ -12,13 +12,14 @@ import {
 } from '../core/poker/message-processing.util.ts';
 import { convertToBBs } from '../core/poker/value-conversion.util.ts';
 
-import { AIService } from '../services/ai/ai-client.interface.ts';
+import { AIService } from '../core/ai/ai-client.interface.ts';
 import { HandOutcomesAPIService } from '../services/db/handoutcomes.service.ts';
 import { LogService } from '../services/logs/log.service.ts';
 import { PuppeteerService } from '../services/puppeteer/puppeteer.service.ts';
 
 import { sleep } from '../utils/bot-timeout.helper.ts';
 import { DebugMode, ErrorResponse, logResponse, SuccessResponse } from '../utils/error-handling.util.ts';
+import { Logger } from '../utils/logger.util.ts';
 
 import { HandState } from './hand-state.ts';
 
@@ -31,6 +32,7 @@ export class GameStateBuilder {
         private ai: AIService,
         private hand_outcomes: HandOutcomesAPIService,
         private state: HandState,
+        private logger: Logger,
         private debug: DebugMode,
         private guard?: ProcessPlayersGuard,
     ) {}
@@ -39,14 +41,14 @@ export class GameStateBuilder {
         if (this.state.between_hands) {
             const started = await this.startNewHand();
             if (!started) {
-                console.log("No new hand detected (likely alone at table). Sleeping before retry.");
+                this.logger.info("No new hand detected (likely alone at table). Sleeping before retry.");
                 await sleep(5000);
                 return null;
             }
             this.state.between_hands = false;
         }
 
-        console.log("Checking for bot's turn or winner of hand.");
+        this.logger.info("Checking for bot's turn or winner of hand.");
         const res = await this.puppeteer.waitForBotTurnOrWinner(
             this.state.table.getNumPlayers(),
             this.state.game.getMaxTurnLength(),
@@ -57,7 +59,7 @@ export class GameStateBuilder {
 
         const data = res.data as string;
         if (data.includes("winner")) {
-            console.log("Detected winner in hand.");
+            this.logger.info("Detected winner in hand.");
             await this.endHand();
             this.state.between_hands = true;
             return null;
@@ -68,10 +70,10 @@ export class GameStateBuilder {
         }
 
         await this.fetchActionLogs();
-        console.log("Performing bot's turn.");
+        this.logger.info("Performing bot's turn.");
         const ready = await this.prepareHero();
         if (!ready) {
-            console.log("Hero state not ready; skipping turn and waiting for it to time out.");
+            this.logger.warn("Hero state not ready; skipping turn and waiting for it to time out.");
             return null;
         }
         await postProcessLogs(this.state.table.getLogsQueue(), this.state.game);
@@ -82,7 +84,7 @@ export class GameStateBuilder {
         await this.waitForNextHand();
         await this.updateNumPlayers();
         await this.updateGameInfo();
-        console.log("Number of players in game:", this.state.table.getNumPlayers());
+        this.logger.info("Number of players in game:", this.state.table.getNumPlayers());
         this.state.table.setPlayersInPot(this.state.table.getNumPlayers());
 
         this.ai.resetHand();
@@ -102,7 +104,7 @@ export class GameStateBuilder {
                     bot_id = undefined;
                 }
                 this.state.is_dealer = bot_id !== undefined && hand_info_res.data.dealer_id === bot_id;
-                console.log(`Hand #${this.state.hand_number}, bot is dealer: ${this.state.is_dealer}`);
+                this.logger.info(`Hand #${this.state.hand_number}, bot is dealer: ${this.state.is_dealer}`);
             }
         } finally {
             logResponse(await this.puppeteer.closeLogPanel(), this.debug);
@@ -115,7 +117,7 @@ export class GameStateBuilder {
 
                 if (!this.state.table.getNameToId().has(this.state.bot_name)) {
                     const retry_hand = this.state.hand_number + 1;
-                    console.log(
+                    this.logger.warn(
                         `Bot "${this.state.bot_name}" not in Player stacks for hand ${this.state.hand_number}; retrying with hand ${retry_hand}.`,
                     );
                     this.state.hand_number = retry_hand;
@@ -129,7 +131,7 @@ export class GameStateBuilder {
                     return false;
                 }
             } catch (err) {
-                console.log("Failed to pull initial hand logs:", err);
+                this.logger.error("Failed to pull initial hand logs:", err);
                 return false;
             }
         }
@@ -137,7 +139,7 @@ export class GameStateBuilder {
     }
 
     private async waitForNextHand(): Promise<void> {
-        console.log("Waiting for next hand to start.");
+        this.logger.info("Waiting for next hand to start.");
         await this.puppeteer.waitForNextHand(
             this.state.table.getNumPlayers(),
             this.state.game.getMaxTurnLength(),
@@ -153,7 +155,7 @@ export class GameStateBuilder {
 
     private async updateGameInfo(): Promise<void> {
         logResponse(await this.puppeteer.waitForGameInfo(), this.debug);
-        console.log("Getting game info.");
+        this.logger.info("Getting game info.");
         const res = await this.puppeteer.getGameInfo();
         logResponse(res, this.debug);
         if (res.code !== "success") {
@@ -172,7 +174,7 @@ export class GameStateBuilder {
 
             if (was_first_fetch && !this.state.table.getNameToId().has(this.state.bot_name)) {
                 const retry_hand = this.state.hand_number + 1;
-                console.log(
+                this.logger.warn(
                     `Bot "${this.state.bot_name}" not in Player stacks for hand ${this.state.hand_number}; retrying with hand ${retry_hand}.`,
                 );
                 this.state.hand_number = retry_hand;
@@ -185,7 +187,7 @@ export class GameStateBuilder {
                 last_created: new_logs.last_created || this.state.processed_logs.last_created,
             };
         } catch (err) {
-            console.log("Failed to pull logs:", err);
+            this.logger.error("Failed to pull logs:", err);
         }
     }
 
@@ -198,7 +200,7 @@ export class GameStateBuilder {
             this.state.table.setPot(convertToBBs(pot_size, this.state.game.getBigBlind()));
             return await this.updateHero(hand, convertToBBs(stack_size, this.state.game.getBigBlind()));
         } catch (err) {
-            console.log("Error preparing hero:", err);
+            this.logger.error("Error preparing hero:", err);
             return false;
         }
     }
@@ -228,7 +230,7 @@ export class GameStateBuilder {
             try {
                 bot_id = this.state.table.getIdFromName(this.state.bot_name);
             } catch {
-                console.log(
+                this.logger.error(
                     `Cannot create hero — bot name "${this.state.bot_name}" not in name_to_id map. Known mappings:`,
                     Array.from(this.state.table.getNameToId().entries()),
                 );
@@ -247,10 +249,10 @@ export class GameStateBuilder {
         logResponse(stack_res, this.debug);
         let ending_stack_BB = 0;
         if (stack_res.code === "success") {
-            console.log("Ending stack size:", stack_res.data);
+            this.logger.info("Ending stack size:", stack_res.data);
             ending_stack_BB = convertToBBs(Number(stack_res.data), this.state.game.getBigBlind());
             if (Number(stack_res.data) === 0) {
-                console.log(`Bot "${this.state.bot_name}" has busted — stopping after this hand.`);
+                this.logger.info(`Bot "${this.state.bot_name}" has busted — stopping after this hand.`);
                 this.state.active = false;
             }
         }
@@ -264,13 +266,13 @@ export class GameStateBuilder {
                 await this.state.table.processPlayers();
             }
         } catch (err) {
-            console.log("Failed to process players:", err);
+            this.logger.error("Failed to process players:", err);
         }
 
         await this.recordHandOutcome(ending_stack_BB);
 
         logResponse(await this.puppeteer.waitForHandEnd(), this.debug);
-        console.log("Completed a hand.\n");
+        this.logger.info("Completed a hand.\n");
 
         this.state.hand_number++;
         this.state.first_created = "";
@@ -310,7 +312,7 @@ export class GameStateBuilder {
                 created_at: Date.now(),
             });
         } catch (err) {
-            console.log("Failed to record hand outcome:", err);
+            this.logger.error("Failed to record hand outcome:", err);
         }
     }
 
@@ -346,7 +348,7 @@ export class GameStateBuilder {
                 this.state.table.setNameToId(getNameToIdFromMsg(stack_msg));
                 await this.state.table.updateCache();
             } else {
-                console.log("No Player stacks entry in fetched logs — preserving previous maps.");
+                this.logger.warn("No Player stacks entry in fetched logs — preserving previous maps.");
             }
         }
 

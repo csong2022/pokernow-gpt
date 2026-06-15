@@ -6,7 +6,7 @@ import { Bot } from './bot.ts'
 
 import bot_worker_ee from './eventemitters/bot-worker.eventemitter.ts';
 
-import { AIServiceFactory } from '../services/ai/ai-service-factory.helper.ts';
+import { AIServiceFactory } from '../core/ai/ai-service-factory.helper.ts';
 
 import { WorkerConfig } from '../interfaces/config.interface.ts';
 import { EntryParams, ProcessPlayersResponse, RequestProcessPlayers } from '../interfaces/message.interface.ts';
@@ -17,9 +17,13 @@ import { HandOutcomesAPIService } from '../services/db/handoutcomes.service.ts';
 import { PlayerStatsAPIService } from '../services/db/playerstatsapi.service.ts';
 import { PuppeteerService } from '../services/puppeteer/puppeteer.service.ts';
 
+import { Logger } from '../utils/logger.util.ts';
+
 dotenv.config();
 
 async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_config, webdriver_config, port }: WorkerConfig): Promise<void> {
+    const logger = new Logger(bot_uuid, ai_config.model_name);
+
     const puppeteer_service = new PuppeteerService(webdriver_config.default_timeout, webdriver_config.headless_flag);
     await puppeteer_service.init();
 
@@ -36,10 +40,10 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
     const ai_service_factory = new AIServiceFactory();
     ai_service_factory.printSupportedModels();
     const ai_service = ai_service_factory.createAIService(ai_config.provider, ai_config.model_name, ai_config.playstyle);
-    console.log(`Created AI service: ${ai_config.provider} ${ai_config.model_name} with playstyle: ${ai_config.playstyle}`);
+    logger.info(`Created AI service: ${ai_config.provider} ${ai_config.model_name} with playstyle: ${ai_config.playstyle}`);
     ai_service.init();
 
-    const bot = new Bot(bot_uuid, ai_service, ai_config, log_service, playerstats_api_service, hand_outcomes_api_service, puppeteer_service, game_id, bot_config.debug_mode, bot_config.query_retries);
+    const bot = new Bot(bot_uuid, ai_service, ai_config, log_service, playerstats_api_service, hand_outcomes_api_service, puppeteer_service, logger, game_id, bot_config.debug_mode, bot_config.query_retries);
 
     await bot.openGame();
 
@@ -76,10 +80,10 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
     try {
         await bot.run(process_players_guard);
     } finally {
-        console.log(`Bot "${name}" shutting down — closing resources.`);
-        try { await puppeteer_service.closeBrowser(); } catch (err) { console.log("Error closing puppeteer browser:", err); }
-        try { await log_service.closeBrowser(); } catch (err) { console.log("Error closing log service browser:", err); }
-        try { db_service.close(); } catch (err) { console.log("Error closing db:", err); }
+        logger.info(`Bot "${name}" shutting down — closing resources.`);
+        try { await puppeteer_service.closeBrowser(); } catch (err) { logger.error("Error closing puppeteer browser:", err); }
+        try { await log_service.closeBrowser(); } catch (err) { logger.error("Error closing log service browser:", err); }
+        try { db_service.close(); } catch (err) { logger.error("Error closing db:", err); }
     }
 }
 

@@ -4,6 +4,8 @@
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
+    "check:boundaries": "tsx scripts/check-boundaries.ts",
+    "pretest": "npm run check:boundaries",
     "test": "mocha -r dotenv/config --timeout 5000"
   },
   "keywords": [],

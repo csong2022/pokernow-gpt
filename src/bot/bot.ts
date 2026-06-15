@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import { Game } from '../core/game/game.model.ts';
 import { Table } from '../core/game/table.model.ts';
 
-import { AIService } from '../services/ai/ai-client.interface.ts';
+import { AIService } from '../core/ai/ai-client.interface.ts';
 import { LogService } from '../services/logs/log.service.ts';
 import { HandOutcomesAPIService } from '../services/db/handoutcomes.service.ts';
 import { PlayerStatsAPIService } from '../services/db/playerstatsapi.service.ts';
@@ -12,6 +12,7 @@ import { PuppeteerService } from '../services/puppeteer/puppeteer.service.ts';
 import { AIConfig } from '../interfaces/config.interface.ts';
 import { sleep } from '../utils/bot-timeout.helper.ts';
 import { DebugMode, logResponse } from '../utils/error-handling.util.ts';
+import { Logger } from '../utils/logger.util.ts';
 
 import { ActionExecutor } from './action-executor.ts';
 import { DecisionEngine } from './decision-engine.ts';
@@ -29,8 +30,9 @@ export class Bot {
     private player_service: PlayerStatsAPIService;
     private hand_outcomes_service: HandOutcomesAPIService;
     private puppeteer_service: PuppeteerService;
+    private logger: Logger;
 
-    private state = new HandState();
+    private state: HandState;
 
     private stateBuilder!: GameStateBuilder;
     private decisionEngine!: DecisionEngine;
@@ -44,6 +46,7 @@ export class Bot {
         player_service: PlayerStatsAPIService,
         hand_outcomes_service: HandOutcomesAPIService,
         puppeteer_service: PuppeteerService,
+        logger: Logger,
         game_id: string,
         debug_mode: DebugMode,
         query_retries: number,
@@ -54,14 +57,12 @@ export class Bot {
         this.player_service = player_service;
         this.hand_outcomes_service = hand_outcomes_service;
         this.puppeteer_service = puppeteer_service;
+        this.logger = logger;
         this.game_id = game_id;
         this.debug_mode = debug_mode;
         this.query_retries = query_retries;
 
-        this.state.bot_uuid = bot_uuid;
-        this.state.model_provider = ai_config.provider;
-        this.state.model_name = ai_config.model_name;
-        this.state.game_id = game_id;
+        this.state = new HandState(bot_uuid, ai_config.provider, ai_config.model_name, game_id);
     }
 
     public stop(): void {
@@ -83,12 +84,12 @@ export class Bot {
     }
 
     public async openGame(): Promise<void> {
-        console.log(`The PokerNow game with id: ${this.game_id} will now open.`);
+        this.logger.info(`The PokerNow game with id: ${this.game_id} will now open.`);
 
         logResponse(await this.puppeteer_service.navigateToGame(this.game_id), this.debug_mode);
         logResponse(await this.puppeteer_service.waitForGameInfo(), this.debug_mode);
 
-        console.log("Getting game info.");
+        this.logger.info("Getting game info.");
         const res = await this.puppeteer_service.getGameInfo();
         logResponse(res, this.debug_mode);
         if (res.code !== "success") {
@@ -100,18 +101,18 @@ export class Bot {
     }
 
     public async enterTableInProgress(name: string, stack_size: number): Promise<void> {
-        console.log(`Your player name will be ${name}.`);
+        this.logger.info(`Your player name will be ${name}.`);
         this.state.bot_name = name;
         this.ai_service.setBotName(name);
 
-        console.log(`Your initial stack size will be ${stack_size}.`);
+        this.logger.info(`Your initial stack size will be ${stack_size}.`);
 
         await sleep(1000);
-        console.log(`Attempting to enter table with name: ${name} and stack size: ${stack_size}.`);
+        this.logger.info(`Attempting to enter table with name: ${name} and stack size: ${stack_size}.`);
         const res = await this.puppeteer_service.sendEnterTableRequest(name, stack_size);
 
         if (res.code === "success") {
-            console.log("Waiting for table host to accept ingress request.");
+            this.logger.info("Waiting for table host to accept ingress request.");
             if (logResponse(await this.puppeteer_service.waitForTableEntry(), this.debug_mode) !== "success") {
                 throw new Error("Table ingress request rejected, please try again.");
             }
@@ -126,9 +127,9 @@ export class Bot {
             const hand_info_res = await this.puppeteer_service.getStartingHandInfo();
             if (hand_info_res.code === "success" && hand_info_res.data.hand_number > 0) {
                 this.state.hand_number = hand_info_res.data.hand_number;
-                console.log("Initialized hand number from log:", this.state.hand_number);
+                this.logger.info("Initialized hand number from log:", this.state.hand_number);
             } else {
-                console.log("No hand info in log yet, defaulting hand number to 1.");
+                this.logger.info("No hand info in log yet, defaulting hand number to 1.");
             }
         } finally {
             logResponse(await this.puppeteer_service.closeLogPanel(), this.debug_mode);
@@ -145,6 +146,7 @@ export class Bot {
             this.ai_service,
             this.hand_outcomes_service,
             this.state,
+            this.logger,
             this.debug_mode,
             guard,
         );
@@ -152,11 +154,13 @@ export class Bot {
             this.ai_service,
             this.puppeteer_service,
             this.state,
+            this.logger,
             this.query_retries,
         );
         this.executor = new ActionExecutor(
             this.puppeteer_service,
             this.state,
+            this.logger,
             this.debug_mode,
         );
     }
