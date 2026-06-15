@@ -5,7 +5,7 @@ import { Game } from "../../src/core/game/game.model.ts";
 import { Table } from "../../src/core/game/table.model.ts";
 import { postProcessLogsAfterHand, Street } from "../../src/live/pokernow/log-processing.util.ts";
 import { Action } from "../../src/core/poker/action.enum.ts";
-import { LogService } from "../../src/services/logs/log.service.ts";
+import { LogService } from "../../src/live/pokernow/log.service.ts";
 import { DBService } from "../../src/services/db/db.service.ts";
 import { PlayerStatsAPIService } from "../../src/services/db/playerstatsapi.service.ts";
 import { DebugMode, logResponse, SUCCESS_RESPONSE, ERROR_RESPONSE } from "../../src/utils/error-handling.util.ts";

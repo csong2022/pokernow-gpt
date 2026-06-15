@@ -4,20 +4,20 @@ import { Game } from '../core/game/game.model.ts';
 import { Table } from '../core/game/table.model.ts';
 
 import { AIService } from '../core/ai/ai-client.interface.ts';
-import { LogService } from '../services/logs/log.service.ts';
+import { LogService } from '../live/pokernow/log.service.ts';
 import { HandOutcomesAPIService } from '../services/db/handoutcomes.service.ts';
 import { PlayerStatsAPIService } from '../services/db/playerstatsapi.service.ts';
-import { PuppeteerService } from '../services/puppeteer/puppeteer.service.ts';
+import { PuppeteerService } from '../live/pokernow/puppeteer.service.ts';
 
 import { AIConfig } from '../interfaces/config.interface.ts';
 import { sleep } from '../utils/bot-timeout.helper.ts';
 import { DebugMode, logResponse } from '../utils/error-handling.util.ts';
 import { Logger } from '../utils/logger.util.ts';
 
-import { ActionExecutor } from './action-executor.ts';
+import { ActionExecutor } from '../live/pokernow/action-executor.ts';
 import { DecisionEngine } from './decision-engine.ts';
 import { HandState } from './hand-state.ts';
-import { GameStateBuilder, ProcessPlayersGuard } from './state-builder.ts';
+import { GameStateBuilder, ProcessPlayersGuard } from '../live/pokernow/state-builder.ts';
 
 export class Bot {
     private bot_uuid: crypto.UUID;

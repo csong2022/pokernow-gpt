@@ -1,6 +1,6 @@
-import { Game } from '../core/game/game.model.ts';
-import { ProcessedLogs } from '../core/poker/log-processing.interface.ts';
-import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from '../live/pokernow/log-processing.util.ts';
+import { Game } from '../../core/game/game.model.ts';
+import { ProcessedLogs } from '../../core/poker/log-processing.interface.ts';
+import { postProcessLogs, postProcessLogsAfterHand, preProcessLogs } from './log-processing.util.ts';
 import {
     getIdToInitialStackFromMsg,
     getIdToNameFromMsg,
@@ -9,19 +9,19 @@ import {
     getPlayerStacksMsg,
     getTableSeatToIdFromMsg,
     validateAllMsg,
-} from '../live/pokernow/message-processing.util.ts';
-import { convertToBBs } from '../core/poker/value-conversion.util.ts';
+} from './message-processing.util.ts';
+import { convertToBBs } from '../../core/poker/value-conversion.util.ts';
 
-import { AIService } from '../core/ai/ai-client.interface.ts';
-import { HandOutcomesAPIService } from '../services/db/handoutcomes.service.ts';
-import { LogService } from '../services/logs/log.service.ts';
-import { PuppeteerService } from '../services/puppeteer/puppeteer.service.ts';
+import { AIService } from '../../core/ai/ai-client.interface.ts';
+import { HandOutcomesAPIService } from '../../services/db/handoutcomes.service.ts';
+import { LogService } from './log.service.ts';
+import { PuppeteerService } from './puppeteer.service.ts';
 
-import { sleep } from '../utils/bot-timeout.helper.ts';
-import { DebugMode, ErrorResponse, logResponse, SuccessResponse } from '../utils/error-handling.util.ts';
-import { Logger } from '../utils/logger.util.ts';
+import { sleep } from '../../utils/bot-timeout.helper.ts';
+import { DebugMode, ErrorResponse, logResponse, SuccessResponse } from '../../utils/error-handling.util.ts';
+import { Logger } from '../../utils/logger.util.ts';
 
-import { HandState } from './hand-state.ts';
+import { HandState } from '../../bot/hand-state.ts';
 
 export type ProcessPlayersGuard = (first_created: string) => Promise<boolean>;
 

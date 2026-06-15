@@ -12,10 +12,10 @@ import { WorkerConfig } from '../interfaces/config.interface.ts';
 import { EntryParams, ProcessPlayersResponse, RequestProcessPlayers } from '../interfaces/message.interface.ts';
 
 import { DBService } from '../services/db/db.service.ts';
-import { LogService } from '../services/logs/log.service.ts';
+import { LogService } from '../live/pokernow/log.service.ts';
 import { HandOutcomesAPIService } from '../services/db/handoutcomes.service.ts';
 import { PlayerStatsAPIService } from '../services/db/playerstatsapi.service.ts';
-import { PuppeteerService } from '../services/puppeteer/puppeteer.service.ts';
+import { PuppeteerService } from '../live/pokernow/puppeteer.service.ts';
 
 import { Logger } from '../utils/logger.util.ts';
 

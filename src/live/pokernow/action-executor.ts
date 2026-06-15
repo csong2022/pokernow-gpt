@@ -1,12 +1,12 @@
-import { convertToBBs, convertToValue } from '../core/poker/value-conversion.util.ts';
+import { convertToBBs, convertToValue } from '../../core/poker/value-conversion.util.ts';
 
-import { BotAction } from '../core/ai/ai-client.interface.ts';
-import { PuppeteerService } from '../services/puppeteer/puppeteer.service.ts';
+import { BotAction } from '../../core/ai/ai-client.interface.ts';
+import { PuppeteerService } from './puppeteer.service.ts';
 
-import { DebugMode, logResponse } from '../utils/error-handling.util.ts';
-import { Logger } from '../utils/logger.util.ts';
+import { DebugMode, logResponse } from '../../utils/error-handling.util.ts';
+import { Logger } from '../../utils/logger.util.ts';
 
-import { HandState } from './hand-state.ts';
+import { HandState } from '../../bot/hand-state.ts';
 
 export class ActionExecutor {
     constructor(

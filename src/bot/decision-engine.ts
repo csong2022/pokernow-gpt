@@ -2,7 +2,7 @@ import { Game } from '../core/game/game.model.ts';
 import { constructHandSetup, constructTurnUpdate } from '../core/poker/query-construction.helper.ts';
 
 import { AIService, BotAction, defaultCheckAction, defaultFoldAction } from '../core/ai/ai-client.interface.ts';
-import { PuppeteerService } from '../services/puppeteer/puppeteer.service.ts';
+import { PuppeteerService } from '../live/pokernow/puppeteer.service.ts';
 
 import { sleep, TimeoutError } from '../utils/bot-timeout.helper.ts';
 import { Logger } from '../utils/logger.util.ts';
