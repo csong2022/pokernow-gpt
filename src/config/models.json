@@ -1,0 +1,192 @@
+{
+  "_managedBy": "scripts/update-models.ts",
+  "models": [
+    {
+      "id": "claude-haiku-4-5",
+      "provider": "Anthropic",
+      "apiModelString": "claude-haiku-4-5",
+      "displayName": "Claude Haiku 4.5",
+      "reasoning": true,
+      "inputCostPer1M": 1,
+      "outputCostPer1M": 5,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "claude-opus-4-5",
+      "provider": "Anthropic",
+      "apiModelString": "claude-opus-4-5-20251101",
+      "displayName": "Claude Opus 4.5",
+      "reasoning": false,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "claude-opus-4-6",
+      "provider": "Anthropic",
+      "apiModelString": "claude-opus-4-6",
+      "displayName": "Claude Opus 4.6",
+      "reasoning": false,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "claude-opus-4-7",
+      "provider": "Anthropic",
+      "apiModelString": "claude-opus-4-7",
+      "displayName": "Claude Opus 4.7",
+      "reasoning": false,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "claude-opus-4-8",
+      "provider": "Anthropic",
+      "apiModelString": "claude-opus-4-8",
+      "displayName": "Claude Opus 4.8",
+      "reasoning": true,
+      "inputCostPer1M": 5,
+      "outputCostPer1M": 25,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "claude-sonnet-4-5",
+      "provider": "Anthropic",
+      "apiModelString": "claude-sonnet-4-5-20250929",
+      "displayName": "Claude Sonnet 4.5",
+      "reasoning": false,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "claude-sonnet-4-6",
+      "provider": "Anthropic",
+      "apiModelString": "claude-sonnet-4-6",
+      "displayName": "Claude Sonnet 4.6",
+      "reasoning": true,
+      "inputCostPer1M": 3,
+      "outputCostPer1M": 15,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "gemini-3-flash-preview",
+      "provider": "Google",
+      "apiModelString": "gemini-3-flash-preview",
+      "displayName": "Gemini 3 Flash Preview",
+      "reasoning": true,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "gemini-3-pro-preview",
+      "provider": "Google",
+      "apiModelString": "gemini-3-pro-preview",
+      "displayName": "Gemini 3 Pro Preview",
+      "reasoning": false,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "gemini-3.1-flash-lite",
+      "provider": "Google",
+      "apiModelString": "gemini-3.1-flash-lite",
+      "displayName": "Gemini 3.1 Flash Lite",
+      "reasoning": false,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "gemini-3.1-flash-lite-preview",
+      "provider": "Google",
+      "apiModelString": "gemini-3.1-flash-lite-preview",
+      "displayName": "Gemini 3.1 Flash Lite Preview",
+      "reasoning": false,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "gemini-3.1-pro-preview",
+      "provider": "Google",
+      "apiModelString": "gemini-3.1-pro-preview",
+      "displayName": "Gemini 3.1 Pro Preview",
+      "reasoning": true,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "gemini-3.5-flash",
+      "provider": "Google",
+      "apiModelString": "gemini-3.5-flash",
+      "displayName": "Gemini 3.5 Flash",
+      "reasoning": false,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "gpt-5.4",
+      "provider": "OpenAI",
+      "apiModelString": "gpt-5.4",
+      "displayName": "GPT-5.4",
+      "reasoning": true,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "gpt-5.4-mini",
+      "provider": "OpenAI",
+      "apiModelString": "gpt-5.4-mini",
+      "displayName": "GPT-5.4 Mini",
+      "reasoning": true,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "gpt-5.4-nano",
+      "provider": "OpenAI",
+      "apiModelString": "gpt-5.4-nano",
+      "displayName": "GPT-5.4 Nano",
+      "reasoning": false,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "gpt-5.4-pro",
+      "provider": "OpenAI",
+      "apiModelString": "gpt-5.4-pro",
+      "displayName": "gpt-5.4-pro",
+      "reasoning": false,
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-15",
+      "deprecated": false
+    }
+  ]
+}

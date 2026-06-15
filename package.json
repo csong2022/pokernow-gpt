@@ -8,6 +8,7 @@
     "check:boundaries:strict": "tsx scripts/check-boundaries.ts --strict",
     "analyze": "tsx src/arena/analysis/cli.ts",
     "calibrate": "tsx src/arena/calibrate.ts",
+    "update-models": "tsx scripts/update-models.ts",
     "pretest": "npm run check:boundaries:strict",
     "test": "mocha -r dotenv/config --timeout 5000"
   },

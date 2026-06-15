@@ -1,7 +1,8 @@
 import dotenv from 'dotenv';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-import { AIConfig } from '../core/ai/ai-config.interface.ts';
+import { loadRegistry, toAIConfig } from '../core/ai/model-registry.ts';
 import { PokerKitClient } from './engine/pokerkit-client.ts';
 import { TableConfig } from './engine/protocol.ts';
 import { Agent, LLMAgent, StubAgent } from './agent.ts';
@@ -10,6 +11,10 @@ import { runHands } from './runner.ts';
 import { runDuplicate, RotationMode } from './duplicate-runner.ts';
 
 dotenv.config();
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Composition root owns the registry path; core never hardcodes it.
+const REGISTRY_PATH = path.resolve(__dirname, '..', 'config', 'models.json');
 
 interface Args {
     hands: number;
@@ -22,7 +27,7 @@ interface Args {
     minBet: number;
     stack: number;
     mode: 'cash' | 'tournament';
-    llm?: string; // "Provider:model,Provider:model" (one per seat)
+    llm?: string; // comma-separated registry model ids, one per seat (e.g. "claude-haiku-4-5,gpt-5.4-nano")
     out: string;
 }
 
@@ -59,14 +64,14 @@ function buildAgents(args: Args, gameId: string): Agent[] {
     if (!args.llm) {
         return Array.from({ length: args.players }, (_, seat) => new StubAgent(`stub#${seat}`));
     }
-    const specs = args.llm.split(',').map((s) => s.trim()).filter(Boolean);
-    if (specs.length !== args.players) {
-        throw new Error(`--llm lists ${specs.length} models but --players is ${args.players}`);
+    const ids = args.llm.split(',').map((s) => s.trim()).filter(Boolean);
+    if (ids.length !== args.players) {
+        throw new Error(`--llm lists ${ids.length} model ids but --players is ${args.players}`);
     }
-    return specs.map((spec, seat) => {
-        const [provider, model_name] = spec.split(':');
-        if (!provider || !model_name) throw new Error(`bad --llm spec "${spec}" (want Provider:model)`);
-        const cfg: AIConfig = { provider, model_name, playstyle: 'neutral' };
+    const registry = loadRegistry(REGISTRY_PATH);
+    return ids.map((id, seat) => {
+        // toAIConfig throws "unknown model id: X (not in registry)" on an unregistered id.
+        const cfg = toAIConfig(registry, id, 'neutral');
         return new LLMAgent(seat, cfg, gameId);
     });
 }

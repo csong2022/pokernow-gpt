@@ -162,6 +162,22 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   variance-reduced table (same point estimate, tighter CI; reduction is exact
   only for deterministic strategies — LLM temperature leaves residual decision
   noise). Imports core types only; never the engine — runs with the engine off.
+- **Model registry** (`src/config/models.json`, loader `src/core/ai/model-registry.ts`):
+  script-managed DATA, not code — **read at runtime via `fs` (never import-baked)**,
+  validated loud on load. The stable `id` is the key referenced across the arena
+  (run configs use ids); `apiModelString` is the volatile provider surface string
+  and may change underneath a stable id (preview→GA, version bumps) — mirrors the
+  `modelIdOf` "stable key, volatile field" idea. The loader takes the file PATH
+  from the composition root (`arena/index.ts`), so core hardcodes no path; it
+  resolves `id → AIConfig` (`toAIConfig`) and throws `unknown model id: X` on an
+  unregistered id. **`scripts/update-models.ts` is the sole writer** (`npm run
+  update-models`): fetches each provider's live model list, keeps an allowlisted
+  family (`gpt-5.4*`, `gemini-3*` text-gen, `claude-*-4*`), and merges
+  non-clobbering — preserving ids/addedAt/deprecated/costs/reasoning, collapsing
+  dated snapshots to a family id, deprecating (never deleting) vanished models,
+  and writing deterministically (sorted, fixed key order) so reruns are zero-diff.
+  Costs and `reasoning` aren't in any list endpoint → hand-maintained (new models
+  default to cost 0 / reasoning false). Humans don't hand-edit; re-run the script.
 - **Python venv setup** (one-time):
   ```sh
   py -m venv engine-py/.venv
@@ -179,8 +195,10 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
 - Run the server: `npx tsx src/index.ts` (Express on `http://localhost:8080`)
 - Run the arena (stub agents, no API cost):
   `npx tsx src/arena/index.ts --hands 25 --players 3`
-- Run the arena (LLMs, needs `OPENAI_API_KEY`/`GOOGLEAI_API_KEY` in `.env`):
-  `npx tsx src/arena/index.ts --hands 10 --players 2 --llm "OpenAI:gpt-5.4-nano,Google:gemini-3.1-flash-lite-preview"`
+- Run the arena (LLMs; `--llm` takes registry **ids**, needs the provider keys in `.env`):
+  `npx tsx src/arena/index.ts --hands 10 --players 2 --llm "gpt-5.4-nano,gemini-3.1-flash-lite-preview"`
+- Update the model registry (sole writer; idempotent):
+  `npm run update-models`
 - Run the arena (duplicate-deck variance reduction; `--rotation cyclic|full`, default cyclic):
   `npx tsx src/arena/index.ts --duplicate --deals 50 --players 3 --rotation full`
 - Analyze logs (offline; engine not needed):
