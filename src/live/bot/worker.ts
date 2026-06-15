@@ -6,18 +6,18 @@ import { Bot } from './bot.ts'
 
 import bot_worker_ee from './eventemitters/bot-worker.eventemitter.ts';
 
-import { AIServiceFactory } from '../core/ai/ai-service-factory.helper.ts';
+import { AIServiceFactory } from '../../core/ai/ai-service-factory.helper.ts';
 
-import { WorkerConfig } from '../interfaces/config.interface.ts';
-import { EntryParams, ProcessPlayersResponse, RequestProcessPlayers } from '../interfaces/message.interface.ts';
+import { WorkerConfig } from '../../interfaces/config.interface.ts';
+import { EntryParams, ProcessPlayersResponse, RequestProcessPlayers } from '../../interfaces/message.interface.ts';
 
-import { DBService } from '../services/db/db.service.ts';
-import { LogService } from '../live/pokernow/log.service.ts';
-import { HandOutcomesAPIService } from '../services/db/handoutcomes.service.ts';
-import { PlayerStatsAPIService } from '../services/db/playerstatsapi.service.ts';
-import { PuppeteerService } from '../live/pokernow/puppeteer.service.ts';
+import { DBService } from '../../services/db/db.service.ts';
+import { LogService } from '../pokernow/log.service.ts';
+import { HandOutcomesAPIService } from '../../services/db/handoutcomes.service.ts';
+import { PlayerStatsAPIService } from '../../services/db/playerstatsapi.service.ts';
+import { PuppeteerService } from '../pokernow/puppeteer.service.ts';
 
-import { Logger } from '../utils/logger.util.ts';
+import { Logger } from '../../utils/logger.util.ts';
 
 dotenv.config();
 

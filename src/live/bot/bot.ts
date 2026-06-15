@@ -1,24 +1,24 @@
 import crypto from 'crypto';
 
-import { Game } from '../core/game/game.model.ts';
-import { Table } from '../core/game/table.model.ts';
+import { Game } from '../../core/game/game.model.ts';
+import { Table } from '../../core/game/table.model.ts';
 
-import { AIService } from '../core/ai/ai-client.interface.ts';
-import { LogService } from '../live/pokernow/log.service.ts';
-import { HandOutcomesAPIService } from '../services/db/handoutcomes.service.ts';
-import { PlayerStatsAPIService } from '../services/db/playerstatsapi.service.ts';
-import { PuppeteerService } from '../live/pokernow/puppeteer.service.ts';
+import { AIService } from '../../core/ai/ai-client.interface.ts';
+import { LogService } from '../pokernow/log.service.ts';
+import { HandOutcomesAPIService } from '../../services/db/handoutcomes.service.ts';
+import { PlayerStatsAPIService } from '../../services/db/playerstatsapi.service.ts';
+import { PuppeteerService } from '../pokernow/puppeteer.service.ts';
 
-import { AIConfig } from '../interfaces/config.interface.ts';
-import { sleep } from '../utils/bot-timeout.helper.ts';
-import { DebugMode, logResponse } from '../utils/error-handling.util.ts';
-import { Logger } from '../utils/logger.util.ts';
+import { AIConfig } from '../../interfaces/config.interface.ts';
+import { sleep } from '../../utils/bot-timeout.helper.ts';
+import { DebugMode, logResponse } from '../../utils/error-handling.util.ts';
+import { Logger } from '../../utils/logger.util.ts';
 
-import { ActionExecutor } from '../live/pokernow/action-executor.ts';
-import { DecisionEngine } from '../core/poker/decision-engine.ts';
-import { PuppeteerActionAvailability } from '../live/pokernow/puppeteer-action-availability.ts';
-import { HandState } from '../core/game/hand-state.ts';
-import { GameStateBuilder, ProcessPlayersGuard } from '../live/pokernow/state-builder.ts';
+import { ActionExecutor } from '../pokernow/action-executor.ts';
+import { DecisionEngine } from '../../core/poker/decision-engine.ts';
+import { PuppeteerActionAvailability } from '../pokernow/puppeteer-action-availability.ts';
+import { HandState } from '../../core/game/hand-state.ts';
+import { GameStateBuilder, ProcessPlayersGuard } from '../pokernow/state-builder.ts';
 
 export class Bot {
     private bot_uuid: crypto.UUID;

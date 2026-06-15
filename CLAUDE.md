@@ -8,14 +8,19 @@ the correct side of the seam.
 - **core** (`src/core/**`) — the environment-agnostic "poker brain": LLM provider
   abstraction (`src/core/ai/`), prompt construction
   (`src/core/poker/query-construction.helper.ts`), domain models
-  (`src/core/game/`, `src/core/player/`), and (eventually) decision logic and
-  opponent-stats. Core knows poker, not *where* the game is played.
-- **live** (`src/live/pokernow/`) — the PokerNow adapter: Puppeteer browser
-  automation (`puppeteer.service.ts`), log scraping (`log.service.ts`), log/
-  message parsers, state building (`state-builder.ts`), and action execution
-  (`action-executor.ts`). Depends on core. The bot lifecycle (`src/bot/`), the
-  HTTP API (`src/http/`), and `src/services/db/` are still outside `live/` and
-  slated to migrate (see roadmap). Depends on core.
+  (`src/core/game/`, `src/core/player/`), decision logic
+  (`src/core/poker/decision-engine.ts`), and (eventually) opponent-stats. Core
+  knows poker, not *where* the game is played.
+- **live** (`src/live/**`) — everything PokerNow-specific, depends on core:
+  - `src/live/pokernow/` — the table adapter: Puppeteer driver
+    (`puppeteer.service.ts`), log scraping (`log.service.ts`), log/message
+    parsers, state building (`state-builder.ts`), action execution
+    (`action-executor.ts`), and the `ActionAvailability` adapter.
+  - `src/live/bot/` — the bot runner/lifecycle (`bot.ts`, `worker.ts`,
+    `bot-manager.ts`, `eventemitters/`). `bot.ts` is the composition root that
+    wires core + the pokernow adapter together.
+  - `src/live/http/` — the REST control API (`controllers/`, `routes/`).
+  (`src/services/db/` and `src/config/` remain outside `live/` for now.)
 - **arena** — a future multi-LLM benchmark on an owned poker engine. Depends on
   core. **Not built yet — do not scaffold it.**
 
@@ -73,21 +78,23 @@ talks to the browser — it validates the AI's chosen action through the
 which the live `PuppeteerActionAvailability` adapter implements and `bot.ts`
 injects.
 
-`npm run check:boundaries` reports **0 violations**. Once the rest of the live
-migration (below) lands, switch CI to `--strict`.
+The bot runner and REST API now live under `src/live/bot/` and `src/live/http/`,
+so all PokerNow-specific code is under `src/live/**` and `core` is fully isolated.
 
-## Migration roadmap (still outstanding — not yet addressed)
+`npm run check:boundaries` reports **0 violations**. The structural migration is
+complete — **CI can switch to `--strict`** (`npx tsx scripts/check-boundaries.ts
+--strict`) to fail the build on any future `core -> live` import.
 
-These are on the seam but not yet flagged/fixed:
+## Remaining cleanups (optional, not on the critical path)
 
-1. **Bot lifecycle and HTTP API still outside `live/`** — `src/bot/` (`bot.ts`,
-   `worker.ts`, `bot-manager.ts`, eventemitters) and `src/http/*` should migrate
-   into `src/live/` in later commits. `bot.ts` is the composition root (it wires
-   core + live together) and migrates with the lifecycle.
-
-Note: `src/core/poker/log-processing.interface.ts` stays in core (it defines
-`ProcessedLogs`, consumed by core's `HandState`), but its `Data`/`Log` types
-describe the PokerNow log API shape and may belong in live later.
+- Flip CI / `pretest` to `--strict` now that core is clean.
+- `src/services/db/` and `src/config/` still sit at `src/` root; they're
+  infrastructure shared by live, and could move under `src/live/` later.
+- `src/core/poker/log-processing.interface.ts` stays in core (it defines
+  `ProcessedLogs`, consumed by core's `HandState`), but its `Data`/`Log` types
+  describe the PokerNow log API shape and may belong in live later.
+- `src/interfaces/` (`config.interface`, `message.interface`) are live/worker
+  concerns and could move under `src/live/` later.
 
 ## Commands
 
