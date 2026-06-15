@@ -1,18 +1,18 @@
-import { Game } from '../core/game/game.model.ts';
-import { constructHandSetup, constructTurnUpdate } from '../core/poker/query-construction.helper.ts';
+import { Game } from '../game/game.model.ts';
+import { constructHandSetup, constructTurnUpdate } from './query-construction.helper.ts';
 
-import { AIService, BotAction, defaultCheckAction, defaultFoldAction } from '../core/ai/ai-client.interface.ts';
-import { PuppeteerService } from '../live/pokernow/puppeteer.service.ts';
+import { AIService, BotAction, defaultCheckAction, defaultFoldAction } from '../ai/ai-client.interface.ts';
+import { ActionAvailability } from './action-availability.interface.ts';
 
-import { sleep, TimeoutError } from '../utils/bot-timeout.helper.ts';
-import { Logger } from '../utils/logger.util.ts';
+import { sleep, TimeoutError } from '../../utils/bot-timeout.helper.ts';
+import { Logger } from '../../utils/logger.util.ts';
 
-import { HandState } from '../core/game/hand-state.ts';
+import { HandState } from '../game/hand-state.ts';
 
 export class DecisionEngine {
     constructor(
         private ai: AIService,
-        private puppeteer: PuppeteerService,
+        private availability: ActionAvailability,
         private state: HandState,
         private logger: Logger,
         private query_retries: number,
@@ -73,31 +73,25 @@ export class DecisionEngine {
 
         if (!bot_action.action_str || !valid_actions.includes(bot_action.action_str)) return false;
 
-        let res;
         switch (bot_action.action_str) {
             case "bet":
             case "raise":
                 //TODO: should also check that the raise >= min raise
-                res = await this.puppeteer.waitForBetOption();
                 return (
-                    res.code === "success" &&
+                    (await this.availability.canBet()) &&
                     bot_action.bet_size_in_BBs > 0 &&
                     bot_action.bet_size_in_BBs <= curr_stack_size_in_BBs
                 );
             case "all-in":
-                res = await this.puppeteer.waitForBetOption();
-                return res.code === "success";
+                return await this.availability.canBet();
             case "call":
                 // The call amount can exceed the bot's stack when facing a larger bet —
                 // PokerNow caps the call at the bot's remaining chips (effectively all-in).
-                res = await this.puppeteer.waitForCallOption();
-                return res.code === "success" && bot_action.bet_size_in_BBs > 0;
+                return (await this.availability.canCall()) && bot_action.bet_size_in_BBs > 0;
             case "check":
-                res = await this.puppeteer.waitForCheckOption();
-                return res.code === "success" && bot_action.bet_size_in_BBs == 0;
+                return (await this.availability.canCheck()) && bot_action.bet_size_in_BBs == 0;
             case "fold":
-                res = await this.puppeteer.waitForFoldOption();
-                return res.code === "success" && bot_action.bet_size_in_BBs == 0;
+                return (await this.availability.canFold()) && bot_action.bet_size_in_BBs == 0;
         }
         return false;
     }

@@ -15,7 +15,8 @@ import { DebugMode, logResponse } from '../utils/error-handling.util.ts';
 import { Logger } from '../utils/logger.util.ts';
 
 import { ActionExecutor } from '../live/pokernow/action-executor.ts';
-import { DecisionEngine } from './decision-engine.ts';
+import { DecisionEngine } from '../core/poker/decision-engine.ts';
+import { PuppeteerActionAvailability } from '../live/pokernow/puppeteer-action-availability.ts';
 import { HandState } from '../core/game/hand-state.ts';
 import { GameStateBuilder, ProcessPlayersGuard } from '../live/pokernow/state-builder.ts';
 
@@ -152,7 +153,7 @@ export class Bot {
         );
         this.decisionEngine = new DecisionEngine(
             this.ai_service,
-            this.puppeteer_service,
+            new PuppeteerActionAvailability(this.puppeteer_service),
             this.state,
             this.logger,
             this.query_retries,

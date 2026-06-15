@@ -66,7 +66,12 @@ live. `Table` no longer parses raw PokerNow messages: the adapter
 (`src/live/pokernow/state-builder.ts`) parses and passes the stack map in via
 `Table.setIdToStack(...)`. Core also no longer imports any DB service — `Table`
 depends on the injected `PlayerStatsRepository` port. The per-hand runtime state
-container `HandState` now lives in core (`src/core/game/hand-state.ts`).
+container `HandState` now lives in core (`src/core/game/hand-state.ts`). The
+decision logic (`src/core/poker/decision-engine.ts`) is core too: it no longer
+talks to the browser — it validates the AI's chosen action through the
+`ActionAvailability` port (`src/core/poker/action-availability.interface.ts`),
+which the live `PuppeteerActionAvailability` adapter implements and `bot.ts`
+injects.
 
 `npm run check:boundaries` reports **0 violations**. Once the rest of the live
 migration (below) lands, switch CI to `--strict`.
@@ -77,10 +82,8 @@ These are on the seam but not yet flagged/fixed:
 
 1. **Bot lifecycle and HTTP API still outside `live/`** — `src/bot/` (`bot.ts`,
    `worker.ts`, `bot-manager.ts`, eventemitters) and `src/http/*` should migrate
-   into `src/live/` in later commits. (`decision-engine.ts` is a seam cleanup —
-   see item 2.)
-2. `src/bot/decision-engine.ts` imports `PuppeteerService` (live) alongside core
-   query helpers — it straddles the seam and needs splitting.
+   into `src/live/` in later commits. `bot.ts` is the composition root (it wires
+   core + live together) and migrates with the lifecycle.
 
 Note: `src/core/poker/log-processing.interface.ts` stays in core (it defines
 `ProcessedLogs`, consumed by core's `HandState`), but its `Data`/`Log` types
