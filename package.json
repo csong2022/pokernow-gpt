@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "check:boundaries": "tsx scripts/check-boundaries.ts",
-    "pretest": "npm run check:boundaries",
+    "check:boundaries:strict": "tsx scripts/check-boundaries.ts --strict",
+    "pretest": "npm run check:boundaries:strict",
     "test": "mocha -r dotenv/config --timeout 5000"
   },
   "keywords": [],

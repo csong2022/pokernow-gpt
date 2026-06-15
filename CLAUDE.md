@@ -52,12 +52,12 @@ the forbidden modules. No ESLint dependency — it runs on the existing `tsx`.
 
 ```sh
 npm run check:boundaries          # report mode: print violations, exit 0
-npx tsx scripts/check-boundaries.ts --strict   # CI mode: exit 1 on any violation
+npm run check:boundaries:strict   # strict mode: exit 1 on any violation
 ```
 
-`pretest` runs the checker (report mode), so `npm test` surfaces violations
-without blocking. Once the roadmap below is cleared and core is clean, switch CI
-to `--strict`.
+Core is clean, so the boundary is now **enforced**: `pretest` runs
+`check:boundaries:strict`, so `npm test` (and CI) fails on any `core -> live`
+import. Use the plain `check:boundaries` for a non-failing report while working.
 
 ## Boundary status: core is clean (0 violations)
 
@@ -81,13 +81,12 @@ injects.
 The bot runner and REST API now live under `src/live/bot/` and `src/live/http/`,
 so all PokerNow-specific code is under `src/live/**` and `core` is fully isolated.
 
-`npm run check:boundaries` reports **0 violations**. The structural migration is
-complete — **CI can switch to `--strict`** (`npx tsx scripts/check-boundaries.ts
---strict`) to fail the build on any future `core -> live` import.
+`npm run check:boundaries` reports **0 violations**, and the boundary is enforced:
+`pretest` runs it in `--strict` mode, so any future `core -> live` import fails
+`npm test` / CI.
 
 ## Remaining cleanups (optional, not on the critical path)
 
-- Flip CI / `pretest` to `--strict` now that core is clean.
 - `src/services/db/` and `src/config/` still sit at `src/` root; they're
   infrastructure shared by live, and could move under `src/live/` later.
 - `src/core/poker/log-processing.interface.ts` stays in core (it defines
