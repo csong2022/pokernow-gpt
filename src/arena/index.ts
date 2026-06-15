@@ -7,7 +7,7 @@ import { TableConfig } from './engine/protocol.ts';
 import { Agent, LLMAgent, StubAgent } from './agent.ts';
 import { HandLog } from './hand-log.ts';
 import { runHands } from './runner.ts';
-import { runDuplicate } from './duplicate-runner.ts';
+import { runDuplicate, RotationMode } from './duplicate-runner.ts';
 
 dotenv.config();
 
@@ -15,6 +15,7 @@ interface Args {
     hands: number;
     deals: number;
     duplicate: boolean;
+    rotation: RotationMode;
     players: number;
     sb: number;
     bb: number;
@@ -42,6 +43,7 @@ function parseArgs(argv: string[]): Args {
         hands,
         deals: num('--deals', 25),
         duplicate,
+        rotation: (get('--rotation') as RotationMode) ?? 'cyclic',
         players,
         bb,
         sb: num('--sb', Math.floor(bb / 2) || 1),
@@ -88,9 +90,12 @@ async function main(): Promise<void> {
 
     try {
         if (args.duplicate) {
-            console.log(`Arena (duplicate-deck, full rotation): ${args.deals} deals x ${args.players} = ${args.deals * args.players} hands, ${kind} agents -> ${args.out}`);
-            await runDuplicate({ client, config, agents, deals: args.deals, log });
-            console.log(`Done. Wrote ${args.deals * args.players} hand records (${args.deals} deals) to ${args.out}`);
+            const factorial = (n: number): number => (n <= 1 ? 1 : n * factorial(n - 1));
+            const replays = args.rotation === 'full' ? factorial(args.players) : args.players;
+            const total = args.deals * replays;
+            console.log(`Arena (duplicate-deck, ${args.rotation} rotation): ${args.deals} deals x ${replays} = ${total} hands, ${kind} agents -> ${args.out}`);
+            await runDuplicate({ client, config, agents, deals: args.deals, log, rotation: args.rotation });
+            console.log(`Done. Wrote ${total} hand records (${args.deals} deals) to ${args.out}`);
         } else {
             console.log(`Arena: ${args.hands} hands, ${args.players} players, ${kind} agents -> ${args.out}`);
             await runHands({ client, config, agents, hands: args.hands, log });

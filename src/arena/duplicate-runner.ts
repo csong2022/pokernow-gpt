@@ -7,6 +7,8 @@ import { HandLog } from './hand-log.ts';
 import { generateDeck } from './deck.ts';
 import { playDecisionLoop } from './runner.ts';
 
+export type RotationMode = 'cyclic' | 'full';
+
 export interface DuplicateRunOptions {
     client: PokerKitClient;
     config: TableConfig;
@@ -15,6 +17,30 @@ export interface DuplicateRunOptions {
     log: HandLog;
     gameId?: string;
     rng?: () => number;
+    rotation?: RotationMode; // default 'cyclic'
+}
+
+function permutations(items: number[]): number[][] {
+    if (items.length <= 1) return [items.slice()];
+    const out: number[][] = [];
+    for (let i = 0; i < items.length; i++) {
+        const rest = [...items.slice(0, i), ...items.slice(i + 1)];
+        for (const p of permutations(rest)) out.push([items[i], ...p]);
+    }
+    return out;
+}
+
+// Seatings replayed for one deck. Each seating maps seat -> agent index.
+//   cyclic: P rotations — each model in each seat once (Latin square). Removes
+//           first-order seat bias; for P>=3 pairwise opponent ORDERING stays
+//           confounded (A always has the same neighbours). = full perms at HU.
+//   full:   all P! seatings — exact first- and second-order cancellation for
+//           deterministic play; cost is factorial, so only use at small tables.
+export function seatings(playerCount: number, mode: RotationMode): number[][] {
+    if (mode === 'full') return permutations([...Array(playerCount).keys()]);
+    return Array.from({ length: playerCount }, (_, rot) =>
+        Array.from({ length: playerCount }, (_, seat) => ((seat - rot) % playerCount + playerCount) % playerCount),
+    );
 }
 
 // Duplicate-deck harness (full rotation). For each deal we generate ONE deck and
@@ -33,15 +59,16 @@ export async function runDuplicate(opts: DuplicateRunOptions): Promise<void> {
     const rng = opts.rng ?? Math.random;
     const repo = new InMemoryPlayerStatsRepository();
     const env = new ArenaEnvironment(client, gameId);
+    const dealSeatings = seatings(P, opts.rotation ?? 'cyclic');
 
     await client.createGame({ game_id: gameId, ...config });
 
     let handIndex = 0;
     for (let deal = 0; deal < deals; deal++) {
         const deck = generateDeck(rng);
-        for (let rotation = 0; rotation < P; rotation++) {
-            // seat -> model: rotate the assignment so each model visits each seat once.
-            const seatAgents = Array.from({ length: P }, (_, seat) => agents[(((seat - rotation) % P) + P) % P]);
+        for (let rotation = 0; rotation < dealSeatings.length; rotation++) {
+            // seat -> model for this replay of the same deck.
+            const seatAgents = dealSeatings[rotation].map((agentIdx) => agents[agentIdx]);
             seatAgents.forEach((a) => a.startHand());
 
             const first = await env.startHand({ deck });

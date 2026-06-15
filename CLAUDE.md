@@ -139,10 +139,22 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   `duplicate-runner.ts` is the variance-reduction harness (below). Both share
   `playDecisionLoop` and write one replayable JSONL record per hand via `hand-log.ts`.
 - **Duplicate-deck variance reduction** (`deck.ts`, `duplicate-runner.ts`): per
-  *deal* one shuffled deck is generated and replayed `P` times (full rotation),
-  rotating which model sits in which seat, so every model plays the same cards in
-  every position. Hands are tagged `deal_id` + `rotation`. Card luck cancels when
-  the analysis groups by deal.
+  *deal* one shuffled deck is generated and replayed with rotated seat→model
+  assignments, so every model plays the same cards in different positions; card
+  luck cancels when the analysis groups by `deal_id`. Two `--rotation` modes:
+  - `cyclic` (default): `P` rotations — each model in each seat once (a Latin
+    square). Removes first-order seat bias. **= full permutations only at HU**;
+    for `P>=3` pairwise opponent *ordering* stays confounded (A keeps the same
+    neighbours across rotations), an uncancelled residual invisible in the point
+    estimate but able to perturb a close ranking.
+  - `full`: all `P!` seatings — exact first- and second-order cancellation for
+    deterministic play. Cost is factorial, so it's a non-issue at HU/3-max (2/6
+    replays) but impractical beyond. **Run ranking experiments (e.g. HU-vs-3max
+    transfer) with `--rotation full`**; keep `cyclic` for cheap/larger runs.
+  - The cost of the shortcut is empirical, not a guess: `npm run calibrate` plays
+    deterministic agents both ways on identical decks and reports the residual
+    (measured ~1.1–1.45x wider reduced CI at 3-max — bigger for more
+    position-reactive agents).
 - **Analysis** (`src/arena/analysis/`, pure offline pass over the JSONL):
   `npm run analyze <file|dir>` prints per-model bb/100, mbb/hand, 95% CI, net bb,
   malformed rate, runs integrity guards (chip conservation, seat→model, …), and
@@ -169,10 +181,12 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   `npx tsx src/arena/index.ts --hands 25 --players 3`
 - Run the arena (LLMs, needs `OPENAI_API_KEY`/`GOOGLEAI_API_KEY` in `.env`):
   `npx tsx src/arena/index.ts --hands 10 --players 2 --llm "OpenAI:gpt-5.4-nano,Google:gemini-3.1-flash-lite-preview"`
-- Run the arena (duplicate-deck variance reduction, full rotation):
-  `npx tsx src/arena/index.ts --duplicate --deals 50 --players 2`
+- Run the arena (duplicate-deck variance reduction; `--rotation cyclic|full`, default cyclic):
+  `npx tsx src/arena/index.ts --duplicate --deals 50 --players 3 --rotation full`
 - Analyze logs (offline; engine not needed):
   `npm run analyze arena-logs/<file-or-dir>.jsonl`
+- Calibrate the cyclic-vs-full residual with deterministic agents:
+  `npm run calibrate` (`CAL_DEALS=300`)
 - Tests: `npm test` (Mocha, specs in `test/unit/*.spec.ts`; `pretest` runs the
   boundary checker in `--strict`)
 - Type-check: `npx tsc --noEmit` (tsconfig sets `noEmit`; there is no build step)
