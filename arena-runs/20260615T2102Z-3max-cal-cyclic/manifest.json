@@ -1,0 +1,16 @@
+{
+  "runId": "20260615T2102Z-3max-cal-cyclic",
+  "createdAt": "2026-06-15T21:02:54.108Z",
+  "gitCommit": null,
+  "format": "3max",
+  "models": [],
+  "rotation": "cyclic",
+  "deals": 300,
+  "replaysPerDeal": 3,
+  "tags": [
+    "pre-manifest-migration",
+    "calibration"
+  ],
+  "notes": "calibration (cyclic-vs-full residual); agents: tight, loose, aggro",
+  "results": null
+}

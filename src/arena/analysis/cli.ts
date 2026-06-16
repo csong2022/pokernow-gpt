@@ -4,7 +4,11 @@ import path from 'path';
 import { loadHandLogs } from './load.ts';
 import { aggregateByModel, checkIntegrity } from './aggregate.ts';
 import { computeStyleByModel } from './style.ts';
-import { AnalysisReport, ModelSummary, StyleStats } from './types.ts';
+import { AnalysisReport, IntegrityViolation, ModelSummary, StyleStats } from './types.ts';
+import { byFormat, filterRuns, formatsIn, loadManifests } from './manifest-index.ts';
+import type { RunFilter } from './manifest-index.ts';
+import { writeManifest } from '../run-manifest.ts';
+import type { RunFormat, RunResults } from '../run-manifest.ts';
 
 function fmt(n: number, digits = 2): string {
     return Number.isFinite(n) ? n.toFixed(digits) : 'n/a';
@@ -81,17 +85,11 @@ function printReducedTable(models: ModelSummary[]): void {
     );
 }
 
-function main(): void {
-    const args = process.argv.slice(2);
-    const source = args.find((a) => !a.startsWith('--'));
-    if (!source) {
-        console.error('usage: analyze <jsonl-file-or-dir> [--out <dir>]');
-        process.exit(2);
-    }
-    const outIdx = args.indexOf('--out');
-    const outDir = outIdx >= 0 ? args[outIdx + 1] : 'arena-analysis';
-
-    const records = loadHandLogs(source);
+// Analyze one set of records: print the tables, write a JSON report, return the
+// report + integrity violations. Shared by single-path mode and each per-format
+// group in filter mode (which is why it never pools across formats — the caller
+// partitions first).
+function analyzeAndReport(records: ReturnType<typeof loadHandLogs>, source: string, outDir: string): IntegrityViolation[] {
     const violations = checkIntegrity(records);
     const models = aggregateByModel(records);
     const style = computeStyleByModel(records);
@@ -120,9 +118,86 @@ function main(): void {
     mkdirSync(outDir, { recursive: true });
     const outPath = path.join(outDir, `analysis-${Date.now()}.json`);
     writeFileSync(outPath, JSON.stringify(report, null, 2));
-    console.log(`\nWrote machine-readable report -> ${outPath}`);
+    console.log(`Wrote machine-readable report -> ${outPath}`);
+    return violations;
+}
 
-    process.exit(violations.length > 0 ? 1 : 0);
+function resultsFrom(models: ModelSummary[]): RunResults {
+    return {
+        analyzedAt: new Date().toISOString(),
+        models: models.map((m) => ({
+            model: m.model,
+            hands: m.hands,
+            bbPer100: m.bbPer100,
+            ci95HalfWidthBBPer100: m.ci95HalfWidthBBPer100,
+            reducedHalfWidthBBPer100: m.reduced?.ci95HalfWidthBBPer100 ?? null,
+            malformedRate: m.malformedRate,
+        })),
+    };
+}
+
+function getFlag(args: string[], flag: string): string | undefined {
+    const i = args.indexOf(flag);
+    return i >= 0 ? args[i + 1] : undefined;
+}
+
+function main(): void {
+    const args = process.argv.slice(2);
+    const source = args.find((a) => !a.startsWith('--'));
+    const outDir = getFlag(args, '--out') ?? 'arena-analysis';
+    const runsRoot = getFlag(args, '--runs-root') ?? 'arena-runs';
+    const filter: RunFilter = {
+        format: getFlag(args, '--format') as RunFormat | undefined,
+        model: getFlag(args, '--model'),
+        tag: getFlag(args, '--tag'),
+    };
+    const hasFilter = Boolean(filter.format || filter.model || filter.tag);
+
+    // Single-path mode (unchanged): analyze a JSONL file or a directory of them.
+    if (source && !hasFilter) {
+        const violations = analyzeAndReport(loadHandLogs(source), source, outDir);
+        process.exit(violations.length > 0 ? 1 : 0);
+    }
+
+    if (!hasFilter) {
+        console.error('usage: analyze <jsonl-file-or-dir> [--out <dir>]');
+        console.error('   or: analyze --format HU|3max|6max | --tag <tag> | --model <id> [--runs-root <dir>] [--write-results]');
+        process.exit(2);
+    }
+
+    // Filter mode: resolve runs via the manifest index.
+    const runs = filterRuns(loadManifests(runsRoot), filter);
+    if (runs.length === 0) {
+        console.error(`No runs in ${runsRoot} match filter ${JSON.stringify(filter)}.`);
+        process.exit(2);
+    }
+
+    // Never pool incompatible formats: partition and analyze each separately.
+    const formats = formatsIn(runs);
+    if (formats.length > 1) {
+        console.log(`Selection spans ${formats.length} formats (${formats.join(', ')}) — analyzing each separately; HU and 3max bb/100 are NOT pooled.`);
+    }
+    let anyViolation = false;
+    for (const f of formats) {
+        const group = byFormat(runs, f);
+        console.log(`\n===== format ${f}: ${group.length} run(s) =====`);
+        for (const r of group) console.log(`  - ${r.manifest.runId}`);
+        const records = group.flatMap((r) => loadHandLogs(r.handsPath));
+        const violations = analyzeAndReport(records, `filter ${JSON.stringify(filter)} [${f}]`, outDir);
+        if (violations.length > 0) anyViolation = true;
+    }
+
+    // Optionally backfill each selected run's manifest with its OWN results (each run
+    // analyzed independently, so the manifest stays self-describing).
+    if (args.includes('--write-results')) {
+        for (const r of runs) {
+            const models = aggregateByModel(loadHandLogs(r.handsPath));
+            writeManifest(r.dir, { ...r.manifest, results: resultsFrom(models) });
+            console.log(`Backfilled results -> ${r.manifest.runId}/manifest.json`);
+        }
+    }
+
+    process.exit(anyViolation ? 1 : 0);
 }
 
 main();

@@ -1,0 +1,19 @@
+{
+  "runId": "20260616T0308Z-3max-mini-haiku-flash",
+  "createdAt": "2026-06-16T03:08:55.904Z",
+  "gitCommit": null,
+  "format": "3max",
+  "models": [
+    "gpt-5.4-mini",
+    "claude-haiku-4-5",
+    "gemini-3.5-flash"
+  ],
+  "rotation": "full",
+  "deals": 100,
+  "replaysPerDeal": 6,
+  "tags": [
+    "pre-manifest-migration"
+  ],
+  "notes": "",
+  "results": null
+}

@@ -181,6 +181,22 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   cross-replay non-independence matters less than for CIs, but the report says so.
   Imports core types only (+ the core `Action` enum); never the engine — runs with
   the engine off.
+- **Run registry** (`arena-runs/<runId>/{manifest.json,hands.jsonl}`): a run's
+  identity lives in metadata, not its filename. `src/arena/run-manifest.ts` defines
+  the `RunManifest` (runId, createdAt, gitCommit, format, models = **stable registry
+  ids**, rotation, deals, replaysPerDeal, tags, notes, results). The composition
+  root (`arena/index.ts`) creates the dir + manifest at run start (`startRun`) and
+  the runner writes `hands.jsonl` into it (hand-log schema unchanged; runId comes
+  from the directory, not denormalized per row). `src/arena/analysis/manifest-index.ts`
+  is the pure/offline index: `loadManifests` + `byFormat`/`byModel`/`byTag`/`filterRuns`
+  predicates (no DB, no DSL). `analyze` accepts those filters as well as a path;
+  when a selection spans multiple formats it groups per format and **never pools**
+  HU with 3max (a correctness guard), and `--write-results` backfills each run's
+  own `results` into its manifest. **Git split:** `manifest.json` is tracked (the
+  small, versioned record of what was run, self-describing without the data);
+  `arena-runs/**/hands.jsonl` is gitignored (bulky, local). Migrated pre-scheme
+  runs carry a `pre-manifest-migration` tag; stub/calibration runs have `models: []`
+  with the agent labels in `notes`.
 - **Model registry** (`src/config/models.json`, loader `src/core/ai/model-registry.ts`):
   script-managed DATA, not code — **read at runtime via `fs` (never import-baked)**,
   validated loud on load. The stable `id` is the key referenced across the arena
@@ -215,7 +231,8 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   # POSIX: engine-py/.venv/bin/python -m pip install -r engine-py/requirements.txt
   ```
   The client auto-selects `Scripts/python.exe` vs `bin/python` by platform. The
-  venv and `arena-logs/` are gitignored.
+  venv, `arena-logs/`, `arena-analysis/`, and `arena-runs/**/hands.jsonl` are
+  gitignored (run `manifest.json`s are tracked).
 - **Out of scope (so far):** GTO/EV-loss scoring, ranking systems, feeding
   opponent stats back into arena agent decisions (the deliberate exploitation
   experiment — left as a `HandContextBuilder` swap), concurrency, durable runs.
@@ -233,8 +250,11 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   `npm run update-models`
 - Run the arena (duplicate-deck variance reduction; `--rotation cyclic|full`, default cyclic):
   `npx tsx src/arena/index.ts --duplicate --deals 50 --players 3 --rotation full`
-- Analyze logs (offline; engine not needed):
-  `npm run analyze arena-logs/<file-or-dir>.jsonl`
+  (tag/annotate a run: `--tag hypothesis-test --notes "..."`)
+- Analyze logs (offline; engine not needed) — single path OR manifest filter:
+  `npm run analyze arena-runs/<run_id>/hands.jsonl` (or any `.jsonl`/dir), or
+  `npm run analyze -- --format HU --tag kaggle-validation [--write-results]`
+  (filter spans multiple formats → grouped per format, never pooled)
 - Calibrate the cyclic-vs-full residual with deterministic agents:
   `npm run calibrate` (`CAL_DEALS=300`)
 - Tests: `npm test` (Mocha, specs in `test/unit/*.spec.ts`; `pretest` runs the
