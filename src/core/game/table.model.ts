@@ -15,6 +15,19 @@ export class Table {
     private runout: string;
     private street: string;
 
+    // Hero's betting context for the current decision (in BB), supplied by the
+    // environment's state builder. null when not provided (e.g. live until wired,
+    // or no legal raise) — query-construction omits the corresponding prompt line.
+    private amount_to_call: number | null;
+    private min_raise_to: number | null;
+    private max_raise_to: number | null;
+    // Live per-id stacks (BB) for the CURRENT decision (vs id_to_initial_stacks at
+    // hand start). null until a state builder supplies it; omitted from the prompt.
+    private current_stacks: Map<string, number> | null;
+    // Ids of players who have NOT folded this hand (in seat order). null until a
+    // state builder supplies it; omitted from the prompt.
+    private live_player_ids: string[] | null;
+
     private logs_queue: Queue<Array<string>>;
     private player_actions: Array<PlayerAction>;
     
@@ -44,6 +57,11 @@ export class Table {
         this.pot_size_in_BBs = 0;
         this.runout = "";
         this.street = "";
+        this.amount_to_call = null;
+        this.min_raise_to = null;
+        this.max_raise_to = null;
+        this.current_stacks = null;
+        this.live_player_ids = null;
 
         this.logs_queue = new Queue();
         this.player_actions = new Array<PlayerAction>;
@@ -88,6 +106,35 @@ export class Table {
     }
     public setPot(pot: number): void {
         this.pot_size_in_BBs = pot;
+    }
+
+    // Hero's current-decision betting context (BB). Amounts are TOTALs to match the
+    // prompt's bet-sizing convention; null means "not provided / not applicable".
+    public setBettingContext(amount_to_call: number | null, min_raise_to: number | null, max_raise_to: number | null): void {
+        this.amount_to_call = amount_to_call;
+        this.min_raise_to = min_raise_to;
+        this.max_raise_to = max_raise_to;
+    }
+    public getAmountToCall(): number | null {
+        return this.amount_to_call;
+    }
+    public getMinRaiseTo(): number | null {
+        return this.min_raise_to;
+    }
+    public getMaxRaiseTo(): number | null {
+        return this.max_raise_to;
+    }
+    public setCurrentStacks(stacks: Map<string, number>): void {
+        this.current_stacks = stacks;
+    }
+    public getCurrentStacks(): Map<string, number> | null {
+        return this.current_stacks;
+    }
+    public setLivePlayers(player_ids: string[]): void {
+        this.live_player_ids = player_ids;
+    }
+    public getLivePlayers(): string[] | null {
+        return this.live_player_ids;
     }
 
 
@@ -413,6 +460,11 @@ export class Table {
         this.pot_size_in_BBs = 0;
         this.runout = "";
         this.street = "";
+        this.amount_to_call = null;
+        this.min_raise_to = null;
+        this.max_raise_to = null;
+        this.current_stacks = null;
+        this.live_player_ids = null;
 
         this.logs_queue = new Queue<string[]>();
         this.player_actions = new Array<PlayerAction>();

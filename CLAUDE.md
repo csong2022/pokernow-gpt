@@ -65,6 +65,17 @@ identical replays, and cross-run comparability needs bb/100 attributable to the
 model, not to adaptation. A future opponent-aware arena arm (the deliberate
 exploitation experiment) is a builder swap, not a flag.
 
+Per-decision betting context — exact amount-to-call, legal raise band (min/max
+total), live opponent stacks, and the live-players list — is engine-provided info
+the prompt surfaces so the model isn't left inferring it. It rides in on `Table`
+setters (`setBettingContext`, `setCurrentStacks`, `setLivePlayers`) that the
+environment's state builder populates; the arena's `state-mapper` fills them from
+the engine's `legal_actions`/`stacks`/folds. They're **additive and nullable** —
+`query-construction` omits each line when unset, so the live path (which doesn't
+set them yet) produces byte-identical prompts to before. The pre-query pacing
+delay is injectable on `DecisionEngine` (live keeps 2s to look human at the
+PokerNow table; the arena passes 0).
+
 ## Enforcement
 
 A lightweight checker (`scripts/check-boundaries.ts`, no ESLint — runs on the

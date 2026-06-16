@@ -55,10 +55,51 @@ export function constructTurnUpdate(game: Game): string {
         defineCommunityCards(street, runout),
     ];
 
+    const hero_id = game.getHero()!.getPlayerId();
+    const positions = table.getPlayerPositions();
+    const live_players = table.getLivePlayers();
+    const live_set = live_players ? new Set(live_players) : null;
+
+    // Opponents' CURRENT stacks (BB) when supplied, for effective-stack reasoning
+    // (live opponents only). Omitted when the environment doesn't provide them.
+    const current_stacks = table.getCurrentStacks();
+    if (current_stacks) {
+        const entries: string[] = [];
+        for (const player_id of positions.keys()) {
+            if (player_id === hero_id) continue;
+            if (live_set && !live_set.has(player_id)) continue; // skip folded players
+            const stack = current_stacks.get(player_id);
+            if (stack != null) entries.push(`${positions.get(player_id)}: ${stack} BB`);
+        }
+        if (entries.length > 0) sections.push(`Opponent stacks now: {${entries.join(", ")}}`);
+    }
+
+    // Who's still in the hand — only meaningful with 3+ players (HU is implied).
+    if (live_players && table.getNumPlayers() > 2) {
+        const labels = live_players.map((id) => positions.get(id)).filter((p): p is string => p != null);
+        if (labels.length > 0) sections.push(`Players still in the hand: ${labels.join(", ")}.`);
+    }
+
     const rank_query = defineRank(street, runout, hero_cards);
     if (rank_query) sections.push(rank_query);
 
     sections.push(defineActions(player_actions, table));
+
+    // Surface the exact amount to call when the environment provides it (omitted
+    // otherwise, e.g. live until wired, so those prompts stay unchanged).
+    const amount_to_call = table.getAmountToCall();
+    if (amount_to_call != null && amount_to_call > 0) {
+        sections.push(`To call: ${amount_to_call} BB.`);
+    }
+
+    // Legal raise band (TOTAL bet sizes, in BB) when raising is allowed — so the
+    // model picks a legal size instead of guessing and getting clamped.
+    const min_raise_to = table.getMinRaiseTo();
+    const max_raise_to = table.getMaxRaiseTo();
+    if (min_raise_to != null && max_raise_to != null) {
+        sections.push(`If raising, the total must be between ${min_raise_to} and ${max_raise_to} BB.`);
+    }
+
     sections.push("What's my action?");
 
     return sections.join('\n');

@@ -73,6 +73,31 @@ export async function mapStateView(
     table.setRunout(view.board.map(toCoreCard).join(' '));
     table.setPot(toBB(view.total_pot));
 
+    // Hero's betting context for this decision, straight from the engine's legal
+    // actions (amounts are totals, in BB). Lets query-construction state the exact
+    // to-call / legal raise band instead of making the model infer them.
+    const la = view.legal_actions;
+    if (la) {
+        table.setBettingContext(
+            la.check_call ? toBB(la.check_call_amount) : null,
+            la.raise && la.min != null ? toBB(la.min) : null,
+            la.raise && la.max != null ? toBB(la.max) : null,
+        );
+    }
+
+    // Current per-seat stacks (BB) so the turn update can show opponents' live
+    // stacks (effective-stack reasoning), not just their hand-start stacks.
+    const currentStacks = new Map<string, number>();
+    for (let seat = 0; seat < view.player_count; seat++) currentStacks.set(seatId(seat), toBB(view.stacks[seat]));
+    table.setCurrentStacks(currentStacks);
+
+    // Players still in the hand = those who haven't folded (multiway awareness).
+    const folded = new Set<number>();
+    for (const entry of view.actions) if (entry.type === 'folds') folded.add(entry.seat);
+    const live: string[] = [];
+    for (let seat = 0; seat < view.player_count; seat++) if (!folded.has(seat)) live.push(seatId(seat));
+    table.setLivePlayers(live);
+
     const currentStreet = view.street_index ?? 0;
     for (const entry of view.actions) {
         if (entry.street_index !== currentStreet) continue;

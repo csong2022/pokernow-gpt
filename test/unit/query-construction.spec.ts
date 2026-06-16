@@ -2,7 +2,8 @@
 import { expect } from "chai";
 
 import { Game } from "../../src/core/game/game.model.ts";
-import { constructHandSetup } from "../../src/core/poker/query-construction.helper.ts";
+import { Table } from "../../src/core/game/table.model.ts";
+import { constructHandSetup, constructTurnUpdate } from "../../src/core/poker/query-construction.helper.ts";
 import type { HandContextBuilder } from "../../src/core/poker/hand-context-builder.interface.ts";
 import { mapStateView } from "../../src/arena/state-mapper.ts";
 import { InMemoryPlayerStatsRepository } from "../../src/arena/player-stats.repository.ts";
@@ -80,3 +81,93 @@ describe("query-construction context-builder seam", () => {
         expect(oppIdx).to.be.lessThan(instrIdx);
     });
 });
+
+describe("constructTurnUpdate betting context (amount-to-call)", () => {
+    // big_blind = 2 chips, so toBB = chips / 2.
+    const legal = (extra: any) => ({ fold: true, check_call: true, check_call_amount: 0, raise: true, min: 8, max: 200, ...extra });
+    const viewWith = (la: any): any => ({ ...view(), legal_actions: la });
+    const repo = () => new InMemoryPlayerStatsRepository();
+
+    it("states the exact amount to call when the environment supplies it", async () => {
+        const game = await mapStateView(viewWith(legal({ check_call_amount: 4 })), 0, repo()); // 4 chips / 2 = 2 BB
+        expect(constructTurnUpdate(game)).to.contain("To call: 2 BB.");
+    });
+
+    it("states the legal raise band (min/max total) when raising is allowed", async () => {
+        const game = await mapStateView(viewWith(legal({ check_call_amount: 4, min: 8, max: 200 })), 0, repo());
+        // 8/2=4, 200/2=100
+        expect(constructTurnUpdate(game)).to.contain("If raising, the total must be between 4 and 100 BB.");
+    });
+
+    it("omits the raise band when raising is illegal", async () => {
+        const game = await mapStateView(viewWith(legal({ raise: false, min: null, max: null })), 0, repo());
+        expect(constructTurnUpdate(game)).to.not.contain("If raising");
+    });
+
+    it("omits the to-call line when facing no bet (check spot)", async () => {
+        const game = await mapStateView(viewWith(legal({ check_call_amount: 0 })), 0, repo());
+        expect(constructTurnUpdate(game)).to.not.contain("To call:");
+    });
+
+    it("shows opponents' current stacks when supplied (arena)", async () => {
+        // hero seat0 has 198 chips, opp seat1 has 190 -> 99 / 95 BB
+        const v = { ...viewWith(legal({ check_call_amount: 4 })), stacks: [198, 190] };
+        const game = await mapStateView(v, 0, repo());
+        const out = constructTurnUpdate(game);
+        const oppPos = game.getTable().getPlayerPositionFromId("1");
+        expect(out).to.contain(`Opponent stacks now: {${oppPos}: 95 BB}`);
+        expect(out).to.not.contain("Players still in"); // HU: not shown (implied)
+    });
+
+    it("3-max: lists live players and excludes folded opponents from stacks", async () => {
+        const v3: any = {
+            game_id: "t3", street_index: 0, actor_index: 2, player_count: 3, button: 2, sb_index: 0, bb_index: 1,
+            small_blind: 1, big_blind: 2, stacks: [198, 200, 200], board: [], hole_cards: [["Ah", "Kh"], ["2c", "2d"], ["Qs", "Js"]],
+            starting_stacks: [200, 200, 200], total_pot: 3,
+            legal_actions: legal({ check_call_amount: 2 }),
+            actions: [{ seat: 1, type: "folds", amount: 0, street_index: 0 }], // BB folded
+        };
+        const game = await mapStateView(v3, 2, repo()); // hero = seat2 (BU)
+        const out = constructTurnUpdate(game);
+        expect(out).to.contain("Players still in the hand: SB, BU.");      // BB folded out
+        expect(out).to.contain("Opponent stacks now: {SB: 99 BB}");        // live opp only
+        expect(out).to.not.contain("BB:");                                  // folded opp excluded
+    });
+
+    it("omits betting context AND opponent stacks when none is provided (live path, unchanged)", async () => {
+        // Build the Table the way the LIVE state-builder does — it never calls the
+        // new setBettingContext/setCurrentStacks — so the new prompt lines are absent.
+        const game = await liveLikeGame();
+        const t = game.getTable();
+        expect(t.getAmountToCall()).to.equal(null);
+        expect(t.getMinRaiseTo()).to.equal(null);
+        expect(t.getCurrentStacks()).to.equal(null);
+        expect(t.getLivePlayers()).to.equal(null);
+        const out = constructTurnUpdate(game);
+        expect(out).to.not.contain("To call:");
+        expect(out).to.not.contain("If raising");
+        expect(out).to.not.contain("Opponent stacks now:");
+        expect(out).to.not.contain("Players still in");
+    });
+});
+
+// Builds a HU Game the way live does (names/positions/initial stacks/pot/hero) but
+// WITHOUT the new betting-context / current-stack setters — the live path today.
+async function liveLikeGame(): Promise<Game> {
+    const table = new Table(new InMemoryPlayerStatsRepository());
+    table.setNumPlayers(2);
+    table.setIdToName(new Map([["0", "Seat0"], ["1", "Seat1"]]));
+    table.setNameToId(new Map([["Seat0", "0"], ["Seat1", "1"]]));
+    table.setIdToTableSeat(new Map([["0", 1], ["1", 2]]));
+    table.setTableSeatToId(new Map([[1, "0"], [2, "1"]]));
+    table.setIdToStack(new Map([["0", 100], ["1", 100]]));
+    await table.updateCache();
+    table.setIdToPosition(1);
+    table.convertAllOrdersToPosition();
+    table.setStreet("");
+    table.setPot(3);
+    table.setRunout("");
+    const game = new Game("t", table, 1, 0.5, "No Limit Hold'em", 0);
+    game.createAndSetHero("0", ["Ah", "Kh"], 100);
+    return game;
+}

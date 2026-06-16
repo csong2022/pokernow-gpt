@@ -87,7 +87,7 @@ export class LLMAgent implements Agent {
         this.ai.setBotName(`Seat${seat}`);
         const logger = new Logger(`arena-${seat}`, aiConfig.model_name);
         this.state = new HandState(`arena-${seat}`, aiConfig.provider, aiConfig.model_name, gameId);
-        this.engine = new DecisionEngine(this.ai, this.availability, new NoOpponentContext(), this.state, logger, queryRetries);
+        this.engine = new DecisionEngine(this.ai, this.availability, new NoOpponentContext(), this.state, logger, queryRetries, 0);
         this.name = `${aiConfig.provider}:${aiConfig.model_name}#${seat}`;
     }
 

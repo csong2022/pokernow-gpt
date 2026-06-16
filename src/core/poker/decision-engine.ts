@@ -18,6 +18,9 @@ export class DecisionEngine {
         private state: HandState,
         private logger: Logger,
         private query_retries: number,
+        // Pause before each query. Live keeps human-like pacing (avoids PokerNow
+        // flagging instant actions); the arena has no table, so it passes 0.
+        private query_delay_ms: number = 2000,
     ) {}
 
     async decide(game: Game): Promise<BotAction> {
@@ -41,7 +44,7 @@ export class DecisionEngine {
             return fallback;
         }
         try {
-            await sleep(2000);
+            if (this.query_delay_ms > 0) await sleep(this.query_delay_ms);
             const action = await this.ai.query(query);
             if (await this.isValidBotAction(action)) {
                 return action;
