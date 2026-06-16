@@ -171,7 +171,9 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
 - **Analysis** (`src/arena/analysis/`, pure offline pass over the JSONL):
   `npm run analyze <file|dir>` prints per-model bb/100, mbb/hand, 95% CI, net bb,
   malformed rate, runs integrity guards (chip conservation, seat→model, …), and
-  writes a JSON report to `arena-analysis/`. For duplicate runs it adds a
+  writes a JSON report. A single run's report lands in its run dir
+  (`arena-runs/<runId>/analysis.json`, gitignored); only multi-run/filter reports
+  go to the flat `arena-analysis/`. For duplicate runs it adds a
   variance-reduced table (same point estimate, tighter CI; reduction is exact
   only for deterministic strategies — LLM temperature leaves residual decision
   noise). It also prints a per-model **style table** (`style.ts`): VPIP / PFR /
@@ -192,9 +194,12 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   predicates (no DB, no DSL). `analyze` accepts those filters as well as a path;
   when a selection spans multiple formats it groups per format and **never pools**
   HU with 3max (a correctness guard), and `--write-results` backfills each run's
-  own `results` into its manifest. **Git split:** `manifest.json` is tracked (the
-  small, versioned record of what was run, self-describing without the data);
-  `arena-runs/**/hands.jsonl` is gitignored (bulky, local). Migrated pre-scheme
+  own `results` into its manifest. A single-run analysis (single-path at a run, or
+  a filter resolving to one run) writes its full report to
+  `arena-runs/<runId>/analysis.json`; multi-run reports go to flat `arena-analysis/`.
+  **Git split:** `manifest.json` is tracked (the small, versioned record of what
+  was run, self-describing without the data); the bulky/derived per-run artifacts
+  (`arena-runs/**/hands.jsonl`, `arena-runs/**/analysis.json`) are gitignored. Migrated pre-scheme
   runs carry a `pre-manifest-migration` tag; stub/calibration runs have `models: []`
   with the agent labels in `notes`.
 - **Model registry** (`src/config/models.json`, loader `src/core/ai/model-registry.ts`):
@@ -231,8 +236,9 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   # POSIX: engine-py/.venv/bin/python -m pip install -r engine-py/requirements.txt
   ```
   The client auto-selects `Scripts/python.exe` vs `bin/python` by platform. The
-  venv, `arena-logs/`, `arena-analysis/`, and `arena-runs/**/hands.jsonl` are
-  gitignored (run `manifest.json`s are tracked).
+  venv, `arena-analysis/`, and the derived per-run artifacts
+  (`arena-runs/**/hands.jsonl`, `arena-runs/**/analysis.json`) are gitignored (run
+  `manifest.json`s are tracked). (`arena-logs/` is retired.)
 - **Out of scope (so far):** GTO/EV-loss scoring, ranking systems, feeding
   opponent stats back into arena agent decisions (the deliberate exploitation
   experiment — left as a `HandContextBuilder` swap), concurrency, durable runs.

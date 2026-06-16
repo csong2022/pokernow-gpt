@@ -93,7 +93,7 @@ async function fetchAnthropic(): Promise<RawModel[]> {
 }
 
 const PROVIDERS: ProviderSpec[] = [
-    { provider: 'OpenAI', keep: (id) => /^gpt-5\.\d/.test(id) && !/codex/.test(id), fetch: fetchOpenAI },
+    { provider: 'OpenAI', keep: (id) => (/^gpt-5\.\d/.test(id) || /^o3(-\d{4}-\d{2}-\d{2})?$/.test(id)) && !/codex/.test(id), fetch: fetchOpenAI },
     { provider: 'Google', keep: (id) => /^gemini-3/.test(id) && !/(image|tts|live|translate|customtools)/.test(id), fetch: fetchGoogle },
     { provider: 'Anthropic', keep: (id) => /^claude-(opus|sonnet|haiku)-4/.test(id), fetch: fetchAnthropic },
 ];

@@ -140,11 +140,11 @@ dist
 
 # arena Python engine venv + generated hand logs
 engine-py/.venv/
-arena-logs/
 arena-analysis/
 # arena run registry: track the small, queryable manifests (the record of what was
-# run) but ignore the bulky per-run hand logs.
+# run) but ignore the bulky/derived per-run artifacts (hand logs + analysis report).
 arena-runs/**/hands.jsonl
+arena-runs/**/analysis.json
 __pycache__/
 *.pyc
 

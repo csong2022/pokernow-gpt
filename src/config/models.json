@@ -275,6 +275,17 @@
       "outputCostPer1M": 0,
       "addedAt": "2026-06-15",
       "deprecated": false
+    },
+    {
+      "id": "o3",
+      "provider": "OpenAI",
+      "apiModelString": "o3",
+      "displayName": "o3",
+      "reasoning": "medium",
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-06-16",
+      "deprecated": false
     }
   ]
 }

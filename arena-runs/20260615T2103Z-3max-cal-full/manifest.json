@@ -12,5 +12,33 @@
     "calibration"
   ],
   "notes": "calibration (cyclic-vs-full residual); agents: tight, loose, aggro",
-  "results": null
+  "results": {
+    "analyzedAt": "2026-06-16T04:10:30.019Z",
+    "models": [
+      {
+        "model": "aggro",
+        "hands": 1800,
+        "bbPer100": 156.80555555555554,
+        "ci95HalfWidthBBPer100": 355.98025318311454,
+        "reducedHalfWidthBBPer100": 153.528828676824,
+        "malformedRate": 0.5771487472248652
+      },
+      {
+        "model": "tight",
+        "hands": 1800,
+        "bbPer100": 115.19444444444444,
+        "ci95HalfWidthBBPer100": 313.5630513586872,
+        "reducedHalfWidthBBPer100": 242.84761714912153,
+        "malformedRate": 0.33489361702127657
+      },
+      {
+        "model": "loose",
+        "hands": 1800,
+        "bbPer100": -272,
+        "ci95HalfWidthBBPer100": 353.67007487511574,
+        "reducedHalfWidthBBPer100": 241.05397080370378,
+        "malformedRate": 0.55818235380763
+      }
+    ]
+  }
 }

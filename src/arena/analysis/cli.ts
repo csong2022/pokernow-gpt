@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'fs';
 import path from 'path';
 
 import { loadHandLogs } from './load.ts';
@@ -8,7 +8,7 @@ import { AnalysisReport, IntegrityViolation, ModelSummary, StyleStats } from './
 import { byFormat, filterRuns, formatsIn, loadManifests } from './manifest-index.ts';
 import type { RunFilter } from './manifest-index.ts';
 import { writeManifest } from '../run-manifest.ts';
-import type { RunFormat, RunResults } from '../run-manifest.ts';
+import type { RunFormat, RunManifest, RunResults } from '../run-manifest.ts';
 
 function fmt(n: number, digits = 2): string {
     return Number.isFinite(n) ? n.toFixed(digits) : 'n/a';
@@ -89,7 +89,7 @@ function printReducedTable(models: ModelSummary[]): void {
 // report + integrity violations. Shared by single-path mode and each per-format
 // group in filter mode (which is why it never pools across formats — the caller
 // partitions first).
-function analyzeAndReport(records: ReturnType<typeof loadHandLogs>, source: string, outDir: string): IntegrityViolation[] {
+function analyzeAndReport(records: ReturnType<typeof loadHandLogs>, source: string, reportPath: string): IntegrityViolation[] {
     const violations = checkIntegrity(records);
     const models = aggregateByModel(records);
     const style = computeStyleByModel(records);
@@ -115,11 +115,19 @@ function analyzeAndReport(records: ReturnType<typeof loadHandLogs>, source: stri
         console.log('\nIntegrity: OK (chip conservation, seat->model, hand count, big_blind>0).');
     }
 
-    mkdirSync(outDir, { recursive: true });
-    const outPath = path.join(outDir, `analysis-${Date.now()}.json`);
-    writeFileSync(outPath, JSON.stringify(report, null, 2));
-    console.log(`Wrote machine-readable report -> ${outPath}`);
+    mkdirSync(path.dirname(reportPath), { recursive: true });
+    writeFileSync(reportPath, JSON.stringify(report, null, 2));
+    console.log(`Wrote machine-readable report -> ${reportPath}`);
     return violations;
+}
+
+// Resolve a source path to its run directory (the dir holding manifest.json), or
+// null if the source isn't inside a run. Lets single-run analysis drop its report
+// into the run dir (like manifest.json/hands.jsonl) instead of a flat side-dump.
+function runDirOf(p: string): string | null {
+    if (!existsSync(p)) return null;
+    const dir = statSync(p).isDirectory() ? p : path.dirname(p);
+    return existsSync(path.join(dir, 'manifest.json')) ? dir : null;
 }
 
 function resultsFrom(models: ModelSummary[]): RunResults {
@@ -153,9 +161,21 @@ function main(): void {
     };
     const hasFilter = Boolean(filter.format || filter.model || filter.tag);
 
-    // Single-path mode (unchanged): analyze a JSONL file or a directory of them.
+    // Single-path mode: analyze a JSONL file or a directory of them. A run's report
+    // lands inside its run dir (arena-runs/<id>/analysis.json); anything else goes
+    // to the flat outDir.
     if (source && !hasFilter) {
-        const violations = analyzeAndReport(loadHandLogs(source), source, outDir);
+        const runDir = runDirOf(source);
+        const reportPath = runDir ? path.join(runDir, 'analysis.json') : path.join(outDir, `analysis-${Date.now()}.json`);
+        const records = loadHandLogs(source);
+        const violations = analyzeAndReport(records, source, reportPath);
+        // When the source is a run, --write-results also backfills its manifest with
+        // its own summary results (no pooling, no flat side-report).
+        if (runDir && args.includes('--write-results')) {
+            const manifest = JSON.parse(readFileSync(path.join(runDir, 'manifest.json'), 'utf8')) as RunManifest;
+            writeManifest(runDir, { ...manifest, results: resultsFrom(aggregateByModel(records)) });
+            console.log(`Backfilled results -> ${path.basename(runDir)}/manifest.json`);
+        }
         process.exit(violations.length > 0 ? 1 : 0);
     }
 
@@ -183,7 +203,12 @@ function main(): void {
         console.log(`\n===== format ${f}: ${group.length} run(s) =====`);
         for (const r of group) console.log(`  - ${r.manifest.runId}`);
         const records = group.flatMap((r) => loadHandLogs(r.handsPath));
-        const violations = analyzeAndReport(records, `filter ${JSON.stringify(filter)} [${f}]`, outDir);
+        // A single-run group writes into that run's dir; a multi-run group is a
+        // cross-run report with no single home, so it goes to the flat outDir.
+        const reportPath = group.length === 1
+            ? path.join(group[0].dir, 'analysis.json')
+            : path.join(outDir, `analysis-${f}-${Date.now()}.json`);
+        const violations = analyzeAndReport(records, `filter ${JSON.stringify(filter)} [${f}]`, reportPath);
         if (violations.length > 0) anyViolation = true;
     }
 
