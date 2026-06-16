@@ -210,6 +210,19 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   cross-replay non-independence matters less than for CIs, but the report says so.
   Imports core types only (+ the core `Action` enum); never the engine — runs with
   the engine off.
+- **Bradley-Terry ranking** (`bradley-terry.ts`, reported ALONGSIDE bb/100):
+  Kaggle-comparable FREQUENCY statistic. Reduction unit = the HAND: per hand,
+  group chip `deltas` by `modelIdOf` (a model in two seats contributes the SUM of
+  its seats; a model vs itself yields no pair), then compare every distinct pair —
+  higher total delta wins, equal = draw (a 3-max hand → 3 pairwise outcomes, which
+  are NOT independent — kingmaking — so independence is handled in the CI). Fit is
+  a hand-rolled L2-penalized MLE (gradient ascent, draws = half-credit, betas
+  centered to mean 0), scaled to Elo `R = 1000 + 400/ln10·beta`. CIs come from a
+  **deal-level bootstrap** (resample `deal_id` blocks with replacement, refit;
+  per-hand only for plain runs, noted) — wider but honest vs resampling correlated
+  replays. NEVER pools HU with 3-max (fit per format, same guard as bb/100).
+  bb/100 (margin) and BT (frequency) can DIVERGE — a model can win more hands yet
+  lose chips — and that divergence is the point of reporting both.
 - **Run registry** (`arena-runs/<runId>/{manifest.json,hands.jsonl}`): a run's
   identity lives in metadata, not its filename. `src/arena/run-manifest.ts` defines
   the `RunManifest` (runId, createdAt, gitCommit, format, models = **stable registry

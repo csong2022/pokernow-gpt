@@ -122,11 +122,31 @@ export interface IntegrityViolation {
     detail: string;
 }
 
+// Bradley-Terry ranking (frequency statistic) — see bradley-terry.ts.
+export interface BTModel {
+    model: string;
+    rating: number;                              // Elo-scaled (1000 + 400/ln10 * beta)
+    beta: number;                                // raw centered strength
+    ci95: { low: number; high: number } | null;  // Elo-scaled deal-level bootstrap CI
+    wins: number;
+    losses: number;
+    draws: number;
+    nComparisons: number;                        // pairwise comparisons involving this model
+}
+
+export interface BTRanking {
+    models: BTModel[];                  // sorted by rating desc
+    nComparisons: number;
+    nDeals: number;
+    bootstrapUnit: 'deal' | 'hand';     // 'hand' only for plain runs without deal_id
+}
+
 export interface AnalysisReport {
     generatedAt: string;
     source: string;
     handCount: number;
     models: ModelSummary[];
     style: StyleStats[];
+    bradleyTerry: BTRanking;       // frequency-based ranking, alongside bb/100 (margin)
     integrity: { ok: boolean; violations: IntegrityViolation[] };
 }

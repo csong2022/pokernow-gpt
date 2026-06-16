@@ -4,7 +4,8 @@ import path from 'path';
 import { loadHandLogs } from './load.ts';
 import { aggregateByModel, checkIntegrity } from './aggregate.ts';
 import { computeStyleByModel } from './style.ts';
-import { AnalysisReport, IntegrityViolation, ModelSummary, StyleStats } from './types.ts';
+import { rankBradleyTerry } from './bradley-terry.ts';
+import { AnalysisReport, BTRanking, IntegrityViolation, ModelSummary, StyleStats } from './types.ts';
 import { byFormat, filterRuns, formatsIn, loadManifests } from './manifest-index.ts';
 import type { RunFilter } from './manifest-index.ts';
 import { writeManifest } from '../run-manifest.ts';
@@ -80,6 +81,23 @@ function printDecisionEvents(models: ModelSummary[]): void {
     );
 }
 
+// Bradley-Terry ranking (frequency) — shown next to bb/100 (margin) so agreement
+// vs divergence between the two is visible.
+function printBTTable(bt: BTRanking): void {
+    console.log(`\nBradley-Terry ranking (pairwise win/loss by hand; ${bt.nComparisons} comparisons over ${bt.nDeals} ${bt.bootstrapUnit}s):`);
+    table(
+        ['model', 'BT rating', `95% CI (${bt.bootstrapUnit}-bootstrap)`, 'beta', 'W-L-D', 'n'],
+        bt.models.map((m) => [
+            m.model,
+            fmt(m.rating, 0),
+            m.ci95 ? `[${fmt(m.ci95.low, 0)}, ${fmt(m.ci95.high, 0)}]` : 'n/a',
+            fmt(m.beta, 3),
+            `${m.wins}-${m.losses}-${m.draws}`,
+            String(m.nComparisons),
+        ]),
+    );
+}
+
 // Raw vs duplicate-deck-reduced CI, shown only for duplicate runs.
 function printReducedTable(models: ModelSummary[]): void {
     const withReduced = models.filter((s) => s.reduced);
@@ -111,6 +129,7 @@ function analyzeAndReport(records: ReturnType<typeof loadHandLogs>, source: stri
     const violations = checkIntegrity(records);
     const models = aggregateByModel(records);
     const style = computeStyleByModel(records);
+    const bradleyTerry = rankBradleyTerry(records);
 
     const report: AnalysisReport = {
         generatedAt: new Date().toISOString(),
@@ -118,12 +137,14 @@ function analyzeAndReport(records: ReturnType<typeof loadHandLogs>, source: stri
         handCount: records.length,
         models,
         style,
+        bradleyTerry,
         integrity: { ok: violations.length === 0, violations },
     };
 
     console.log(`\nAnalyzed ${records.length} hands from ${source}\n`);
     printTable(models);
     printReducedTable(models);
+    printBTTable(bradleyTerry);
     printStyleTable(style);
     printDecisionEvents(models);
 

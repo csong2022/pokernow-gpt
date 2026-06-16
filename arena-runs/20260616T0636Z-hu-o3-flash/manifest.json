@@ -1,0 +1,38 @@
+{
+  "createdAt": "2026-06-16T06:36:55.680Z",
+  "gitCommit": "4657724",
+  "format": "HU",
+  "models": [
+    "o3",
+    "gemini-3-flash-preview"
+  ],
+  "rotation": "full",
+  "deals": 100,
+  "replaysPerDeal": 2,
+  "tags": [
+    "hypothesis-test"
+  ],
+  "notes": "o3 vs gemini-3-flash-preview, 100 deals HU, reasoning regime; rotation full≡cyclic at HU",
+  "results": {
+    "analyzedAt": "2026-06-16T08:53:54.313Z",
+    "models": [
+      {
+        "model": "Google:gemini-3-flash-preview",
+        "hands": 200,
+        "bbPer100": 23,
+        "ci95HalfWidthBBPer100": 114.35808509296861,
+        "reducedHalfWidthBBPer100": 109.69935193127363,
+        "malformedRate": 0
+      },
+      {
+        "model": "OpenAI:o3",
+        "hands": 200,
+        "bbPer100": -23,
+        "ci95HalfWidthBBPer100": 114.35808509296861,
+        "reducedHalfWidthBBPer100": 109.69935193127363,
+        "malformedRate": 0
+      }
+    ]
+  },
+  "runId": "20260616T0636Z-hu-o3-flash"
+}
