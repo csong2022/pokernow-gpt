@@ -7,6 +7,7 @@ import { PlayerStatsRepository } from '../core/player/playerstats-repository.int
 import { Agent } from './agent.ts';
 import { MalformedEvent, resolveAction } from './action-policy.ts';
 import { HandLog } from './hand-log.ts';
+import type { DecisionLog } from './analysis/types.ts';
 
 export interface RunOptions {
     client: PokerKitClient;
@@ -22,6 +23,7 @@ export interface HandPlayResult {
     malformed: MalformedEvent[];
     resolved: Array<{ seat: number; desired: unknown; engineAction: unknown }>;
     decisionEvents: Array<{ seat: number; kind: string }>;
+    decisions: DecisionLog[];
 }
 
 const MAX_STEPS_PER_HAND = 1000; // safety valve against an engine/agent stall
@@ -39,6 +41,7 @@ export async function playDecisionLoop(
     const malformed: MalformedEvent[] = [];
     const resolved: HandPlayResult['resolved'] = [];
     const decisionEvents: HandPlayResult['decisionEvents'] = [];
+    const decisions: DecisionLog[] = [];
 
     let steps = 0;
     while (!view.hand_over && steps < MAX_STEPS_PER_HAND) {
@@ -56,9 +59,26 @@ export async function playDecisionLoop(
         const r = resolveAction(seat, desired, view.legal_actions, view.big_blind);
         if (r.malformed) malformed.push(r.malformed);
         resolved.push({ seat, desired, engineAction: r.engineAction });
+
+        // Full replay trace for this decision: the engine's prompt/raw/parsed/events
+        // (LLM agents only) plus any clamp from resolveAction, tagged with seat/model/street.
+        const clampEvents = r.malformed ? [{ kind: 'clamp', reason: r.malformed.reason }] : [];
+        const traces = agent.drainDecisions ? agent.drainDecisions() : [];
+        for (const t of traces) {
+            decisions.push({
+                seat,
+                model_id: agent.name.replace(/#\d+$/, ''),
+                street: view.street_index,
+                prompt: t.prompt,
+                raw_response: t.raw_response,
+                parsed_action: t.parsed_action,
+                events: [...t.events.map((kind) => ({ kind })), ...clampEvents],
+            });
+        }
+
         view = await env.applyAction(r.engineAction);
     }
-    return { view, malformed, resolved, decisionEvents };
+    return { view, malformed, resolved, decisionEvents, decisions };
 }
 
 // Plain sequential runner: N independent hands (random decks).
@@ -73,7 +93,7 @@ export async function runHands(opts: RunOptions): Promise<void> {
     for (let hand = 0; hand < hands; hand++) {
         agents.forEach((a) => a.startHand());
         const first = await env.startHand();
-        const { malformed, resolved, decisionEvents } = await playDecisionLoop(env, first, agents, repo);
+        const { malformed, resolved, decisionEvents, decisions } = await playDecisionLoop(env, first, agents, repo);
         const sd = await env.showdown();
         log.write({
             hand,
@@ -86,6 +106,7 @@ export async function runHands(opts: RunOptions): Promise<void> {
             resolved_actions: resolved,
             malformed_events: malformed,
             decision_events: decisionEvents,
+            decisions,
         });
     }
 

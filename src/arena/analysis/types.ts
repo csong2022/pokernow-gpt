@@ -21,6 +21,23 @@ export interface DecisionEventEntry {
     kind: string;
 }
 
+// Full record-only trace of one decision, for offline replay / a future visualizer.
+// raw_response is the model's reasoning + final-answer text; it is NEVER read by the
+// bb/100, style, or BT passes (record-only, additive).
+export interface DecisionLogEvent {
+    kind: string;        // 'rethink' | 'fallback' | 'clamp'
+    reason?: string;     // clamp detail (from action-policy), when applicable
+}
+export interface DecisionLog {
+    seat: number;
+    model_id: string;    // agent name with the #seat suffix stripped
+    street: number | null;
+    prompt: string;
+    raw_response: string;
+    parsed_action: { action: string; amount: number };
+    events: DecisionLogEvent[];
+}
+
 // One engine action from the hand's ordered action list. Vocabulary matches the
 // core Action enum (`bets|calls|folds|raises|checks`); blinds are not emitted.
 export interface ActionEntry {
@@ -45,11 +62,21 @@ export interface HandRecord {
     // older logs without it don't crash (style stats are skipped for those).
     actions?: ActionEntry[];
 
+    // Full per-decision replay log (prompt + raw reasoning + parsed action + events).
+    // Additive/record-only: the stat passes ignore it. Absent in older logs.
+    decisions?: DecisionLog[];
+
     // duplicate-deck harness tags (absent in plain runs); analysis groups by deal_id
     deal_id?: number;
     rotation?: number;
 
-    // present in real logs but unused by analysis
+    // present in real logs; used by the offline reconstructor (not the stat passes)
+    hole_cards?: string[][]; // index = seat
+    board?: string[];        // full runout (flop=0..3, turn=3, river=4)
+    final_stacks?: number[];
+    button?: number | null;
+
+    // present in real logs but unused
     game_id?: string;
     config?: Record<string, unknown>;
     small_blind?: number;

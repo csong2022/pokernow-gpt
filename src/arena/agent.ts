@@ -3,7 +3,7 @@ import { AIConfig } from '../core/ai/ai-config.interface.ts';
 import { AIService, BotAction } from '../core/ai/ai-client.interface.ts';
 import { AIServiceFactory } from '../core/ai/ai-service-factory.helper.ts';
 import { ActionAvailability } from '../core/poker/action-availability.interface.ts';
-import { DecisionEngine, DecisionEvent } from '../core/poker/decision-engine.ts';
+import { DecisionEngine, DecisionEvent, DecisionTrace } from '../core/poker/decision-engine.ts';
 import { NoOpponentContext } from './no-opponent-context.ts';
 import { HandState } from '../core/game/hand-state.ts';
 import { Logger } from '../utils/logger.util.ts';
@@ -17,6 +17,9 @@ export interface Agent {
     decide(game: Game, view: StateView, heroSeat: number): Promise<DesiredAction>;
     // Decision-engine events (rethink/fallback) since the last call; runner logs them.
     drainEvents?(): DecisionEvent[];
+    // Full per-decision traces (prompt + raw response + parsed action + events) since
+    // the last call; runner writes them into the replayable hand log.
+    drainDecisions?(): DecisionTrace[];
 }
 
 // ---- Stub agent: deterministic-ish legal play, zero API cost. ----------------
@@ -83,6 +86,7 @@ export class LLMAgent implements Agent {
     private readonly state: HandState;
     private readonly engine: DecisionEngine;
     private events: DecisionEvent[] = [];
+    private traces: DecisionTrace[] = [];
 
     constructor(seat: number, aiConfig: AIConfig, gameId: string, queryRetries = 2) {
         this.ai = new AIServiceFactory().createAIService(aiConfig.provider, aiConfig.model_name, aiConfig.playstyle, aiConfig.reasoning ?? 'none');
@@ -90,7 +94,11 @@ export class LLMAgent implements Agent {
         this.ai.setBotName(`Seat${seat}`);
         const logger = new Logger(`arena-${seat}`, aiConfig.model_name);
         this.state = new HandState(`arena-${seat}`, aiConfig.provider, aiConfig.model_name, gameId);
-        this.engine = new DecisionEngine(this.ai, this.availability, new NoOpponentContext(), this.state, logger, queryRetries, 0, (e) => this.events.push(e));
+        this.engine = new DecisionEngine(
+            this.ai, this.availability, new NoOpponentContext(), this.state, logger, queryRetries, 0,
+            (e) => this.events.push(e),
+            (t) => this.traces.push(t),
+        );
         this.name = `${aiConfig.provider}:${aiConfig.model_name}#${seat}`;
     }
 
@@ -102,6 +110,12 @@ export class LLMAgent implements Agent {
     drainEvents(): DecisionEvent[] {
         const drained = this.events;
         this.events = [];
+        return drained;
+    }
+
+    drainDecisions(): DecisionTrace[] {
+        const drained = this.traces;
+        this.traces = [];
         return drained;
     }
 

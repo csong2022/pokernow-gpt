@@ -74,10 +74,12 @@ export class ClaudeAIService extends AIService {
             .join("");
 
         if (text) {
-            console.log(tag, "raw:", text); // reasoning + final answer, for audit
+            this.setLastRawResponse(text); // reasoning + final answer; record-only, separate from parsed action
+            console.log(tag, "raw:", text);
             this.messages.push({ role: "assistant", content: text });
             return parseResponse(text);
         }
+        this.setLastRawResponse("");
         return { action_str: "", bet_size_in_BBs: 0 };
     }
 }

@@ -52,7 +52,8 @@ export class GoogleAIService extends AIService {
             "Google AI query"
         );
         const text_content = result.response.text();
-        if (text_content) console.log(tag, "raw:", text_content); // reasoning + final answer, for audit
+        this.setLastRawResponse(text_content ?? ""); // reasoning + final answer; record-only, separate from parsed action
+        if (text_content) console.log(tag, "raw:", text_content);
         return text_content ? parseResponse(text_content) : { action_str: "", bet_size_in_BBs: 0 };
     }
 }

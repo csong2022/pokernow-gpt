@@ -7,6 +7,9 @@ export abstract class AIService {
     private reasoning: ReasoningLevel;
     private bot_name: string = "";
     protected playstyle_prompt: string = "";
+    // The full raw text of the most recent model response (reasoning + final-answer
+    // line). Record-only: surfaced for logging/replay, never read back into game state.
+    private last_raw_response: string = "";
 
     constructor(api_key: string, model: string, playstyle: string, reasoning: ReasoningLevel = "none") {
         this.api_key = api_key;
@@ -41,6 +44,15 @@ export abstract class AIService {
 
     getBotName(): string {
         return this.bot_name;
+    }
+
+    // Providers call this with the raw response text before parsing; consumers read
+    // it right after query() for per-decision logging.
+    protected setLastRawResponse(raw: string): void {
+        this.last_raw_response = raw;
+    }
+    getLastRawResponse(): string {
+        return this.last_raw_response;
     }
 }
 

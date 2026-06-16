@@ -6,6 +6,16 @@ import { constructHandSetup, constructTurnUpdate, RETHINK_PROMPT } from './query
 // and defaulted. Emitted via the injected sink so the arena can log them per hand.
 export type DecisionEvent = 'rethink' | 'fallback';
 
+// Full record-only trace of one decision, for replay/audit. raw_response is the
+// model's reasoning + final-answer text; it is never read back into game state or
+// the stat passes (record-only).
+export interface DecisionTrace {
+    prompt: string;
+    raw_response: string;
+    parsed_action: { action: string; amount: number };
+    events: DecisionEvent[];
+}
+
 import { AIService, BotAction, defaultCheckAction, defaultFoldAction } from '../ai/ai-client.interface.ts';
 import { ActionAvailability } from './action-availability.interface.ts';
 import type { HandContextBuilder } from './hand-context-builder.interface.ts';
@@ -28,26 +38,53 @@ export class DecisionEngine {
         private query_delay_ms: number = 2000,
         // Optional sink for rethink/fallback events (arena wires it into the JSONL).
         private onEvent?: (event: DecisionEvent) => void,
+        // Optional per-decision trace sink (arena writes it into the replayable log).
+        private onDecision?: (trace: DecisionTrace) => void,
     ) {}
 
+    // Events accumulated for the decision currently being made (also forwarded to
+    // onEvent), so the per-decision trace carries exactly that decision's events.
+    private currentEvents: DecisionEvent[] = [];
+
     async decide(game: Game): Promise<BotAction> {
+        this.currentEvents = [];
+        let query = "";
         try {
-            const query = this.state.is_first_turn_of_hand
+            query = this.state.is_first_turn_of_hand
                 ? constructHandSetup(game, this.contextBuilder) + "\n\n" + constructTurnUpdate(game)
                 : constructTurnUpdate(game);
             this.state.is_first_turn_of_hand = false;
 
-            return await this.queryWithRetries(query, this.query_retries);
+            const action = await this.queryWithRetries(query, this.query_retries);
+            this.emitDecision(query, action);
+            return action;
         } catch (err) {
             this.logger.error("Error during decision, falling back to default action:", err);
-            return await this.fallback();
+            const fallback = await this.fallback();
+            this.emitDecision(query, fallback);
+            return fallback;
         }
+    }
+
+    // Record an engine event for the current decision and forward it to the sink.
+    private recordEvent(event: DecisionEvent): void {
+        this.currentEvents.push(event);
+        this.onEvent?.(event);
+    }
+
+    private emitDecision(prompt: string, action: BotAction): void {
+        this.onDecision?.({
+            prompt,
+            raw_response: this.ai.getLastRawResponse(),
+            parsed_action: { action: action.action_str, amount: action.bet_size_in_BBs },
+            events: this.currentEvents.slice(),
+        });
     }
 
     private async queryWithRetries(query: string, retries: number, retry_counter: number = 0): Promise<BotAction> {
         if (retry_counter > retries) {
             const fallback = await this.fallback();
-            this.onEvent?.('fallback');
+            this.recordEvent('fallback');
             this.logger.error(`Failed to query bot action, exceeded the retry limit after ${retries} attempts. Defaulting to ${fallback.action_str}.`);
             return fallback;
         }
@@ -58,7 +95,7 @@ export class DecisionEngine {
             // first attempt only. Genuine-but-illegal actions fall through to the
             // existing retry/clamp path instead.
             if (!action.action_str && retry_counter === 0) {
-                this.onEvent?.('rethink');
+                this.recordEvent('rethink');
                 this.logger.warn("No parseable Final Answer; sending one-shot rethink reprompt.");
                 action = await this.ai.query(RETHINK_PROMPT);
             }
