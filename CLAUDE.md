@@ -52,6 +52,19 @@ implements and which is injected into `Table` — so core never imports a DB
 service. (`log-processing.interface` stays in core; only the `*.util` parsers
 are live.)
 
+Prompt context that differs per environment goes through the `HandContextBuilder`
+port (`src/core/poker/hand-context-builder.interface.ts`): `query-construction`
+and the decision loop are single-sourced and just insert whatever
+`buildOpponentSection(game)` returns. Live injects `StatsContextBuilder`
+(`src/live/bot/`), which emits the VPIP/PFR/3-bet/AFq opponent block from the
+table's stats (the exploitative thesis). The arena injects `NoOpponentContext`
+(`src/arena/`), which returns `""` — so an arena agent is a pure function of
+current hand state **by construction** (no code path reads opponent history). That
+statelessness is load-bearing: duplicate-deck variance cancellation needs
+identical replays, and cross-run comparability needs bb/100 attributable to the
+model, not to adaptation. A future opponent-aware arena arm (the deliberate
+exploitation experiment) is a builder swap, not a flag.
+
 ## Enforcement
 
 A lightweight checker (`scripts/check-boundaries.ts`, no ESLint — runs on the
@@ -161,7 +174,13 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   writes a JSON report to `arena-analysis/`. For duplicate runs it adds a
   variance-reduced table (same point estimate, tighter CI; reduction is exact
   only for deterministic strategies — LLM temperature leaves residual decision
-  noise). Imports core types only; never the engine — runs with the engine off.
+  noise). It also prints a per-model **style table** (`style.ts`): VPIP / PFR /
+  3-Bet / Fold-to-3-Bet / AFq, keyed by `modelIdOf` (summed across seats), derived
+  from the JSONL `actions[]` — how each model plays, not just who won. Style is
+  over RAW per-hand rows (not per-deal blocks): behavioral frequencies, so
+  cross-replay non-independence matters less than for CIs, but the report says so.
+  Imports core types only (+ the core `Action` enum); never the engine — runs with
+  the engine off.
 - **Model registry** (`src/config/models.json`, loader `src/core/ai/model-registry.ts`):
   script-managed DATA, not code — **read at runtime via `fs` (never import-baked)**,
   validated loud on load. The stable `id` is the key referenced across the arena
@@ -197,9 +216,11 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   ```
   The client auto-selects `Scripts/python.exe` vs `bin/python` by platform. The
   venv and `arena-logs/` are gitignored.
-- **Out of scope (so far):** GTO/EV-loss scoring, ranking systems, style stats
-  (VPIP/PFR), concurrency, durable runs. Stacks reset to the configured starting
-  stack each hand (clean per-hand deltas; no bust handling).
+- **Out of scope (so far):** GTO/EV-loss scoring, ranking systems, feeding
+  opponent stats back into arena agent decisions (the deliberate exploitation
+  experiment — left as a `HandContextBuilder` swap), concurrency, durable runs.
+  Stacks reset to the configured starting stack each hand (clean per-hand deltas;
+  no bust handling).
 
 ## Commands
 

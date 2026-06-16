@@ -4,6 +4,7 @@ import { AIService, BotAction } from '../core/ai/ai-client.interface.ts';
 import { AIServiceFactory } from '../core/ai/ai-service-factory.helper.ts';
 import { ActionAvailability } from '../core/poker/action-availability.interface.ts';
 import { DecisionEngine } from '../core/poker/decision-engine.ts';
+import { NoOpponentContext } from './no-opponent-context.ts';
 import { HandState } from '../core/game/hand-state.ts';
 import { Logger } from '../utils/logger.util.ts';
 
@@ -86,7 +87,7 @@ export class LLMAgent implements Agent {
         this.ai.setBotName(`Seat${seat}`);
         const logger = new Logger(`arena-${seat}`, aiConfig.model_name);
         this.state = new HandState(`arena-${seat}`, aiConfig.provider, aiConfig.model_name, gameId);
-        this.engine = new DecisionEngine(this.ai, this.availability, this.state, logger, queryRetries);
+        this.engine = new DecisionEngine(this.ai, this.availability, new NoOpponentContext(), this.state, logger, queryRetries);
         this.name = `${aiConfig.provider}:${aiConfig.model_name}#${seat}`;
     }
 

@@ -3,6 +3,7 @@ import { constructHandSetup, constructTurnUpdate } from './query-construction.he
 
 import { AIService, BotAction, defaultCheckAction, defaultFoldAction } from '../ai/ai-client.interface.ts';
 import { ActionAvailability } from './action-availability.interface.ts';
+import type { HandContextBuilder } from './hand-context-builder.interface.ts';
 
 import { sleep, TimeoutError } from '../../utils/bot-timeout.helper.ts';
 import { Logger } from '../../utils/logger.util.ts';
@@ -13,6 +14,7 @@ export class DecisionEngine {
     constructor(
         private ai: AIService,
         private availability: ActionAvailability,
+        private contextBuilder: HandContextBuilder,
         private state: HandState,
         private logger: Logger,
         private query_retries: number,
@@ -21,7 +23,7 @@ export class DecisionEngine {
     async decide(game: Game): Promise<BotAction> {
         try {
             const query = this.state.is_first_turn_of_hand
-                ? constructHandSetup(game) + "\n\n" + constructTurnUpdate(game)
+                ? constructHandSetup(game, this.contextBuilder) + "\n\n" + constructTurnUpdate(game)
                 : constructTurnUpdate(game);
             this.state.is_first_turn_of_hand = false;
 

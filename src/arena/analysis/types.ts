@@ -14,6 +14,15 @@ export interface ResolvedActionEntry {
     engineAction?: unknown;
 }
 
+// One engine action from the hand's ordered action list. Vocabulary matches the
+// core Action enum (`bets|calls|folds|raises|checks`); blinds are not emitted.
+export interface ActionEntry {
+    type: string;
+    amount: number;
+    seat: number;
+    street_index: number; // 0 = preflop
+}
+
 // One line of a hand log. Only the fields the analysis reads are required; the
 // rest of the record (hole_cards, board, winners, …) is ignored here.
 export interface HandRecord {
@@ -23,6 +32,10 @@ export interface HandRecord {
     big_blind: number;     // chips; read PER HAND, never hardcoded
     malformed_events: MalformedEvent[];
     resolved_actions: ResolvedActionEntry[];
+
+    // Ordered engine action list for the hand. Present in real logs; optional so
+    // older logs without it don't crash (style stats are skipped for those).
+    actions?: ActionEntry[];
 
     // duplicate-deck harness tags (absent in plain runs); analysis groups by deal_id
     deal_id?: number;
@@ -66,6 +79,33 @@ export interface ModelSummary {
     reduced?: VarianceStats & { deals: number };
 }
 
+// Per-model behavioral style stats, computed offline from the ordered action list.
+// Keyed by model identity (modelIdOf), summed across seats. Percentages use
+// hands-dealt as the denominator (NB: not live's walk-adjusted denominator).
+// These are over RAW per-hand rows and are NOT independent across duplicate-deck
+// replays (the same situation is replayed up to P! times) — fine for behavioral
+// frequencies, but stated explicitly so they're not read as edge estimates.
+export interface StyleStats {
+    model: string;
+    hands: number;              // (model, hand) rows the model was dealt into
+    vpipPct: number;            // voluntarily put money in preflop
+    pfrPct: number;             // raised preflop
+    threeBetPct: number;        // three_bet_hands / three_bet_opportunities
+    foldToThreeBetPct: number;  // folded_to_three_bet / faced_three_bet
+    afqPct: number;             // (bets+raises)/(bets+raises+calls+folds), all streets
+    // raw counts behind the percentages, for transparency / re-derivation
+    vpipHands: number;
+    pfrHands: number;
+    threeBetOpportunities: number;
+    threeBetHands: number;
+    facedThreeBet: number;
+    foldedToThreeBet: number;
+    bets: number;
+    raises: number;
+    calls: number;
+    folds: number;
+}
+
 export interface IntegrityViolation {
     hand: number; // -1 for log-level issues
     kind: string;
@@ -77,5 +117,6 @@ export interface AnalysisReport {
     source: string;
     handCount: number;
     models: ModelSummary[];
+    style: StyleStats[];
     integrity: { ok: boolean; violations: IntegrityViolation[] };
 }

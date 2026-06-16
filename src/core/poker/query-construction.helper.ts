@@ -3,16 +3,19 @@ import { rankBoard } from "phe";
 import { Game } from "../game/game.model.ts";
 import { PlayerAction } from "../player/playeraction.model.ts";
 import { Table } from "../game/table.model.ts";
+import type { HandContextBuilder } from "./hand-context-builder.interface.ts";
 
 const RUNOUT_CARD_RE = /([JQKA]|10|[1-9])([shdc])/g;
 
 // Sent once at the start of each hand — contains the state that stays fixed mid-hand
-// (position, hole cards, opponent initial stacks, opponent stats, table size).
-export function constructHandSetup(game: Game): string {
+// (position, hole cards, opponent initial stacks, table size). Any opponent-history
+// section is supplied by the injected HandContextBuilder; this function does not
+// know whether such a section exists — it just inserts whatever the builder returns
+// (omitting it when empty), so live and arena share this code unchanged.
+export function constructHandSetup(game: Game, contextBuilder: HandContextBuilder): string {
     const table = game.getTable();
 
     const hero_id = game.getHero()!.getPlayerId();
-    const hero_name = table.getNameFromId(hero_id);
     const hero_position = table.getPlayerPositionFromId(hero_id);
     const hero_cards = game.getHero()!.getHand();
 
@@ -20,16 +23,19 @@ export function constructHandSetup(game: Game): string {
     const player_stacks = table.getPlayerInitialStacks();
     const player_positions = table.getPlayerPositions();
 
-    const { stacks_section, stats_section } = defineStacksAndStats(player_positions, player_stacks, table, hero_id, hero_name);
+    const stacks_section = defineStacks(player_positions, player_stacks, table, hero_id);
+    const opponent_section = contextBuilder.buildOpponentSection(game);
 
     const sections: string[] = [
         `New No Limit Hold'em hand. I'm in the ${hero_position} position. It is ${num_players}-handed.`,
         defineHand(hero_cards),
         stacks_section,
-        stats_section,
+    ];
+    if (opponent_section) sections.push(opponent_section);
+    sections.push(
         "I'll send the state on each of my decision points in this hand. Respond each time with only {action, bet_size_in_BBs BB} — no explanations.",
         "For bet/raise/all-in, set bet_size_in_BBs to the TOTAL bet size for this street (e.g., raising to 3 BB total = 3, not the increment over a previous raise). For call, set it to the amount you're matching (the current outstanding bet). For check/fold, set it to 0.",
-    ];
+    );
     return sections.join('\n');
 }
 
@@ -128,15 +134,17 @@ function replaceTenWithLetter(cards: string[]): string[] {
     });
 }
 
-function defineStacksAndStats(
+// Opponent initial stacks = current hand state, shared by every environment. The
+// opponent STATS section (opponent history) is environment-specific and lives in a
+// HandContextBuilder instead.
+function defineStacks(
     player_positions: Map<string, string>,
     player_stacks: Map<string, number>,
     table: Table,
-    hero_id: string,
-    hero_name: string
-): { stacks_section: string, stats_section: string } {
+    hero_id: string
+): string {
+    const hero_name = table.getNameFromId(hero_id);
     const stack_entries: string[] = [];
-    const stat_entries: string[] = [];
 
     for (const player_id of player_positions.keys()) {
         if (player_id === hero_id) continue;
@@ -145,17 +153,9 @@ function defineStacksAndStats(
         if (player_name === hero_name) continue;
 
         stack_entries.push(`{${player_pos}: ${player_stacks.get(player_id)} BBs}`);
-
-        const player_stats = table.getPlayerStatsFromName(player_name);
-        stat_entries.push(
-            `{${player_pos}: Total Hands Played = ${player_stats.getTotalHands()}, VPIP = ${player_stats.computeVPIPStat().toFixed(2)}, PFR = ${player_stats.computePFRStat().toFixed(2)}, 3-Bet = ${player_stats.computeThreeBetStat().toFixed(2)}, Fold-to-3-Bet = ${player_stats.computeFoldToThreeBetStat().toFixed(2)}, AFq = ${player_stats.computeAggressionFrequency().toFixed(2)}}`
-        );
     }
 
-    return {
-        stacks_section: "Here are the initial stack sizes of the other players in the pot, defined in the format {position: stack_size_in_BBs}:\n" + stack_entries.join(", "),
-        stats_section: "Here are the stats of the other players in the pot, defined in the format {position: Total Hands Played = total_hands, VPIP = vpip_stat, PFR = pfr_stat, 3-Bet = three_bet_stat, Fold-to-3-Bet = fold_to_three_bet_stat, AFq = aggression_frequency}:\n" + stat_entries.join("\n"),
-    };
+    return "Here are the initial stack sizes of the other players in the pot, defined in the format {position: stack_size_in_BBs}:\n" + stack_entries.join(", ");
 }
 
 function defineActions(player_actions: Array<PlayerAction>, table: Table): string {

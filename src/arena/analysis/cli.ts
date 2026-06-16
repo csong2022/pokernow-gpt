@@ -3,7 +3,8 @@ import path from 'path';
 
 import { loadHandLogs } from './load.ts';
 import { aggregateByModel, checkIntegrity } from './aggregate.ts';
-import { AnalysisReport, ModelSummary } from './types.ts';
+import { computeStyleByModel } from './style.ts';
+import { AnalysisReport, ModelSummary, StyleStats } from './types.ts';
 
 function fmt(n: number, digits = 2): string {
     return Number.isFinite(n) ? n.toFixed(digits) : 'n/a';
@@ -35,6 +36,26 @@ function printTable(models: ModelSummary[]): void {
             `${fmt(s.malformedRate * 100)}% (${s.malformedCount}/${s.decisions})`,
         ]),
     );
+}
+
+// Per-model behavioral style — how each model played, not just who won. Raw
+// per-hand frequencies (see caveat below).
+function printStyleTable(style: StyleStats[]): void {
+    if (style.length === 0) return;
+    console.log('\nStyle (raw per-hand; preflop VPIP/PFR/3-Bet, AFq over all streets):');
+    table(
+        ['model', 'hands', 'VPIP%', 'PFR%', '3Bet%', 'F3Bet%', 'AFq%'],
+        style.map((s) => [
+            s.model,
+            String(s.hands),
+            fmt(s.vpipPct, 1),
+            fmt(s.pfrPct, 1),
+            fmt(s.threeBetPct, 1),
+            fmt(s.foldToThreeBetPct, 1),
+            fmt(s.afqPct, 1),
+        ]),
+    );
+    console.log('  (style stats are over raw hands and may double-count duplicated situations across replays; AFq = (bets+raises)/(bets+raises+calls+folds))');
 }
 
 // Raw vs duplicate-deck-reduced CI, shown only for duplicate runs.
@@ -73,18 +94,21 @@ function main(): void {
     const records = loadHandLogs(source);
     const violations = checkIntegrity(records);
     const models = aggregateByModel(records);
+    const style = computeStyleByModel(records);
 
     const report: AnalysisReport = {
         generatedAt: new Date().toISOString(),
         source,
         handCount: records.length,
         models,
+        style,
         integrity: { ok: violations.length === 0, violations },
     };
 
     console.log(`\nAnalyzed ${records.length} hands from ${source}\n`);
     printTable(models);
     printReducedTable(models);
+    printStyleTable(style);
 
     if (violations.length > 0) {
         console.error(`\n!!! INTEGRITY: ${violations.length} violation(s) — these findings are NOT trustworthy:`);
