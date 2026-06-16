@@ -76,6 +76,22 @@ set them yet) produces byte-identical prompts to before. The pre-query pacing
 delay is injectable on `DecisionEngine` (live keeps 2s to look human at the
 PokerNow table; the arena passes 0).
 
+**Output regime: reasoning + `Final Answer:`** (matches the Kaggle Game Arena
+harness so rankings are comparable, and lets reasoning models actually reason).
+The prompt asks the model to reason, then end with `Final Answer: <action> <size>`
+(BB units, TOTAL street bet — Kaggle uses chips, so cross-harness comparison is
+ordinal only). `parseResponse` (`ai-query.helper.ts`) anchors on the LAST
+`Final Answer:` line and ignores the reasoning body (so "considered folding but
+will raise" → raise). On a parse failure the `DecisionEngine` does ONE
+`RETHINK_PROMPT` re-prompt, then falls back to the existing clamp/default safety
+net; `rethink`/`fallback` are emitted as `DecisionEvent`s via an injected sink,
+which the arena threads into each hand record's `decision_events` (analysis prints
+a per-model rethink/fallback "Decision reliability" table). Each provider service
+logs the raw response (reasoning + final answer) separately from the parsed
+action — for audit only; it never enters game state, the JSONL action data, or the
+style/analysis signal. Non-reasoning Claude `max_tokens` is 4096 to fit visible
+reasoning + the final line.
+
 ## Enforcement
 
 A lightweight checker (`scripts/check-boundaries.ts`, no ESLint — runs on the

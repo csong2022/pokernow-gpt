@@ -91,6 +91,8 @@ export function aggregateByModel(records: HandRecord[]): ModelSummary[] {
     const dealResults = hasDuplicateData(records) ? perDealModelResults(records) : null;
     const decisions = new Map<string, number>();
     const malformed = new Map<string, number>();
+    const rethink = new Map<string, number>();
+    const fallback = new Map<string, number>();
     const bump = (m: Map<string, number>, k: string) => m.set(k, (m.get(k) ?? 0) + 1);
 
     for (const rec of records) {
@@ -101,6 +103,12 @@ export function aggregateByModel(records: HandRecord[]): ModelSummary[] {
         for (const ev of rec.malformed_events ?? []) {
             const agent = rec.agents[ev.seat];
             if (agent != null) bump(malformed, modelIdOf(agent));
+        }
+        for (const ev of rec.decision_events ?? []) {
+            const agent = rec.agents[ev.seat];
+            if (agent == null) continue;
+            if (ev.kind === 'rethink') bump(rethink, modelIdOf(agent));
+            else if (ev.kind === 'fallback') bump(fallback, modelIdOf(agent));
         }
     }
 
@@ -123,6 +131,8 @@ export function aggregateByModel(records: HandRecord[]): ModelSummary[] {
             ci95HalfWidthBBPer100: raw.ci95HalfWidthBBPer100,
             malformedCount: mal,
             malformedRate: dec > 0 ? mal / dec : 0,
+            rethinkCount: rethink.get(model) ?? 0,
+            fallbackCount: fallback.get(model) ?? 0,
         };
         if (dealResults) {
             const red = summarize(dealResults.get(model) ?? []);

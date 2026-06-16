@@ -7,6 +7,10 @@ import type { HandContextBuilder } from "./hand-context-builder.interface.ts";
 
 const RUNOUT_CARD_RE = /([JQKA]|10|[1-9])([shdc])/g;
 
+// Sent once when a reply has no parseable "Final Answer:" line — a one-shot
+// re-prompt asking only for the correctly formatted final line (Kaggle POKER_RETHINK).
+export const RETHINK_PROMPT = "I couldn't parse an action from your reply. Respond with ONLY the final line in this exact format: `Final Answer: <action> <size>` — <action> is one of fold, check, call, bet, raise, all-in; <size> in BIG BLINDS (TOTAL street bet) only for bet/raise/all-in.";
+
 // Sent once at the start of each hand — contains the state that stays fixed mid-hand
 // (position, hole cards, opponent initial stacks, table size). Any opponent-history
 // section is supplied by the injected HandContextBuilder; this function does not
@@ -33,8 +37,9 @@ export function constructHandSetup(game: Game, contextBuilder: HandContextBuilde
     ];
     if (opponent_section) sections.push(opponent_section);
     sections.push(
-        "I'll send the state on each of my decision points in this hand. Respond each time with only {action, bet_size_in_BBs BB} — no explanations.",
-        "For bet/raise/all-in, set bet_size_in_BBs to the TOTAL bet size for this street (e.g., raising to 3 BB total = 3, not the increment over a previous raise). For call, set it to the amount you're matching (the current outstanding bet). For check/fold, set it to 0.",
+        "I'll send the state at each of your decision points this hand. First reason briefly about the spot — your hand vs the opponent's likely range, board texture, the price to call and pot odds, stack depth/SPR, and your plan — then end your reply with a single final line in EXACTLY this format:",
+        "Final Answer: <action> <size>",
+        "where <action> is one of fold, check, call, bet, raise, all-in. Give <size> only for bet/raise/all-in, in BIG BLINDS, as the TOTAL bet for this street (e.g. raising to 3 BB total -> `Final Answer: raise 3`, not the increment over a previous bet); for call use the amount you're matching; for check/fold omit it. The `Final Answer:` line must come last.",
     );
     return sections.join('\n');
 }

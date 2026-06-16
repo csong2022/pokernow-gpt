@@ -15,42 +15,33 @@ export function getPromptFromPlaystyle(playstyle: string): string {
     throw new Error("Invalid playstyle, could not get playstyle prompt.");
 }
 
+const EMPTY_ACTION: BotAction = { action_str: "", bet_size_in_BBs: 0 };
+
+// Parse the model's reply by anchoring on the LAST "Final Answer:" line, ignoring
+// all preceding reasoning text (so "I considered folding but will raise" -> raise,
+// not fold). Tolerant of case, "Final Answer:" / "final answer -", and trailing
+// punctuation. Returns an empty action (action_str === "") when no final-answer
+// line is found, which the decision engine treats as a parse failure (-> rethink).
 export function parseResponse(msg: string): BotAction {
-    msg = processOutput(msg);
+    const tail = extractFinalAnswer(msg);
+    if (tail == null) return EMPTY_ACTION;
 
-    if (!msg) {
-        return {
-            action_str: "",
-            bet_size_in_BBs: 0
-        }
-    }
-    
-    const action_matches = msg.match(/(bet|raise|call|check|fold|all.in)/);
-    let action_str = "";
-    if (action_matches) {
-        action_str = action_matches[0];
-        if (action_str.includes("in")) {
-            action_str = "all-in";
-        }
-    }
+    const action_matches = tail.match(/all[\s-]?in|fold|check|call|bet|raise/i);
+    if (!action_matches) return EMPTY_ACTION;
+    let action_str = action_matches[0].toLowerCase();
+    if (action_str.replace(/[\s-]/g, "") === "allin") action_str = "all-in";
 
-    const bet_size_matches = msg.match(/[+]?([0-9]+(?:[\.][0-9]*)?|\.[0-9]+)/);
-    let bet_size_in_BBs = 0;
-    if (bet_size_matches) {
-        bet_size_in_BBs = parseFloat(bet_size_matches[0]);
-    }
-    return {
-        action_str: action_str,
-        bet_size_in_BBs: bet_size_in_BBs
-    }
+    const bet_size_matches = tail.match(/[+]?([0-9]+(?:\.[0-9]*)?|\.[0-9]+)/);
+    const bet_size_in_BBs = bet_size_matches ? parseFloat(bet_size_matches[0]) : 0;
+
+    return { action_str, bet_size_in_BBs };
 }
 
-function processOutput(msg: string): string {
-    msg = msg.toLowerCase();
-    const start_index = msg.indexOf("{");
-    const end_index = msg.indexOf("}");
-    if (start_index != -1 && end_index != -1) {
-        return msg.substring(start_index + 1, end_index);
-    }
-    return msg;
+// The text after the final "final answer" marker on its line, or null if absent.
+function extractFinalAnswer(msg: string): string | null {
+    if (!msg) return null;
+    const re = /final\s*answer\s*[:\-]?\s*(.+)/gi;
+    let last: string | null = null;
+    for (const m of msg.matchAll(re)) last = m[1].trim();
+    return last;
 }

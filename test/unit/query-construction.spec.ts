@@ -12,7 +12,7 @@ import { StatsContextBuilder } from "../../src/live/bot/stats-context-builder.ts
 
 const STACKS_HEADER = "Here are the initial stack sizes of the other players in the pot,";
 const STATS_HEADER = "Here are the stats of the other players in the pot,";
-const INSTR = "I'll send the state on each of my decision points";
+const INSTR = "I'll send the state at each of your decision points";
 
 // Minimal heads-up state_view; mapStateView turns it into a real core Game/Table
 // exactly as the arena does, so we exercise the shared query-construction path.
@@ -91,6 +91,13 @@ describe("constructTurnUpdate betting context (amount-to-call)", () => {
     it("states the exact amount to call when the environment supplies it", async () => {
         const game = await mapStateView(viewWith(legal({ check_call_amount: 4 })), 0, repo()); // 4 chips / 2 = 2 BB
         expect(constructTurnUpdate(game)).to.contain("To call: 2 BB.");
+    });
+
+    it("labels a raise as 'raises to X BB' (not 'bets'), disambiguating 3-bets", async () => {
+        const v = { ...viewWith(legal({ check_call_amount: 6 })), actions: [{ seat: 1, type: "raises", amount: 10, street_index: 0 }] };
+        const out = constructTurnUpdate(await mapStateView(v, 0, repo())); // 10 chips / 2 = 5 BB
+        expect(out).to.contain("raises to 5 BB");
+        expect(out).to.not.contain("bets 5 BB");
     });
 
     it("states the legal raise band (min/max total) when raising is allowed", async () => {

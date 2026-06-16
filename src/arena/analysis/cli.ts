@@ -62,6 +62,24 @@ function printStyleTable(style: StyleStats[]): void {
     console.log('  (style stats are over raw hands and may double-count duplicated situations across replays; AFq = (bets+raises)/(bets+raises+calls+folds))');
 }
 
+// Decision-engine reliability per model: how often a reply needed a rethink
+// re-prompt to parse, and how often the engine gave up and defaulted. Shown only
+// when there's something to report.
+function printDecisionEvents(models: ModelSummary[]): void {
+    if (!models.some((s) => s.rethinkCount > 0 || s.fallbackCount > 0)) return;
+    console.log('\nDecision reliability:');
+    table(
+        ['model', 'decisions', 'rethink', 'rethink%', 'fallback'],
+        models.map((s) => [
+            s.model,
+            String(s.decisions),
+            String(s.rethinkCount),
+            fmt(s.decisions > 0 ? (s.rethinkCount / s.decisions) * 100 : 0, 1),
+            String(s.fallbackCount),
+        ]),
+    );
+}
+
 // Raw vs duplicate-deck-reduced CI, shown only for duplicate runs.
 function printReducedTable(models: ModelSummary[]): void {
     const withReduced = models.filter((s) => s.reduced);
@@ -107,6 +125,7 @@ function analyzeAndReport(records: ReturnType<typeof loadHandLogs>, source: stri
     printTable(models);
     printReducedTable(models);
     printStyleTable(style);
+    printDecisionEvents(models);
 
     if (violations.length > 0) {
         console.error(`\n!!! INTEGRITY: ${violations.length} violation(s) — these findings are NOT trustworthy:`);

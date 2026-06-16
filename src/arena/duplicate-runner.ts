@@ -72,7 +72,7 @@ export async function runDuplicate(opts: DuplicateRunOptions): Promise<void> {
             seatAgents.forEach((a) => a.startHand());
 
             const first = await env.startHand({ deck });
-            const { malformed, resolved } = await playDecisionLoop(env, first, seatAgents, repo);
+            const { malformed, resolved, decisionEvents } = await playDecisionLoop(env, first, seatAgents, repo);
             const sd = await env.showdown();
 
             log.write({
@@ -87,6 +87,7 @@ export async function runDuplicate(opts: DuplicateRunOptions): Promise<void> {
                 payouts: sd.payouts,
                 resolved_actions: resolved,
                 malformed_events: malformed,
+                decision_events: decisionEvents,
             });
         }
     }

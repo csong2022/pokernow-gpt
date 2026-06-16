@@ -37,7 +37,7 @@ export class PlayerAction {
                 action_str = "folds";
                 break;
             case Action.RAISE:
-                action_str = `bets ${this.bet_amount_BBs} BB`;
+                action_str = `raises to ${this.bet_amount_BBs} BB`;
                 break;
             case Action.POST:
                 action_str = `posts ${this.bet_amount_BBs} BB`;

@@ -4,7 +4,7 @@ import { getPromptFromPlaystyle, parseResponse } from "./ai-query.helper.ts";
 import { withTimeout } from "../../utils/bot-timeout.helper.ts";
 
 const AI_QUERY_TIMEOUT_MS = 20000;
-const MAX_TOKENS = 1024;
+const MAX_TOKENS = 4096; // headroom for visible reasoning + the Final Answer line
 // Thinking tokens count toward max_tokens, so give reasoning runs more room.
 const REASONING_MAX_TOKENS = 8192;
 
@@ -74,6 +74,7 @@ export class ClaudeAIService extends AIService {
             .join("");
 
         if (text) {
+            console.log(tag, "raw:", text); // reasoning + final answer, for audit
             this.messages.push({ role: "assistant", content: text });
             return parseResponse(text);
         }

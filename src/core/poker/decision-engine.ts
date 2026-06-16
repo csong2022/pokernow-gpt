@@ -1,5 +1,10 @@
 import { Game } from '../game/game.model.ts';
-import { constructHandSetup, constructTurnUpdate } from './query-construction.helper.ts';
+import { constructHandSetup, constructTurnUpdate, RETHINK_PROMPT } from './query-construction.helper.ts';
+
+// Decision-engine events worth tracking as quality signals (distinct from arena's
+// action-clamp "malformed" events): a rethink reprompt was needed, or we gave up
+// and defaulted. Emitted via the injected sink so the arena can log them per hand.
+export type DecisionEvent = 'rethink' | 'fallback';
 
 import { AIService, BotAction, defaultCheckAction, defaultFoldAction } from '../ai/ai-client.interface.ts';
 import { ActionAvailability } from './action-availability.interface.ts';
@@ -21,6 +26,8 @@ export class DecisionEngine {
         // Pause before each query. Live keeps human-like pacing (avoids PokerNow
         // flagging instant actions); the arena has no table, so it passes 0.
         private query_delay_ms: number = 2000,
+        // Optional sink for rethink/fallback events (arena wires it into the JSONL).
+        private onEvent?: (event: DecisionEvent) => void,
     ) {}
 
     async decide(game: Game): Promise<BotAction> {
@@ -40,12 +47,21 @@ export class DecisionEngine {
     private async queryWithRetries(query: string, retries: number, retry_counter: number = 0): Promise<BotAction> {
         if (retry_counter > retries) {
             const fallback = await this.fallback();
+            this.onEvent?.('fallback');
             this.logger.error(`Failed to query bot action, exceeded the retry limit after ${retries} attempts. Defaulting to ${fallback.action_str}.`);
             return fallback;
         }
         try {
             if (this.query_delay_ms > 0) await sleep(this.query_delay_ms);
-            const action = await this.ai.query(query);
+            let action = await this.ai.query(query);
+            // Parse failure (no "Final Answer:" line) -> one-shot rethink reprompt,
+            // first attempt only. Genuine-but-illegal actions fall through to the
+            // existing retry/clamp path instead.
+            if (!action.action_str && retry_counter === 0) {
+                this.onEvent?.('rethink');
+                this.logger.warn("No parseable Final Answer; sending one-shot rethink reprompt.");
+                action = await this.ai.query(RETHINK_PROMPT);
+            }
             if (await this.isValidBotAction(action)) {
                 return action;
             }

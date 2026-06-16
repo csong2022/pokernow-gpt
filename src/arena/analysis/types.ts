@@ -14,6 +14,13 @@ export interface ResolvedActionEntry {
     engineAction?: unknown;
 }
 
+// A decision-engine event for one decision: "rethink" (a re-prompt was needed to
+// get a parseable Final Answer) or "fallback" (the engine gave up and defaulted).
+export interface DecisionEventEntry {
+    seat: number;
+    kind: string;
+}
+
 // One engine action from the hand's ordered action list. Vocabulary matches the
 // core Action enum (`bets|calls|folds|raises|checks`); blinds are not emitted.
 export interface ActionEntry {
@@ -32,6 +39,7 @@ export interface HandRecord {
     big_blind: number;     // chips; read PER HAND, never hardcoded
     malformed_events: MalformedEvent[];
     resolved_actions: ResolvedActionEntry[];
+    decision_events?: DecisionEventEntry[]; // rethink/fallback per decision (absent in older logs)
 
     // Ordered engine action list for the hand. Present in real logs; optional so
     // older logs without it don't crash (style stats are skipped for those).
@@ -72,6 +80,8 @@ export interface ModelSummary {
     ci95HalfWidthBBPer100: number | null;               // 1.96 * SE * 100
     malformedCount: number;
     malformedRate: number;    // malformed / decisions (0 when no decisions)
+    rethinkCount: number;     // decisions needing a rethink re-prompt to parse
+    fallbackCount: number;    // decisions where the engine gave up and defaulted
 
     // Variance-reduced estimate (duplicate-deck runs only). Same point estimate
     // as the raw bb/100 but with a tighter CI, since per-deal card luck cancels.

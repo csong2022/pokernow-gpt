@@ -3,7 +3,7 @@ import { AIConfig } from '../core/ai/ai-config.interface.ts';
 import { AIService, BotAction } from '../core/ai/ai-client.interface.ts';
 import { AIServiceFactory } from '../core/ai/ai-service-factory.helper.ts';
 import { ActionAvailability } from '../core/poker/action-availability.interface.ts';
-import { DecisionEngine } from '../core/poker/decision-engine.ts';
+import { DecisionEngine, DecisionEvent } from '../core/poker/decision-engine.ts';
 import { NoOpponentContext } from './no-opponent-context.ts';
 import { HandState } from '../core/game/hand-state.ts';
 import { Logger } from '../utils/logger.util.ts';
@@ -15,6 +15,8 @@ export interface Agent {
     readonly name: string;
     startHand(): void;
     decide(game: Game, view: StateView, heroSeat: number): Promise<DesiredAction>;
+    // Decision-engine events (rethink/fallback) since the last call; runner logs them.
+    drainEvents?(): DecisionEvent[];
 }
 
 // ---- Stub agent: deterministic-ish legal play, zero API cost. ----------------
@@ -80,6 +82,7 @@ export class LLMAgent implements Agent {
     private readonly availability = new LegalActionsAvailability();
     private readonly state: HandState;
     private readonly engine: DecisionEngine;
+    private events: DecisionEvent[] = [];
 
     constructor(seat: number, aiConfig: AIConfig, gameId: string, queryRetries = 2) {
         this.ai = new AIServiceFactory().createAIService(aiConfig.provider, aiConfig.model_name, aiConfig.playstyle, aiConfig.reasoning ?? 'none');
@@ -87,13 +90,19 @@ export class LLMAgent implements Agent {
         this.ai.setBotName(`Seat${seat}`);
         const logger = new Logger(`arena-${seat}`, aiConfig.model_name);
         this.state = new HandState(`arena-${seat}`, aiConfig.provider, aiConfig.model_name, gameId);
-        this.engine = new DecisionEngine(this.ai, this.availability, new NoOpponentContext(), this.state, logger, queryRetries, 0);
+        this.engine = new DecisionEngine(this.ai, this.availability, new NoOpponentContext(), this.state, logger, queryRetries, 0, (e) => this.events.push(e));
         this.name = `${aiConfig.provider}:${aiConfig.model_name}#${seat}`;
     }
 
     startHand(): void {
         this.state.is_first_turn_of_hand = true;
         this.ai.resetHand();
+    }
+
+    drainEvents(): DecisionEvent[] {
+        const drained = this.events;
+        this.events = [];
+        return drained;
     }
 
     async decide(game: Game, view: StateView): Promise<DesiredAction> {

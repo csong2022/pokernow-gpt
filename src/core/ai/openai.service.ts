@@ -49,6 +49,7 @@ export class OpenAIService extends AIService {
 
         const response_msg = completion.choices[0].message;
         if (response_msg.content) {
+            console.log(tag, "raw:", response_msg.content); // reasoning + final answer, for audit (separate from parsed action)
             this.messages.push({ role: "assistant", content: response_msg.content });
             return parseResponse(response_msg.content);
         }
