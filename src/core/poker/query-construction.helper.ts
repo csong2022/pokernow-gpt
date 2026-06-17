@@ -37,7 +37,7 @@ export function constructHandSetup(game: Game, contextBuilder: HandContextBuilde
     ];
     if (opponent_section) sections.push(opponent_section);
     sections.push(
-        "I'll send the state at each of your decision points this hand. First reason briefly about the spot — your hand vs the opponent's likely range, board texture, the price to call and pot odds, stack depth/SPR, and your plan — then end your reply with a single final line in EXACTLY this format:",
+        "I'll send the state at each of your decision points this hand. First reason briefly about the spot — your hand vs the opponents' likely ranges, board texture, position, stack depth/SPR, and your plan — then end your reply with a single final line in EXACTLY this format:",
         "Final Answer: <action> <size>",
         "where <action> is one of fold, check, call, bet, raise, all-in. Give <size> only for bet/raise/all-in, in BIG BLINDS, as the TOTAL bet for this street (e.g. raising to 3 BB total -> `Final Answer: raise 3`, not the increment over a previous bet); for call use the amount you're matching; for check/fold omit it. The `Final Answer:` line must come last.",
     );
