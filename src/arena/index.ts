@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import { loadRegistry, toAIConfig } from '../core/ai/model-registry.ts';
+import { AIConfig } from '../core/ai/ai-config.interface.ts';
 import { PokerKitClient } from './engine/pokerkit-client.ts';
 import { TableConfig } from './engine/protocol.ts';
 import { Agent, LLMAgent, StubAgent } from './agent.ts';
@@ -50,9 +51,9 @@ const TIGHTNESS_PROBES: Record<string, string> = {
     nit: "You are an extremely tight ('nit') poker player. Play ONLY premium starting hands — roughly the top 15-20% (big pairs, strong broadways, strong aces) — and FOLD the large majority of hands preflop. Hand selection comes first: fold marginal and speculative holdings regardless of position, price, or pot odds.",
     'anti-odds': "You are a disciplined, selective poker player. Do NOT enter pots based on price or pot odds — a cheap call or small amount to complete is NOT a reason to play a weak hand. Preflop, decide purely on hand strength and playability: fold weak and marginal holdings even when the call is cheap or you are getting good odds. Only continue with hands you would happily play for a raise.",
     tag: "You are a tight-aggressive ('TAG') poker player. Be very selective preflop — fold the majority of starting hands — but when you do play, be aggressive (raise rather than call, bet for value and pressure). Tight selection first, aggression second.",
-    // Calibrated toward a MODERATE tight range (~VPIP 30): worded against over-
-    // folding, since the strict "nit" prompt overshot to VPIP 3.
-    tight: "You are a solid, moderately tight poker player — selective but NOT an extreme nit. Play roughly the top third (~30-40%) of starting hands; fold clearly weak and trashy hands preflop, but keep playing a healthy range of reasonable hands — do NOT fold down to only premium hands. Decide on hand strength and playability rather than pot odds, and aim to voluntarily play about a third of your hands.",
+    // Concrete hand-range list (~top 30%) — adjective-based calibration was bimodal
+    // (strict prompts -> VPIP 3, hedged prompts -> VPIP 83). An explicit range anchors better.
+    tight: "You are a tight, disciplined poker player. Preflop, play ONLY these starting hands and FOLD everything else: any pocket pair 66 or higher; ace-ten or stronger (AT, AJ, AQ, AK); king-queen (KQ); any suited ace (Axs); and suited connectors 87s and higher. Fold all other hands preflop regardless of position or price. Postflop, play normally based on hand strength.",
 };
 
 function parseArgs(argv: string[]): Args {
@@ -110,28 +111,43 @@ function buildAgents(args: Args, gameId: string): Agent[] {
     // ("aggro" open-raises, so the paid model gets 3-bet opportunities).
     const cal = new Map(calibrationAgents().map((a) => [a.name, a]));
     const registry = ids.some((id) => !REFERENCE_TOKENS.has(id)) ? loadRegistry(REGISTRY_PATH) : null;
-    // Per-seat playstyle, aligned to --llm; defaults to neutral. Lets us vary STYLE
-    // while holding model + reasoning effort fixed (e.g. one model at passive/neutral/
-    // aggressive). Ignored for reference tokens (stub/threshold agents have no prompt).
-    const playstyles = (args.playstyle ?? '').split(',').map((s) => s.trim());
-    for (const ps of playstyles) {
-        if (ps && !VALID_PLAYSTYLES.has(ps)) throw new Error(`--playstyle "${ps}" invalid; use ${[...VALID_PLAYSTYLES].join('/')}`);
+    // Per-seat STYLE token, aligned to --llm; defaults to neutral. A token is either
+    // a playstyle (pro/aggressive/passive/neutral) or a tightness-probe key
+    // (nit/anti-odds/tag/tight). This lets ONE model run multiple styles in the same
+    // table (e.g. "tight,neutral,aggressive") for a within-model style contrast — each
+    // with a distinct identity label so the analysis can separate them. Ignored for
+    // reference tokens (stub/threshold agents have no prompt).
+    const styleTokens = (args.playstyle ?? '').split(',').map((s) => s.trim());
+    for (const t of styleTokens) {
+        if (t && !VALID_PLAYSTYLES.has(t) && !(t in TIGHTNESS_PROBES)) {
+            throw new Error(`--playstyle "${t}" not a playstyle (${[...VALID_PLAYSTYLES].join('/')}) or probe (${Object.keys(TIGHTNESS_PROBES).join('/')})`);
+        }
     }
-    // Probe-only tightness override (applied to every paid seat); ignored by references.
-    let probePrompt = '';
-    if (args.probePrompt) {
-        probePrompt = TIGHTNESS_PROBES[args.probePrompt] ?? '';
-        if (!probePrompt) throw new Error(`--probe-prompt "${args.probePrompt}" invalid; use ${Object.keys(TIGHTNESS_PROBES).join('/')}`);
+    if (args.probePrompt && !(args.probePrompt in TIGHTNESS_PROBES)) {
+        throw new Error(`--probe-prompt "${args.probePrompt}" invalid; use ${Object.keys(TIGHTNESS_PROBES).join('/')}`);
     }
     return ids.map((id, seat) => {
         if (id === 'stub') return new StubAgent(`stub#${seat}`);
         const ref = cal.get(id);
         if (ref) return ref; // deterministic + stateless -> safe to reuse
-        const playstyle = playstyles[seat] || 'neutral';
+        const token = styleTokens[seat] || 'neutral';
         // toAIConfig throws "unknown model id: X (not in registry)" on an unregistered id.
-        const cfg = toAIConfig(registry!, id, playstyle);
-        if (probePrompt) cfg.systemPrompt = probePrompt;
-        return new LLMAgent(seat, cfg, gameId);
+        let cfg: AIConfig;
+        let label: string | undefined;
+        if (token in TIGHTNESS_PROBES) {
+            cfg = toAIConfig(registry!, id, 'neutral');
+            cfg.systemPrompt = TIGHTNESS_PROBES[token];
+            label = token;
+        } else {
+            cfg = toAIConfig(registry!, id, token);
+            label = token !== 'neutral' ? token : undefined;
+        }
+        // Run-wide --probe-prompt applies to any paid seat that didn't set a probe itself.
+        if (args.probePrompt && !cfg.systemPrompt) {
+            cfg.systemPrompt = TIGHTNESS_PROBES[args.probePrompt];
+            label = args.probePrompt;
+        }
+        return new LLMAgent(seat, cfg, gameId, undefined, label);
     });
 }
 

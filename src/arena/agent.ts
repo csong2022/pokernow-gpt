@@ -88,7 +88,7 @@ export class LLMAgent implements Agent {
     private events: DecisionEvent[] = [];
     private traces: DecisionTrace[] = [];
 
-    constructor(seat: number, aiConfig: AIConfig, gameId: string, queryRetries = 2) {
+    constructor(seat: number, aiConfig: AIConfig, gameId: string, queryRetries = 2, styleLabel?: string) {
         this.ai = new AIServiceFactory().createAIService(aiConfig.provider, aiConfig.model_name, aiConfig.playstyle, aiConfig.reasoning ?? 'none', aiConfig.systemPrompt ?? '');
         this.ai.init();
         this.ai.setBotName(`Seat${seat}`);
@@ -99,10 +99,13 @@ export class LLMAgent implements Agent {
             (e) => this.events.push(e),
             (t) => this.traces.push(t),
         );
-        // Encode a non-neutral playstyle in the identity so the analysis (which keys
-        // by modelIdOf = name minus #seat) can distinguish same-model seats running
-        // different playstyles. Neutral omits the suffix, so normal runs are unchanged.
-        const styleSuffix = aiConfig.playstyle && aiConfig.playstyle !== 'neutral' ? `@${aiConfig.playstyle}` : '';
+        // Encode a non-neutral style in the identity so the analysis (which keys by
+        // modelIdOf = name minus #seat) can distinguish same-model seats running
+        // different styles. The label is the explicit style token (playstyle or probe
+        // key) from the composition root; fall back to a non-neutral playstyle. Neutral
+        // omits the suffix, so normal runs are unchanged.
+        const tag = styleLabel ?? (aiConfig.playstyle && aiConfig.playstyle !== 'neutral' ? aiConfig.playstyle : '');
+        const styleSuffix = tag ? `@${tag}` : '';
         this.name = `${aiConfig.provider}:${aiConfig.model_name}${styleSuffix}#${seat}`;
     }
 
