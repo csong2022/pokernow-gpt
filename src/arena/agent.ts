@@ -99,7 +99,11 @@ export class LLMAgent implements Agent {
             (e) => this.events.push(e),
             (t) => this.traces.push(t),
         );
-        this.name = `${aiConfig.provider}:${aiConfig.model_name}#${seat}`;
+        // Encode a non-neutral playstyle in the identity so the analysis (which keys
+        // by modelIdOf = name minus #seat) can distinguish same-model seats running
+        // different playstyles. Neutral omits the suffix, so normal runs are unchanged.
+        const styleSuffix = aiConfig.playstyle && aiConfig.playstyle !== 'neutral' ? `@${aiConfig.playstyle}` : '';
+        this.name = `${aiConfig.provider}:${aiConfig.model_name}${styleSuffix}#${seat}`;
     }
 
     startHand(): void {
