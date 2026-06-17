@@ -21,10 +21,15 @@ export class ClaudeAIService extends AIService {
 
     init(): void {
         this.agent = new Anthropic({ apiKey: this.getAPIKey() });
-        try {
-            this.playstyle_prompt = getPromptFromPlaystyle(this.getPlaystyle());
-        } catch (err) {
-            console.log(err);
+        const override = this.getSystemPromptOverride();
+        if (override) {
+            this.playstyle_prompt = override;
+        } else {
+            try {
+                this.playstyle_prompt = getPromptFromPlaystyle(this.getPlaystyle());
+            } catch (err) {
+                console.log(err);
+            }
         }
     }
 

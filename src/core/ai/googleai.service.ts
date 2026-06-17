@@ -22,10 +22,15 @@ export class GoogleAIService extends AIService {
 
     init(): void {
         this.agent = new GoogleGenerativeAI(this.getAPIKey());
-        try {
-            this.playstyle_prompt = getPromptFromPlaystyle(this.getPlaystyle());
-        } catch (err) {
-            console.log(err);
+        const override = this.getSystemPromptOverride();
+        if (override) {
+            this.playstyle_prompt = override;
+        } else {
+            try {
+                this.playstyle_prompt = getPromptFromPlaystyle(this.getPlaystyle());
+            } catch (err) {
+                console.log(err);
+            }
         }
         this.model = this.agent.getGenerativeModel({
             model: this.getModelName(),

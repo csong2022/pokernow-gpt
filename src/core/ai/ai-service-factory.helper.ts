@@ -9,22 +9,22 @@ import { OpenAIService } from "./openai.service.ts";
 // factory no longer keeps a hardcoded model allowlist (that drifted from the
 // providers' real model sets).
 export class AIServiceFactory {
-    createAIService(provider: string, model_name: string, playstyle: string = "neutral", reasoning: ReasoningLevel = "none"): AIService {
+    createAIService(provider: string, model_name: string, playstyle: string = "neutral", reasoning: ReasoningLevel = "none", systemPrompt: string = ""): AIService {
         switch (provider) {
             case "OpenAI": {
                 const key = process.env.OPENAI_API_KEY;
                 if (!key) throw new Error(`Empty ${provider} auth key.`);
-                return new OpenAIService(key, model_name, playstyle, reasoning);
+                return new OpenAIService(key, model_name, playstyle, reasoning, systemPrompt);
             }
             case "Google": {
                 const key = process.env.GOOGLEAI_API_KEY;
                 if (!key) throw new Error(`Empty ${provider} auth key.`);
-                return new GoogleAIService(key, model_name, playstyle, reasoning);
+                return new GoogleAIService(key, model_name, playstyle, reasoning, systemPrompt);
             }
             case "Anthropic": {
                 const key = process.env.CLAUDEAI_API_KEY;
                 if (!key) throw new Error(`Empty ${provider} auth key.`);
-                return new ClaudeAIService(key, model_name, playstyle, reasoning);
+                return new ClaudeAIService(key, model_name, playstyle, reasoning, systemPrompt);
             }
             default:
                 throw new Error(`Unsupported AI provider: ${provider}`);

@@ -34,6 +34,7 @@ interface Args {
     mode: 'cash' | 'tournament';
     llm?: string; // comma-separated registry model ids, one per seat (e.g. "claude-haiku-4-5,gpt-5.4-nano")
     playstyle?: string; // comma-separated per-seat playstyle, aligned to --llm (e.g. "passive,neutral,aggressive")
+    probePrompt?: string; // probe-only tightness system-prompt key, applied to LLM seats
     tags: string[];
     notes: string;
     runsRoot: string;
@@ -41,6 +42,18 @@ interface Args {
 
 // Playstyles the system prompt understands (see ai-query.helper playstyleToPrompt).
 const VALID_PLAYSTYLES = new Set(['pro', 'aggressive', 'passive', 'neutral']);
+
+// Probe-only tightness system-prompt overrides (NOT part of the shared playstyle
+// set). Applied to the paid seat via --probe-prompt to test whether genuine
+// tight-selective (low-VPIP) play is inducible. Arena-only, experiment scaffolding.
+const TIGHTNESS_PROBES: Record<string, string> = {
+    nit: "You are an extremely tight ('nit') poker player. Play ONLY premium starting hands — roughly the top 15-20% (big pairs, strong broadways, strong aces) — and FOLD the large majority of hands preflop. Hand selection comes first: fold marginal and speculative holdings regardless of position, price, or pot odds.",
+    'anti-odds': "You are a disciplined, selective poker player. Do NOT enter pots based on price or pot odds — a cheap call or small amount to complete is NOT a reason to play a weak hand. Preflop, decide purely on hand strength and playability: fold weak and marginal holdings even when the call is cheap or you are getting good odds. Only continue with hands you would happily play for a raise.",
+    tag: "You are a tight-aggressive ('TAG') poker player. Be very selective preflop — fold the majority of starting hands — but when you do play, be aggressive (raise rather than call, bet for value and pressure). Tight selection first, aggression second.",
+    // Calibrated toward a MODERATE tight range (~VPIP 30): worded against over-
+    // folding, since the strict "nit" prompt overshot to VPIP 3.
+    tight: "You are a solid, moderately tight poker player — selective but NOT an extreme nit. Play roughly the top third (~30-40%) of starting hands; fold clearly weak and trashy hands preflop, but keep playing a healthy range of reasonable hands — do NOT fold down to only premium hands. Decide on hand strength and playability rather than pot odds, and aim to voluntarily play about a third of your hands.",
+};
 
 function parseArgs(argv: string[]): Args {
     const get = (flag: string): string | undefined => {
@@ -76,6 +89,7 @@ function parseArgs(argv: string[]): Args {
         mode: (get('--mode') as 'cash' | 'tournament') ?? 'cash',
         llm: get('--llm'),
         playstyle: get('--playstyle'),
+        probePrompt: get('--probe-prompt'),
         tags: getAll('--tag'),
         notes: get('--notes') ?? '',
         runsRoot: get('--runs-root') ?? 'arena-runs',
@@ -103,13 +117,21 @@ function buildAgents(args: Args, gameId: string): Agent[] {
     for (const ps of playstyles) {
         if (ps && !VALID_PLAYSTYLES.has(ps)) throw new Error(`--playstyle "${ps}" invalid; use ${[...VALID_PLAYSTYLES].join('/')}`);
     }
+    // Probe-only tightness override (applied to every paid seat); ignored by references.
+    let probePrompt = '';
+    if (args.probePrompt) {
+        probePrompt = TIGHTNESS_PROBES[args.probePrompt] ?? '';
+        if (!probePrompt) throw new Error(`--probe-prompt "${args.probePrompt}" invalid; use ${Object.keys(TIGHTNESS_PROBES).join('/')}`);
+    }
     return ids.map((id, seat) => {
         if (id === 'stub') return new StubAgent(`stub#${seat}`);
         const ref = cal.get(id);
         if (ref) return ref; // deterministic + stateless -> safe to reuse
         const playstyle = playstyles[seat] || 'neutral';
         // toAIConfig throws "unknown model id: X (not in registry)" on an unregistered id.
-        return new LLMAgent(seat, toAIConfig(registry!, id, playstyle), gameId);
+        const cfg = toAIConfig(registry!, id, playstyle);
+        if (probePrompt) cfg.systemPrompt = probePrompt;
+        return new LLMAgent(seat, cfg, gameId);
     });
 }
 

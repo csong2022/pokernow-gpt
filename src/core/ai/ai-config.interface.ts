@@ -11,5 +11,9 @@ export interface AIConfig {
     provider: string,
     model_name: string,
     playstyle: string,
-    reasoning?: ReasoningLevel
+    reasoning?: ReasoningLevel,
+    // Optional raw system-prompt override. When set, it REPLACES the playstyle
+    // prompt (used for arena probe-only experiments); otherwise the playstyle map
+    // is used. Live/normal runs leave it unset, so existing behavior is unchanged.
+    systemPrompt?: string
 }

@@ -7,15 +7,18 @@ export abstract class AIService {
     private reasoning: ReasoningLevel;
     private bot_name: string = "";
     protected playstyle_prompt: string = "";
+    // Optional raw system-prompt override (arena probe-only); empty = use playstyle.
+    private system_prompt_override: string;
     // The full raw text of the most recent model response (reasoning + final-answer
     // line). Record-only: surfaced for logging/replay, never read back into game state.
     private last_raw_response: string = "";
 
-    constructor(api_key: string, model: string, playstyle: string, reasoning: ReasoningLevel = "none") {
+    constructor(api_key: string, model: string, playstyle: string, reasoning: ReasoningLevel = "none", system_prompt_override: string = "") {
         this.api_key = api_key;
         this.model_name = model;
         this.playstyle = playstyle;
         this.reasoning = reasoning;
+        this.system_prompt_override = system_prompt_override;
     }
 
     abstract init(): void;
@@ -36,6 +39,11 @@ export abstract class AIService {
 
     getReasoning(): ReasoningLevel {
         return this.reasoning;
+    }
+
+    // Raw system-prompt override, or "" to fall back to the playstyle prompt.
+    getSystemPromptOverride(): string {
+        return this.system_prompt_override;
     }
 
     setBotName(bot_name: string): void {

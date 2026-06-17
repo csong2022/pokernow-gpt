@@ -89,7 +89,7 @@ export class LLMAgent implements Agent {
     private traces: DecisionTrace[] = [];
 
     constructor(seat: number, aiConfig: AIConfig, gameId: string, queryRetries = 2) {
-        this.ai = new AIServiceFactory().createAIService(aiConfig.provider, aiConfig.model_name, aiConfig.playstyle, aiConfig.reasoning ?? 'none');
+        this.ai = new AIServiceFactory().createAIService(aiConfig.provider, aiConfig.model_name, aiConfig.playstyle, aiConfig.reasoning ?? 'none', aiConfig.systemPrompt ?? '');
         this.ai.init();
         this.ai.setBotName(`Seat${seat}`);
         const logger = new Logger(`arena-${seat}`, aiConfig.model_name);
