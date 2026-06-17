@@ -33,10 +33,14 @@ interface Args {
     stack: number;
     mode: 'cash' | 'tournament';
     llm?: string; // comma-separated registry model ids, one per seat (e.g. "claude-haiku-4-5,gpt-5.4-nano")
+    playstyle?: string; // comma-separated per-seat playstyle, aligned to --llm (e.g. "passive,neutral,aggressive")
     tags: string[];
     notes: string;
     runsRoot: string;
 }
+
+// Playstyles the system prompt understands (see ai-query.helper playstyleToPrompt).
+const VALID_PLAYSTYLES = new Set(['pro', 'aggressive', 'passive', 'neutral']);
 
 function parseArgs(argv: string[]): Args {
     const get = (flag: string): string | undefined => {
@@ -71,6 +75,7 @@ function parseArgs(argv: string[]): Args {
         stack: num('--stack', 200),
         mode: (get('--mode') as 'cash' | 'tournament') ?? 'cash',
         llm: get('--llm'),
+        playstyle: get('--playstyle'),
         tags: getAll('--tag'),
         notes: get('--notes') ?? '',
         runsRoot: get('--runs-root') ?? 'arena-runs',
@@ -91,12 +96,20 @@ function buildAgents(args: Args, gameId: string): Agent[] {
     // ("aggro" open-raises, so the paid model gets 3-bet opportunities).
     const cal = new Map(calibrationAgents().map((a) => [a.name, a]));
     const registry = ids.some((id) => !REFERENCE_TOKENS.has(id)) ? loadRegistry(REGISTRY_PATH) : null;
+    // Per-seat playstyle, aligned to --llm; defaults to neutral. Lets us vary STYLE
+    // while holding model + reasoning effort fixed (e.g. one model at passive/neutral/
+    // aggressive). Ignored for reference tokens (stub/threshold agents have no prompt).
+    const playstyles = (args.playstyle ?? '').split(',').map((s) => s.trim());
+    for (const ps of playstyles) {
+        if (ps && !VALID_PLAYSTYLES.has(ps)) throw new Error(`--playstyle "${ps}" invalid; use ${[...VALID_PLAYSTYLES].join('/')}`);
+    }
     return ids.map((id, seat) => {
         if (id === 'stub') return new StubAgent(`stub#${seat}`);
         const ref = cal.get(id);
         if (ref) return ref; // deterministic + stateless -> safe to reuse
+        const playstyle = playstyles[seat] || 'neutral';
         // toAIConfig throws "unknown model id: X (not in registry)" on an unregistered id.
-        return new LLMAgent(seat, toAIConfig(registry!, id, 'neutral'), gameId);
+        return new LLMAgent(seat, toAIConfig(registry!, id, playstyle), gameId);
     });
 }
 
