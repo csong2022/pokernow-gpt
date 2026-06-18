@@ -1,0 +1,50 @@
+{
+  "createdAt": "2026-06-17T10:57:34.664Z",
+  "gitCommit": "89c5c28",
+  "format": "3max",
+  "models": [
+    "gpt-5.4-mini",
+    "gpt-5.4-mini",
+    "gpt-5.4-mini"
+  ],
+  "rotation": "cyclic",
+  "deals": 100,
+  "replaysPerDeal": 3,
+  "tags": [
+    "experiment",
+    "3max",
+    "reasoning",
+    "within-model-style"
+  ],
+  "notes": "Within-model style contrast: gpt-5.4-mini at tight(range-list)/neutral/aggressive, identical medium effort, to test whether tight-selective beats aggression as a STYLE (model+compute held constant). tight=VPIP~17.",
+  "results": {
+    "analyzedAt": "2026-06-17T18:52:08.030Z",
+    "models": [
+      {
+        "model": "OpenAI:gpt-5.4-mini@aggressive",
+        "hands": 300,
+        "bbPer100": 23.333333333333332,
+        "ci95HalfWidthBBPer100": 177.24126577932563,
+        "reducedHalfWidthBBPer100": 133.3813129161702,
+        "malformedRate": 0
+      },
+      {
+        "model": "OpenAI:gpt-5.4-mini@tight",
+        "hands": 300,
+        "bbPer100": 18,
+        "ci95HalfWidthBBPer100": 121.45936704341244,
+        "reducedHalfWidthBBPer100": 67.11989351860124,
+        "malformedRate": 0
+      },
+      {
+        "model": "OpenAI:gpt-5.4-mini",
+        "hands": 300,
+        "bbPer100": -41.333333333333336,
+        "ci95HalfWidthBBPer100": 171.6225495999228,
+        "reducedHalfWidthBBPer100": 120.89964096569562,
+        "malformedRate": 0
+      }
+    ]
+  },
+  "runId": "20260617T1057Z-3max-mini-mini-mini"
+}
