@@ -35,6 +35,9 @@ export class GameStateBuilder {
         private logger: Logger,
         private debug: DebugMode,
         private guard?: ProcessPlayersGuard,
+        // Pause before each action-log fetch (ms). Kept small so a decision fits the
+        // table action clock; the old fixed 2s was a big chunk of the budget.
+        private fetchSleepMs: number = 2000,
     ) {}
 
     async build(): Promise<Game | null> {
@@ -185,7 +188,7 @@ export class GameStateBuilder {
 
     private async fetchActionLogs(): Promise<void> {
         try {
-            await sleep(2000);
+            await sleep(this.fetchSleepMs);
             const was_first_fetch = this.state.processed_logs.first_fetch;
             let log = await this.logs.fetchData(this.state.hand_number, this.state.processed_logs.last_created);
             let new_logs = await this.processLogs(log, was_first_fetch);

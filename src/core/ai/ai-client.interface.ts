@@ -9,16 +9,20 @@ export abstract class AIService {
     protected playstyle_prompt: string = "";
     // Optional raw system-prompt override (arena probe-only); empty = use playstyle.
     private system_prompt_override: string;
+    // Per-query timeout (ms). Live derives this from the table action clock; the
+    // arena leaves the generous default since it has no clock.
+    private query_timeout_ms: number;
     // The full raw text of the most recent model response (reasoning + final-answer
     // line). Record-only: surfaced for logging/replay, never read back into game state.
     private last_raw_response: string = "";
 
-    constructor(api_key: string, model: string, playstyle: string, reasoning: ReasoningLevel = "none", system_prompt_override: string = "") {
+    constructor(api_key: string, model: string, playstyle: string, reasoning: ReasoningLevel = "none", system_prompt_override: string = "", query_timeout_ms: number = 20000) {
         this.api_key = api_key;
         this.model_name = model;
         this.playstyle = playstyle;
         this.reasoning = reasoning;
         this.system_prompt_override = system_prompt_override;
+        this.query_timeout_ms = query_timeout_ms;
     }
 
     abstract init(): void;
@@ -44,6 +48,11 @@ export abstract class AIService {
     // Raw system-prompt override, or "" to fall back to the playstyle prompt.
     getSystemPromptOverride(): string {
         return this.system_prompt_override;
+    }
+
+    // Per-query timeout in ms (providers wrap their API call in this).
+    getQueryTimeout(): number {
+        return this.query_timeout_ms;
     }
 
     setBotName(bot_name: string): void {

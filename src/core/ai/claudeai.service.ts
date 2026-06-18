@@ -3,7 +3,6 @@ import { AIService, BotAction } from "./ai-client.interface.ts";
 import { getPromptFromPlaystyle, parseResponse } from "./ai-query.helper.ts";
 import { withTimeout } from "../../utils/bot-timeout.helper.ts";
 
-const AI_QUERY_TIMEOUT_MS = 20000;
 const MAX_TOKENS = 4096; // headroom for visible reasoning + the Final Answer line
 // Thinking tokens count toward max_tokens, so give reasoning runs more room.
 const REASONING_MAX_TOKENS = 8192;
@@ -63,14 +62,14 @@ export class ClaudeAIService extends AIService {
                 output_config: { effort: reasoning },
             };
             try {
-                response = await withTimeout(this.agent.messages.create(withReasoning), AI_QUERY_TIMEOUT_MS, "Claude AI query");
+                response = await withTimeout(this.agent.messages.create(withReasoning), this.getQueryTimeout(), "Claude AI query");
             } catch (err) {
                 if (!isReasoningUnsupported(err)) throw err;
                 console.warn(`${tag} adaptive thinking unsupported on ${this.getModelName()}; retrying without reasoning`);
-                response = await withTimeout(this.agent.messages.create(base), AI_QUERY_TIMEOUT_MS, "Claude AI query");
+                response = await withTimeout(this.agent.messages.create(base), this.getQueryTimeout(), "Claude AI query");
             }
         } else {
-            response = await withTimeout(this.agent.messages.create(base), AI_QUERY_TIMEOUT_MS, "Claude AI query");
+            response = await withTimeout(this.agent.messages.create(base), this.getQueryTimeout(), "Claude AI query");
         }
 
         const text = response.content

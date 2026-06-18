@@ -26,6 +26,8 @@ export class Bot {
     private game_id: string;
     private debug_mode: DebugMode;
     private query_retries: number;
+    private query_delay_ms: number;
+    private fetch_sleep_ms: number;
 
     private ai_service: AIService;
     private log_service: LogService;
@@ -52,6 +54,8 @@ export class Bot {
         game_id: string,
         debug_mode: DebugMode,
         query_retries: number,
+        query_delay_ms: number,
+        fetch_sleep_ms: number,
     ) {
         this.bot_uuid = bot_uuid;
         this.ai_service = ai_service;
@@ -63,6 +67,8 @@ export class Bot {
         this.game_id = game_id;
         this.debug_mode = debug_mode;
         this.query_retries = query_retries;
+        this.query_delay_ms = query_delay_ms;
+        this.fetch_sleep_ms = fetch_sleep_ms;
 
         this.state = new HandState(bot_uuid, ai_config.provider, ai_config.model_name, game_id);
     }
@@ -151,6 +157,7 @@ export class Bot {
             this.logger,
             this.debug_mode,
             guard,
+            this.fetch_sleep_ms,
         );
         this.decisionEngine = new DecisionEngine(
             this.ai_service,
@@ -159,6 +166,7 @@ export class Bot {
             this.state,
             this.logger,
             this.query_retries,
+            this.query_delay_ms,
         );
         this.executor = new ActionExecutor(
             this.puppeteer_service,

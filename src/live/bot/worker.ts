@@ -39,12 +39,24 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
     const log_service = new LogService(game_id);
     await log_service.init(puppeteer_service.getPage());
 
+    // Derive the per-decision timing budget from the table's action clock so a
+    // decision (log fetch + reasoning query + execution) finishes within it. Reserve
+    // headroom for the fetch, the click, and a safety margin; the AI query gets the
+    // rest. Small fixed pacing sleeps replace the old fixed 2s waits.
+    const RESERVE_MS = 5000;
+    const PACING_MS = 500;
+    const action_timer_ms = (webdriver_config.action_timer_secs ?? 20) * 1000;
+    const query_timeout_ms = Math.max(action_timer_ms - RESERVE_MS, 5000);
+    const query_delay_ms = PACING_MS;
+    const fetch_sleep_ms = PACING_MS;
+    logger.info(`Timing budget (action clock ${action_timer_ms}ms): query timeout ${query_timeout_ms}ms, pacing ${PACING_MS}ms.`);
+
     const ai_service_factory = new AIServiceFactory();
-    const ai_service = ai_service_factory.createAIService(ai_config.provider, ai_config.model_name, ai_config.playstyle, ai_config.reasoning ?? 'none');
+    const ai_service = ai_service_factory.createAIService(ai_config.provider, ai_config.model_name, ai_config.playstyle, ai_config.reasoning ?? 'none', '', query_timeout_ms);
     logger.info(`Created AI service: ${ai_config.provider} ${ai_config.model_name} with playstyle: ${ai_config.playstyle}`);
     ai_service.init();
 
-    const bot = new Bot(bot_uuid, ai_service, ai_config, log_service, playerstats_api_service, hand_outcomes_api_service, puppeteer_service, logger, game_id, bot_config.debug_mode, bot_config.query_retries);
+    const bot = new Bot(bot_uuid, ai_service, ai_config, log_service, playerstats_api_service, hand_outcomes_api_service, puppeteer_service, logger, game_id, bot_config.debug_mode, bot_config.query_retries, query_delay_ms, fetch_sleep_ms);
 
     await bot.openGame();
 

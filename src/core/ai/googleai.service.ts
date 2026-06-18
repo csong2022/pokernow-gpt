@@ -3,7 +3,6 @@ import { AIService, BotAction } from "./ai-client.interface.ts";
 import { getPromptFromPlaystyle, parseResponse } from "./ai-query.helper.ts";
 import { withTimeout } from "../../utils/bot-timeout.helper.ts";
 
-const AI_QUERY_TIMEOUT_MS = 20000;
 
 const SAFETY_SETTINGS = [
     { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -53,7 +52,7 @@ export class GoogleAIService extends AIService {
 
         const result = await withTimeout(
             this.chat.sendMessage(input),
-            AI_QUERY_TIMEOUT_MS,
+            this.getQueryTimeout(),
             "Google AI query"
         );
         const text_content = result.response.text();

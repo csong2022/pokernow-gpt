@@ -4,7 +4,6 @@ import { AIService, BotAction } from "./ai-client.interface.ts";
 import { getPromptFromPlaystyle, parseResponse} from "./ai-query.helper.ts";
 import { withTimeout } from "../../utils/bot-timeout.helper.ts";
 
-const AI_QUERY_TIMEOUT_MS = 20000;
 
 export class OpenAIService extends AIService {
     private agent!: OpenAI;
@@ -48,7 +47,7 @@ export class OpenAIService extends AIService {
 
         const completion = await withTimeout(
             this.agent.chat.completions.create(params),
-            AI_QUERY_TIMEOUT_MS,
+            this.getQueryTimeout(),
             "OpenAI query"
         );
 
