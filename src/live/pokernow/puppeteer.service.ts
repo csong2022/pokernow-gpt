@@ -265,6 +265,18 @@ export class PuppeteerService {
         }
     }
     
+    // Non-blocking check: is the hero currently in a "waiting to be dealt in" state
+    // (joined mid-hand / between orbits)? Hero-specific (.you-player), unlike the
+    // table-wide .action-signal, so a waiting joiner doesn't mistake others' turns
+    // for its own.
+    async isHeroWaiting(): Promise<boolean> {
+        try {
+            return (await this.page.$(".you-player > .waiting, .you-player > .waiting-next-hand")) !== null;
+        } catch {
+            return false;
+        }
+    }
+
     async getNumPlayers<D, E=Error>(): Response<D, E> {
         try {
             await this.page.waitForSelector(".table-player", {timeout: this.default_timeout});

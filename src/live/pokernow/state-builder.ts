@@ -48,6 +48,16 @@ export class GameStateBuilder {
             this.state.between_hands = false;
         }
 
+        // If the hero is still waiting to be dealt in (joined mid-hand, or between
+        // orbits), don't enter the action path — the table-wide turn signal would
+        // otherwise make us mistake another player's turn for our own. Route back to
+        // waiting for the next hand instead.
+        if (await this.puppeteer.isHeroWaiting()) {
+            this.logger.info("Hero is waiting to be dealt in; waiting for the next hand.");
+            this.state.between_hands = true;
+            return null;
+        }
+
         this.logger.info("Checking for bot's turn or winner of hand.");
         const res = await this.puppeteer.waitForBotTurnOrWinner(
             this.state.table.getNumPlayers(),
@@ -73,7 +83,15 @@ export class GameStateBuilder {
         this.logger.info("Performing bot's turn.");
         const ready = await this.prepareHero();
         if (!ready) {
-            this.logger.warn("Hero state not ready; skipping turn and waiting for it to time out.");
+            // If we're not in the current hand's player list, we joined an ongoing
+            // hand we weren't dealt into — go wait for the next hand rather than
+            // busy-looping the action path on other players' turns.
+            if (!this.state.table.getNameToId().has(this.state.bot_name)) {
+                this.logger.info("Not in the current hand's player list; waiting for the next hand to be dealt in.");
+                this.state.between_hands = true;
+            } else {
+                this.logger.warn("Hero state not ready; skipping turn and waiting for it to time out.");
+            }
             return null;
         }
         await postProcessLogs(this.state.table.getLogsQueue(), this.state.game);
