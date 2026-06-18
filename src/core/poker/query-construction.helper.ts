@@ -195,8 +195,10 @@ function defineStacks(
     for (const player_id of player_positions.keys()) {
         if (player_id === hero_id) continue;
         const player_pos = player_positions.get(player_id);
-        const player_name = table.getNameFromId(player_id);
-        if (player_name === hero_name) continue;
+        // Skip opponents we can't resolve (e.g. a rebought/new id not yet in the
+        // current maps) rather than throwing and aborting the whole decision.
+        const player_name = table.tryGetNameFromId(player_id);
+        if (!player_name || player_name === hero_name) continue;
 
         stack_entries.push(`{${player_pos}: ${player_stacks.get(player_id)} BBs}`);
     }
@@ -205,8 +207,13 @@ function defineStacks(
 }
 
 function defineActions(player_actions: Array<PlayerAction>, table: Table): string {
-    const entries = player_actions.map(action =>
-        `{${table.getPlayerPositionFromId(action.getPlayerId())} ${action.toString()}}`
-    );
+    const entries = player_actions
+        // Omit actions from players we can't position (e.g. a rebought/new id not yet
+        // in the maps) rather than throwing and aborting the decision.
+        .map(action => {
+            const pos = table.tryGetPositionFromId(action.getPlayerId());
+            return pos ? `{${pos} ${action.toString()}}` : null;
+        })
+        .filter((entry): entry is string => entry !== null);
     return "Actions this street (position action bet_size_in_BBs):\n" + entries.join(", ");
 }

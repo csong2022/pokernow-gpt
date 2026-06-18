@@ -312,6 +312,11 @@ export class Table {
         }
         throw new Error(`Could not retrieve position for player with id: ${player_id}.`);
     }
+    // Non-throwing variant: undefined when the id isn't in the current maps (e.g. a
+    // player who rebought with a new id, or joined since the last stacks refresh).
+    public tryGetPositionFromId(player_id: string): string | undefined {
+        return this.id_to_position.get(player_id);
+    }
     
     public setIdToPosition(first_seat = 1): void {
         const visited = new Set<number>();
@@ -397,6 +402,11 @@ export class Table {
             return player_name;
         }
         throw new Error(`Could not retrieve name for player with id: ${player_id}.`)
+    }
+    // Non-throwing variant: undefined when the id isn't in the current maps (e.g. a
+    // player who rebought with a new id, or joined since the last stacks refresh).
+    public tryGetNameFromId(player_id: string): string | undefined {
+        return this.id_to_name.get(player_id);
     }
     public setIdToName(map: Map<string, string>): void {
         this.id_to_name = map;

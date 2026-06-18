@@ -16,8 +16,10 @@ export class StatsContextBuilder implements HandContextBuilder {
         for (const player_id of player_positions.keys()) {
             if (player_id === hero_id) continue;
             const player_pos = player_positions.get(player_id);
-            const player_name = table.getNameFromId(player_id);
-            if (player_name === hero_name) continue;
+            // Skip opponents we can't resolve (e.g. a rebought/new id not yet in the
+            // current maps) rather than throwing and aborting the whole decision.
+            const player_name = table.tryGetNameFromId(player_id);
+            if (!player_name || player_name === hero_name) continue;
 
             const player_stats = table.getPlayerStatsFromName(player_name);
             stat_entries.push(

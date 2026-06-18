@@ -178,3 +178,44 @@ async function liveLikeGame(): Promise<Game> {
     game.createAndSetHero("0", ["Ah", "Kh"], 100);
     return game;
 }
+
+import { PlayerAction } from "../../src/core/player/playeraction.model.ts";
+
+// A player who rebuys (or joins) gets a NEW id that isn't in the maps until the next
+// "Player stacks" refresh. Prompt construction must tolerate that (skip the player)
+// instead of throwing and forcing a fallback decision.
+describe("query-construction tolerates unresolved player ids (rebuy/new id)", () => {
+    // Count only data rows ("...Played = 10"), not the header ("...Played = total_hands").
+    const countStatRows = (s: string) => (s.match(/Total Hands Played = \d/g) || []).length;
+
+    it("Table.tryGet* return undefined for an unknown id", async () => {
+        const t = (await gameWithStats()).getTable();
+        expect(t.tryGetNameFromId("nope")).to.equal(undefined);
+        expect(t.tryGetPositionFromId("nope")).to.equal(undefined);
+    });
+
+    it("StatsContextBuilder skips an opponent in positions but not the name map", async () => {
+        const game = await gameWithStats();
+        game.getTable().getPlayerPositions().set("ghost", "BB"); // rebought/new id, no name yet
+        const build = () => new StatsContextBuilder().buildOpponentSection(game);
+        expect(build).to.not.throw();
+        expect(countStatRows(build())).to.equal(1); // only the resolvable opponent, ghost omitted
+    });
+
+    it("constructHandSetup with the live builder doesn't throw on an unresolved opponent", async () => {
+        const game = await gameWithStats();
+        game.getTable().getPlayerPositions().set("ghost", "BB");
+        expect(() => constructHandSetup(game, new StatsContextBuilder())).to.not.throw();
+    });
+
+    it("constructTurnUpdate omits actions from an unmapped (rebought) id, keeps mapped ones", async () => {
+        const game = await gameWithStats();
+        const oppPos = game.getTable().getPlayerPositionFromId("1");
+        game.getTable().updatePlayerActions(new PlayerAction("1", "raises", 3));     // mapped opponent
+        game.getTable().updatePlayerActions(new PlayerAction("rebuy_new", "calls", 1)); // unmapped new id
+        let out = "";
+        expect(() => { out = constructTurnUpdate(game); }).to.not.throw();
+        expect(out).to.contain(`{${oppPos} raises to 3 BB}`); // mapped action kept
+        expect(out).to.not.contain("rebuy_new");                // unmapped action dropped, no crash
+    });
+});
