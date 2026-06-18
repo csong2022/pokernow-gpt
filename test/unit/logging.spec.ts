@@ -278,3 +278,53 @@ describe("postProcessLogsAfterHand — preflop aggression detection", () => {
         }
     });
 });
+
+// Transport: LogService now fetches via the shared page's evaluate(fetch) instead
+// of page.goto. Mock the page to return the in-page fetch result shape.
+describe("LogService transport (evaluate-fetch)", () => {
+    const ok = (body: unknown) => ({ status: 200, ok: true, statusText: "OK", retryAfter: null, body });
+    function mockPage(results: any[]) {
+        const calls: string[] = [];
+        let i = 0;
+        return { calls, evaluate: async (_fn: any, url: string) => { calls.push(url); return results[Math.min(i++, results.length - 1)]; } };
+    }
+
+    it("returns success with the parsed body", async () => {
+        const svc = new LogService("g1");
+        const page = mockPage([ok({ data: [{ msg: "a", createdAt: "1" }] })]);
+        await svc.init(page as any);
+        const r: any = await svc.fetchData(0, "");
+        expect(r.code).to.equal("success");
+        expect(r.data).to.deep.equal({ data: [{ msg: "a", createdAt: "1" }] });
+        expect(page.calls[0]).to.contain("/api/games/g1/log_v3");
+        expect(page.calls[0]).to.not.contain("after_at");
+    });
+
+    it("passes after_at + hand_number for incremental fetch", async () => {
+        const svc = new LogService("g1");
+        const page = mockPage([ok({})]);
+        await svc.init(page as any);
+        await svc.fetchData(3, "t99");
+        expect(page.calls[0]).to.contain("hand_number=3");
+        expect(page.calls[0]).to.contain("after_at=t99");
+    });
+
+    it("errors on a non-ok status", async () => {
+        const svc = new LogService("g1");
+        const page = mockPage([{ status: 500, ok: false, statusText: "Server Error", retryAfter: null, body: null }]);
+        await svc.init(page as any);
+        const r: any = await svc.fetchData(0, "");
+        expect(r.code).to.equal("error");
+        expect(String(r.error.message)).to.contain("500");
+    });
+
+    it("retries on 429 then succeeds (backoff preserved)", async function () {
+        this.timeout(5000);
+        const svc = new LogService("g1");
+        const page = mockPage([{ status: 429, ok: false, statusText: "", retryAfter: "0", body: null }, ok({ data: [] })]);
+        await svc.init(page as any);
+        const r: any = await svc.fetchData(0, "");
+        expect(r.code).to.equal("success");
+        expect(page.calls.length).to.equal(2); // one retry
+    });
+});

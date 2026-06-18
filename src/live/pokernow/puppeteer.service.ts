@@ -38,7 +38,13 @@ export class PuppeteerService {
     async closeBrowser(): Promise<void> {
         await this.browser.close();
     }
-    
+
+    // The live game page (on www.pokernow.com after navigateToGame). Shared with
+    // LogService so it can fetch the log API same-origin without a second browser.
+    getPage(): puppeteer.Page {
+        return this.page;
+    }
+
     async navigateToGame<D, E=Error>(game_id: string): Response<D, E> {
         if (!game_id) {
             return {
@@ -46,7 +52,9 @@ export class PuppeteerService {
                 error: new Error("Game id cannot be empty.") as E
             }
         }
-        await this.page.goto(`https://www.pokernow.club/games/${game_id}`);
+        // .com (the .club domain redirects here); used directly so the page origin
+        // is www.pokernow.com, letting LogService fetch the log API same-origin.
+        await this.page.goto(`https://www.pokernow.com/games/${game_id}`);
         await this.page.setViewport({width: 1024, height: 768});
         return {
             code: "success",

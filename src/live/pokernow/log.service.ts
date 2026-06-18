@@ -1,31 +1,36 @@
-import puppeteer from 'puppeteer';
+import type { Page } from 'puppeteer';
 import type { Response } from '../../utils/error-handling.util.ts';
 import { Data, Log } from '../../core/poker/log-processing.interface.ts';
 import { sleep } from '../../utils/bot-timeout.helper.ts';
 
 const MAX_429_RETRIES = 3;
 
+// Result of the in-page fetch, mirroring the bits of the old Puppeteer Response we used.
+interface FetchResult {
+    status: number;
+    ok: boolean;
+    statusText: string;
+    retryAfter: string | null;
+    body: unknown;
+}
+
 export class LogService {
     private game_id: string;
-    private browser!: puppeteer.Browser;
-    private page!: puppeteer.Page;
+    // Shared with PuppeteerService — the live game page (www.pokernow.com origin), so
+    // the log API can be fetched same-origin without launching a second browser.
+    private page!: Page;
 
     constructor(game_id: string) {
         this.game_id = game_id;
     }
 
-    async init(): Promise<void> {
-        this.browser = await puppeteer.launch({
-            defaultViewport: null,
-            headless: true
-        });
-        this.page = await this.browser.newPage();
-        await this.page.setCacheEnabled(false);
+    // Receives the shared game page from PuppeteerService (no browser of its own).
+    async init(page: Page): Promise<void> {
+        this.page = page;
     }
 
-    async closeBrowser(): Promise<void> {
-        await this.browser.close();
-    }
+    // No-op: the page is owned by PuppeteerService, which closes the browser.
+    async closeBrowser(): Promise<void> {}
 
     async fetchData<D, E=Error>(hand_number: number = 0, after: string = ""): Response<D, E> {
         const after_param = after ? `&after_at=${after}` : "";
@@ -34,32 +39,34 @@ export class LogService {
 
         for (let attempt = 0; attempt <= MAX_429_RETRIES; attempt++) {
             try {
-                const res = await this.page.goto(url);
-                if (!res) {
-                    return { code: "error", error: new Error("No response from Log API.") as E };
-                }
+                // Same-origin fetch from the game page (cheap; no full navigation). Parse
+                // the body inside the page so only serializable data crosses back.
+                const res = await this.page.evaluate(async (u): Promise<FetchResult> => {
+                    const r = await fetch(u, { cache: 'no-store' });
+                    let body: unknown = null;
+                    try { body = r.ok ? await r.json() : null; } catch {}
+                    return { status: r.status, ok: r.ok, statusText: r.statusText, retryAfter: r.headers.get('retry-after'), body };
+                }, url);
 
-                if (res.status() === 429) {
+                if (res.status === 429) {
                     if (attempt === MAX_429_RETRIES) {
                         return { code: "error", error: new Error(`Log API rate limited after ${MAX_429_RETRIES} retries.`) as E };
                     }
-                    const retry_after_header = res.headers()['retry-after'];
-                    const retry_after_ms = retry_after_header ? Math.min(parseInt(retry_after_header) * 1000, 10000) : 0;
+                    const retry_after_ms = res.retryAfter ? Math.min(parseInt(res.retryAfter) * 1000, 10000) : 0;
                     const backoff = Math.max(retry_after_ms, 1000 * Math.pow(2, attempt));
                     console.log(`Log API rate limited (429). Waiting ${backoff}ms before retry ${attempt + 1}/${MAX_429_RETRIES}.`);
                     await sleep(backoff);
                     continue;
                 }
 
-                if (!res.ok()) {
+                if (!res.ok) {
                     return {
                         code: "error",
-                        error: new Error(`Log API returned ${res.status()}: ${res.statusText()}`) as E
+                        error: new Error(`Log API returned ${res.status}: ${res.statusText}`) as E
                     };
                 }
 
-                const data = await res.json() as D;
-                return { code: "success", data, msg: "Successfully got logs." };
+                return { code: "success", data: res.body as D, msg: "Successfully got logs." };
             } catch (err) {
                 return { code: "error", error: new Error(`Failed to fetch logs: ${err}`) as E };
             }

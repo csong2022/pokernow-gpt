@@ -34,8 +34,10 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
     const playerstats_api_service = new PlayerStatsAPIService(db_service);
     const hand_outcomes_api_service = new HandOutcomesAPIService(db_service);
 
+    // LogService fetches the log API from the shared game page (same-origin), so it
+    // needs no browser of its own.
     const log_service = new LogService(game_id);
-    await log_service.init();
+    await log_service.init(puppeteer_service.getPage());
 
     const ai_service_factory = new AIServiceFactory();
     const ai_service = ai_service_factory.createAIService(ai_config.provider, ai_config.model_name, ai_config.playstyle, ai_config.reasoning ?? 'none');

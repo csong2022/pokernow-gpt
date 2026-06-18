@@ -230,9 +230,12 @@ export class GameStateBuilder {
             try {
                 bot_id = this.state.table.getIdFromName(this.state.bot_name);
             } catch {
-                this.logger.error(
-                    `Cannot create hero — bot name "${this.state.bot_name}" not in name_to_id map. Known mappings:`,
-                    Array.from(this.state.table.getNameToId().entries()),
+                // Expected transient state after a mid-game join: the bot isn't in the
+                // current hand's "Player stacks" yet (waiting to be dealt in). The
+                // next-hand refresh resolves it, so skip this turn quietly rather than
+                // logging an error every poll.
+                this.logger.warn(
+                    `Bot "${this.state.bot_name}" not yet in the current hand's player list (waiting to be dealt in); skipping turn.`,
                 );
                 return false;
             }
