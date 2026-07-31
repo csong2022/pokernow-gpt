@@ -23,28 +23,31 @@
     "chai": "^5.1.1",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "node-fetch": "^2.7.0",
     "openai": "^4.52.1",
     "phe": "^0.6.0",
     "piscina": "^4.6.1",
     "prompt-sync": "^4.2.0",
     "puppeteer": "^22.10.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "ts-node": "^10.9.2"
   },
   "devDependencies": {
-    "@testing-library/react": "^16.0.0",
-    "@testing-library/user-event": "^14.5.2",
     "@types/better-sqlite3": "^7.6.0",
     "@types/chai": "^4.3.16",
     "@types/express": "^4.17.21",
     "@types/mocha": "^10.0.6",
     "@types/node": "^20.14.9",
-    "@types/node-fetch": "^2.6.11",
     "@types/prompt-sync": "^4.2.3",
     "mocha": "^11.0.0",
     "tsx": "^4.11.0",
     "typescript": "^5.4.5"
+  },
+  "//overrides": "Transitive advisories in the test chain. mocha is already on its latest release and its ranges still resolve to vulnerable versions, so pinning the leaves is the only route. `diff` is scoped to mocha on purpose: ts-node also depends on diff@4, which is NOT in the affected range (>=6.0.0 <8.0.3), and a global override would drag it across four majors for no security gain. The `zod` pin resolves a peer conflict, not an advisory: puppeteer's chromium-bidi asks for exactly 3.23.8 while @anthropic-ai/sdk needs >=3.25 as an optional peer, which makes a fresh `npm ci` unresolvable. 3.23->3.25 is a minor bump that chromium-bidi accepts in practice (verified: puppeteer still launches). Revisit all of these when the upstream ranges widen.",
+  "overrides": {
+    "brace-expansion": "^5.0.8",
+    "serialize-javascript": "^7.0.5",
+    "zod": "^3.25.0",
+    "mocha": {
+      "diff": "^8.0.3"
+    }
   }
 }

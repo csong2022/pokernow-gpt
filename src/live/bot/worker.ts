@@ -4,8 +4,6 @@ import { MessagePort } from 'worker_threads';
 
 import { Bot } from './bot.ts'
 
-import bot_worker_ee from './eventemitters/bot-worker.eventemitter.ts';
-
 import { AIServiceFactory } from '../../core/ai/ai-service-factory.helper.ts';
 
 import { WorkerConfig } from '../../interfaces/config.interface.ts';
@@ -70,7 +68,7 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
             port.postMessage({event_name: `${bot_uuid}-entryFailure`, msg: err.toString()});
             //TODO: add a setTimeout()
             const retryentry_task = (port: MessagePort): Promise<EntryParams> =>
-                new Promise((resolve, reject) =>
+                new Promise((resolve) =>
                     port.once('message', (message: EntryParams) => resolve(message)));
             const msg: EntryParams = await retryentry_task(port);
             name = msg.name;

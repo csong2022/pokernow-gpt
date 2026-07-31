@@ -22,7 +22,9 @@ import { HandState } from '../../core/game/hand-state.ts';
 import { GameStateBuilder, ProcessPlayersGuard } from '../pokernow/state-builder.ts';
 
 export class Bot {
-    private bot_uuid: crypto.UUID;
+    // No bot_uuid field: the constructor arg is forwarded straight into HandState,
+    // which is the single owner of that identity. Keeping a second copy here just
+    // invited them to drift.
     private game_id: string;
     private debug_mode: DebugMode;
     private query_retries: number;
@@ -57,7 +59,6 @@ export class Bot {
         query_delay_ms: number,
         fetch_sleep_ms: number,
     ) {
-        this.bot_uuid = bot_uuid;
         this.ai_service = ai_service;
         this.log_service = log_service;
         this.player_service = player_service;

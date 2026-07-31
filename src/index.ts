@@ -10,7 +10,7 @@ const port = 8080;
 
 app.use(express.json());
 
-app.get('/', (req: any, res: any) => {
+app.get('/', (_req: any, res: any) => {
     res.json({'message': 'ok'});
 })
 
