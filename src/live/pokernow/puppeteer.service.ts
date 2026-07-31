@@ -1,4 +1,5 @@
 import puppeteer from 'puppeteer';
+import type { Browser, ElementHandle, Page } from 'puppeteer';
 
 import { computeTimeout, sleep } from '../../utils/bot-timeout.helper.ts';
 import { parseStackText } from './message-processing.util.ts';
@@ -20,8 +21,8 @@ export class PuppeteerService {
     private default_timeout: number;
     private headless_flag: boolean;
 
-    private browser!: puppeteer.Browser;
-    private page!: puppeteer.Page;
+    private browser!: Browser;
+    private page!: Page;
 
     constructor(default_timeout: number, headless_flag: boolean) {
         this.default_timeout = default_timeout;
@@ -42,7 +43,7 @@ export class PuppeteerService {
 
     // The live game page (on www.pokernow.com after navigateToGame). Shared with
     // LogService so it can fetch the log API same-origin without a second browser.
-    getPage(): puppeteer.Page {
+    getPage(): Page {
         return this.page;
     }
 
@@ -301,7 +302,7 @@ export class PuppeteerService {
     async waitForBotTurnOrWinner<D, E=Error>(num_players: number, max_turn_length: number): Response<D, E> {
         try {
             const el = await this.page.waitForSelector([".action-signal", ".table-player.winner"].join(','), {timeout: computeTimeout(num_players, max_turn_length, 4) * 5 + this.default_timeout});
-            const class_name = await this.page.evaluate(el => el!.className, el);
+            const class_name = await this.page.evaluate((e: Element) => e.className, el as ElementHandle<Element>);
             return {
                 code: "success",
                 data: class_name as D,
