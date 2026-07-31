@@ -38,7 +38,6 @@
       </ul>
     </li>
     <li><a href="#development">Development</a></li>
-    <li><a href="#whats-new">What's New</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
   </ol>
@@ -52,6 +51,8 @@
 A Poker bot designed for [PokerNow](https://www.pokernow.club) using ChatGPT (or other models! check the Supported Models section below) to make decisions for the user. The bot web scrapes and fetches logs from PokerNow, building a model of the live game: the stakes, the user's hole cards, every player's position and stack size, the current pot size, the current street and shown community cards, and previous actions made by the the bot and other players.
 
 This model is used to formulate a query, fed into an LLM model. The output is parsed to reach a decision for the user, which is then executed automatically by the webdriver. The history of queries is maintained across a single hand and passed back into the model so that it can "remember" previous actions, such as who was the preflop aggressor.
+
+The model is asked to reason first and then close with `Final Answer: <action> <size>`, matching the Kaggle Game Arena harness so rankings are comparable and reasoning models can actually reason. The parser anchors on the *last* `Final Answer:` line and ignores the reasoning body, so "I considered folding but will raise" resolves to a raise. If the output still can't be parsed, the decision engine re-prompts once and then falls back to a clamp/default safety net; both events are recorded, which is what the arena's per-model reliability table is built from. Each provider logs the raw response separately from the parsed action — for audit only, never feeding game state or analysis.
 
 During the operation of the bot, a cache is maintained to track the stats of every player in the table (VPIP, PFR, 3-bet, fold-to-3-bet, aggression frequency). After the session ends, a SQLite database is updated with the players' stats, tracked by the player's name. This data will be retrieved the next time the user plays against that opponent again, building a stronger model of the opponent's tendencies the more the user plays against them. Each player's stats are used in the query, allowing the bot to make personalized exploitative adjustments to its strategy.
 
@@ -95,8 +96,11 @@ rather than convention alone:
 State goes **in** to core; actions come **out**. `core` never imports `live` or
 `arena`, and `arena` never imports `live` — so the same decision engine that
 plays a real PokerNow table also plays the benchmark, with no branching on
-which environment it's in. `npm run check:boundaries` verifies this, and
-`npm test` fails on any violation.
+which environment it's in. Core touches neither the browser nor the database: it
+reaches both through injected ports, which is what lets the arena substitute its
+own implementations. `scripts/check-boundaries.ts` enforces the whole dependency
+DAG — `npm run check:boundaries` is a non-failing report, and `pretest` runs it
+in strict mode so `npm test` and CI fail on a stray cross-layer import.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -195,6 +199,12 @@ curl -X POST http://localhost:8080/bot/stop \
   -H "Content-Type: application/json" \
   -d '{ "bot_uuid": "xxxx-xxxx-xxxx-xxxx" }'
 ```
+
+The bot runs a single browser instance — log polling shares the game page rather
+than opening a second one — and it paces its decisions off the table's own action
+clock instead of a fixed delay, so it doesn't time out at a fast table or look
+robotic at a slow one.
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- THE ARENA -->
@@ -254,9 +264,16 @@ npx tsx src/arena/index.ts --duplicate --deals 50 --players 3 --rotation full \
 The cost of the `cyclic` shortcut is measured, not guessed — `npm run calibrate`
 plays deterministic agents both ways on identical decks and reports the residual.
 
+Seats can also be given a `--playstyle` individually, which steers that agent's
+system prompt; a non-neutral playstyle is folded into the agent's identity so
+seats stay distinguishable in the logs. For prompt experiments there's a
+probe-only system-prompt override (used for the tightness probes), which replaces
+the playstyle prompt outright rather than adding to the playstyle map.
+
 Each run writes `arena-runs/<runId>/` containing a tracked `manifest.json` (what
 was run: models, format, rotation, git commit, tags) and a gitignored
-`hands.jsonl` (one replayable record per hand).
+`hands.jsonl` (one replayable record per hand, including the full prompt and
+reasoning trace behind each decision).
 
 ### Analyzing Results
 
@@ -352,10 +369,21 @@ id; deprecates rather than deletes models that disappear, so ids in historical
 run logs stay resolvable; and writes deterministically, so a re-run with no
 upstream changes produces a zero diff.
 
+The registry replaced a hardcoded model allowlist in the service factory, which
+kept drifting from what the providers actually served. Keeping the stable `id`
+separate from the volatile `apiModelString` means a preview→GA rename or a
+version bump can land underneath an id without invalidating the ids recorded in
+historical run logs.
+
 Two fields aren't in any provider list endpoint and are maintained by hand:
 per-1M-token **costs** and the **reasoning** level. New models land with cost `0`
 and reasoning `none` until set; both are preserved across re-runs. Don't hand-edit
 the file for anything else — re-run the script.
+
+The reasoning level is a single setting that each provider service maps to its
+own native knob: **OpenAI** sets `reasoning_effort`, **Anthropic** sets adaptive
+thinking plus effort (with a larger token budget to fit the reasoning), and
+**Gemini** ignores it, since those models reason on their own.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -367,61 +395,6 @@ npx tsc --noEmit            # type-check (no build step; tsconfig sets noEmit)
 npm test                    # Mocha unit tests (pretest runs the boundary checker)
 npm run check:boundaries    # non-failing layering report while working
 ```
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- WHAT'S NEW -->
-## What's New
-
-Everything below landed since the last README update.
-
-**Anthropic (Claude) provider.** A third provider alongside OpenAI and Google,
-configured with `CLAUDEAI_API_KEY`.
-
-**Script-managed model registry.** Models moved out of a hardcoded allowlist in
-the service factory (which drifted from what the providers actually served) and
-into `src/config/models.json`, refreshed by `npm run update-models`. Stable ids
-are decoupled from the volatile provider API strings, so a preview→GA rename
-doesn't invalidate historical run logs.
-
-**Reasoning as a first-class setting.** Each model carries a reasoning *level*
-(`none`/`low`/`medium`/`high`) that flows through to each provider's native knob:
-OpenAI `reasoning_effort`, Anthropic adaptive thinking + effort, and a no-op for
-Gemini (which reasons on its own).
-
-**Output regime: reasoning + `Final Answer:`.** Models are asked to reason and
-then end with `Final Answer: <action> <size>`, matching the Kaggle Game Arena
-harness so rankings are comparable and reasoning models can actually reason. The
-parser anchors on the last `Final Answer:` line and ignores the reasoning body,
-so "I considered folding but will raise" resolves to a raise. On a parse failure
-the decision engine re-prompts once before falling back to the safety net, and
-both events are recorded so the analyzer can report per-model reliability.
-
-**The Arena.** An LLM-vs-LLM benchmark on the PokerKit engine, with duplicate-deck
-variance reduction, bb/100 and Bradley-Terry rankings, per-model style stats, a
-run registry with tracked manifests, and full replayable per-decision logs. See
-[The Arena](#the-arena).
-
-**Per-seat playstyles and prompt probes.** The arena CLI takes a `--playstyle`
-per seat, a non-neutral playstyle is encoded into the agent's identity so seats
-stay distinguishable in the logs, and a probe-only system-prompt override allows
-prompt experiments (e.g. tightness probes) without touching the playstyle map.
-Relatedly, the pot-odds cue was removed from the reasoning prompt — it was
-measurably inflating VPIP.
-
-**Three-layer architecture.** The codebase was split into `core` / `live` /
-`arena` with the dependency direction enforced by `scripts/check-boundaries.ts`,
-wired into `pretest` so CI fails on a stray cross-layer import. Core no longer
-touches the browser or the database — it depends on injected ports instead.
-
-**Richer opponent stats.** 3-bet, fold-to-3-bet, and aggression frequency joined
-VPIP/PFR, in both the live exploitative prompt and the arena's offline style table.
-
-**Live bot fixes.**
-- Log polling was collapsed onto the shared game page, dropping the second browser instance.
-- Decision timing is derived from the table's own action clock instead of a fixed delay.
-- Fixed a hang when joining a game that was already in progress.
-- Prompt construction now tolerates unresolved player ids (a rebuy or a new id mid-session no longer throws).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
