@@ -17,7 +17,7 @@ import { PuppeteerService } from '../pokernow/puppeteer.service.ts';
 
 import { Logger } from '../../utils/logger.util.ts';
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_config, webdriver_config, port }: WorkerConfig): Promise<void> {
     const logger = new Logger(bot_uuid, ai_config.model_name);

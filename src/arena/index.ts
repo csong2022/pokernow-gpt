@@ -13,7 +13,7 @@ import { runHands } from './runner.ts';
 import { runDuplicate, RotationMode } from './duplicate-runner.ts';
 import { currentGitCommit, formatOf, startRun } from './run-manifest.ts';
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Composition root owns the registry path; core never hardcodes it.
