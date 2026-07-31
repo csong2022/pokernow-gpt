@@ -271,11 +271,15 @@ export class GameStateBuilder {
     private async endHand(): Promise<void> {
         const stack_res = await this.puppeteer.getStackSize();
         logResponse(stack_res, this.debug);
+        // getStackSize now returns a parsed number (it used to hand back the raw DOM
+        // text, which carries the pot-award animation — "400 +1200" — and made both
+        // the conversion and the bust check below silently NaN).
         let ending_stack_BB = 0;
         if (stack_res.code === "success") {
-            this.logger.info("Ending stack size:", stack_res.data);
-            ending_stack_BB = convertToBBs(Number(stack_res.data), this.state.game.getBigBlind());
-            if (Number(stack_res.data) === 0) {
+            const ending_stack = stack_res.data as number;
+            this.logger.info("Ending stack size:", ending_stack);
+            ending_stack_BB = convertToBBs(ending_stack, this.state.game.getBigBlind());
+            if (ending_stack === 0) {
                 this.logger.info(`Bot "${this.state.bot_name}" has busted — stopping after this hand.`);
                 this.state.active = false;
             }
@@ -319,6 +323,17 @@ export class GameStateBuilder {
             position = this.state.table.getPlayerPositionFromId(bot_id);
         } catch {
             // Position not yet known — leave null.
+        }
+
+        // SQLite has no NaN/Infinity: a non-finite number binds as NULL and trips the
+        // NOT NULL constraint, so the row is lost either way. Skip loudly instead of
+        // letting a bad parse upstream turn into a silent gap in the outcome data.
+        if (!Number.isFinite(ending_stack_BB) || !Number.isFinite(starting_stack_BB)) {
+            this.logger.warn(
+                `Skipping hand outcome for hand ${this.state.hand_number}: non-finite stack ` +
+                `(starting=${starting_stack_BB}, ending=${ending_stack_BB}).`,
+            );
+            return;
         }
 
         try {

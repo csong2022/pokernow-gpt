@@ -1,6 +1,7 @@
 import puppeteer from 'puppeteer';
 
 import { computeTimeout, sleep } from '../../utils/bot-timeout.helper.ts';
+import { parseStackText } from './message-processing.util.ts';
 
 import type { Response } from '../../utils/error-handling.util.ts';
 
@@ -394,9 +395,15 @@ export class PuppeteerService {
         try {
             await this.page.waitForSelector(".you-player > .table-player-infos-ctn > div > .table-player-stack");
             const stack_size_str = await this.page.$eval(".you-player > .table-player-infos-ctn > div > .table-player-stack", (p: any) => p.textContent);
+            // Normalize here so callers get a real number: the raw text carries the
+            // win/loss animation and thousands separators (see parseStackText).
+            const stack_size = parseStackText(stack_size_str);
+            if (!Number.isFinite(stack_size)) {
+                throw new Error(`Unparseable stack text: ${JSON.stringify(stack_size_str)}`);
+            }
             return {
                 code: "success",
-                data: stack_size_str as D,
+                data: stack_size as D,
                 msg: "Successfully retrieved bot's stack size."
             }
         } catch (err) {
