@@ -2,19 +2,31 @@ import { Player } from "../player/player.model.ts"
 import { PlayerAction } from "../player/playeraction.model.ts";
 import { PlayerStats } from "../player/playerstats.model.ts";
 
-import { PlayerStatsAPIService } from "../../services/db/playerstatsapi.service.ts";
+import { PlayerStatsRepository } from "../player/playerstats-repository.interface.ts";
 
 import { Queue } from "../../utils/data-structures.util.ts"
-import { getPlayerStacksMsg, getIdToInitialStackFromMsg as getPlayerInitialStacksFromMsg } from "../poker/message-processing.util.ts";
 
 export class Table {
-    private player_service: PlayerStatsAPIService;
+    private player_service: PlayerStatsRepository;
 
     private num_players: number;
     private players_in_pot: number;
     private pot_size_in_BBs: number;
     private runout: string;
     private street: string;
+
+    // Hero's betting context for the current decision (in BB), supplied by the
+    // environment's state builder. null when not provided (e.g. live until wired,
+    // or no legal raise) — query-construction omits the corresponding prompt line.
+    private amount_to_call: number | null;
+    private min_raise_to: number | null;
+    private max_raise_to: number | null;
+    // Live per-id stacks (BB) for the CURRENT decision (vs id_to_initial_stacks at
+    // hand start). null until a state builder supplies it; omitted from the prompt.
+    private current_stacks: Map<string, number> | null;
+    // Ids of players who have NOT folded this hand (in seat order). null until a
+    // state builder supplies it; omitted from the prompt.
+    private live_player_ids: string[] | null;
 
     private logs_queue: Queue<Array<string>>;
     private player_actions: Array<PlayerAction>;
@@ -37,7 +49,7 @@ export class Table {
     private first_seat_order_id: string;
     
 
-    constructor(player_service: PlayerStatsAPIService) {
+    constructor(player_service: PlayerStatsRepository) {
         this.player_service = player_service;
 
         this.num_players = 0;
@@ -45,6 +57,11 @@ export class Table {
         this.pot_size_in_BBs = 0;
         this.runout = "";
         this.street = "";
+        this.amount_to_call = null;
+        this.min_raise_to = null;
+        this.max_raise_to = null;
+        this.current_stacks = null;
+        this.live_player_ids = null;
 
         this.logs_queue = new Queue();
         this.player_actions = new Array<PlayerAction>;
@@ -89,6 +106,35 @@ export class Table {
     }
     public setPot(pot: number): void {
         this.pot_size_in_BBs = pot;
+    }
+
+    // Hero's current-decision betting context (BB). Amounts are TOTALs to match the
+    // prompt's bet-sizing convention; null means "not provided / not applicable".
+    public setBettingContext(amount_to_call: number | null, min_raise_to: number | null, max_raise_to: number | null): void {
+        this.amount_to_call = amount_to_call;
+        this.min_raise_to = min_raise_to;
+        this.max_raise_to = max_raise_to;
+    }
+    public getAmountToCall(): number | null {
+        return this.amount_to_call;
+    }
+    public getMinRaiseTo(): number | null {
+        return this.min_raise_to;
+    }
+    public getMaxRaiseTo(): number | null {
+        return this.max_raise_to;
+    }
+    public setCurrentStacks(stacks: Map<string, number>): void {
+        this.current_stacks = stacks;
+    }
+    public getCurrentStacks(): Map<string, number> | null {
+        return this.current_stacks;
+    }
+    public setLivePlayers(player_ids: string[]): void {
+        this.live_player_ids = player_ids;
+    }
+    public getLivePlayers(): string[] | null {
+        return this.live_player_ids;
     }
 
 
@@ -255,9 +301,6 @@ export class Table {
     public setIdToStack(map: Map<string, number>): void {
         this.id_to_initial_stacks = map;
     }
-    public setPlayerInitialStacksFromMsg(msgs: string[], stakes: number): void {
-        this.id_to_initial_stacks = getPlayerInitialStacksFromMsg(getPlayerStacksMsg(msgs), stakes);
-    }
 
     public getPlayerPositions(): Map<string, string> {
         return this.id_to_position;
@@ -268,6 +311,11 @@ export class Table {
             return player_position;
         }
         throw new Error(`Could not retrieve position for player with id: ${player_id}.`);
+    }
+    // Non-throwing variant: undefined when the id isn't in the current maps (e.g. a
+    // player who rebought with a new id, or joined since the last stacks refresh).
+    public tryGetPositionFromId(player_id: string): string | undefined {
+        return this.id_to_position.get(player_id);
     }
     
     public setIdToPosition(first_seat = 1): void {
@@ -355,10 +403,13 @@ export class Table {
         }
         throw new Error(`Could not retrieve name for player with id: ${player_id}.`)
     }
+    // Non-throwing variant: undefined when the id isn't in the current maps (e.g. a
+    // player who rebought with a new id, or joined since the last stacks refresh).
+    public tryGetNameFromId(player_id: string): string | undefined {
+        return this.id_to_name.get(player_id);
+    }
     public setIdToName(map: Map<string, string>): void {
-        for (const [id, name] of map) {
-            this.id_to_name.set(id, name);
-        }
+        this.id_to_name = map;
     }
 
     public getIdFromName(player_name: string): string {
@@ -372,9 +423,7 @@ export class Table {
         return this.name_to_id;
     }
     public setNameToId(map: Map<string, string>): void {
-        for (const [name, id] of map) {
-            this.name_to_id.set(name, id);
-        }
+        this.name_to_id = map;
     }
 
     public getPlayerCache(): Map<string, Player> {
@@ -388,6 +437,7 @@ export class Table {
         throw new Error(`Could not retrieve player stats for player with name: ${player_name}.`);
     }
     public async updateCache(): Promise<void> {
+        this.name_to_player = new Map<string, Player>();
         for (const name of this.name_to_id.keys()) {
             const id = this.name_to_id.get(name)!
             await this.cachePlayer(name, id);
@@ -420,6 +470,11 @@ export class Table {
         this.pot_size_in_BBs = 0;
         this.runout = "";
         this.street = "";
+        this.amount_to_call = null;
+        this.min_raise_to = null;
+        this.max_raise_to = null;
+        this.current_stacks = null;
+        this.live_player_ids = null;
 
         this.logs_queue = new Queue<string[]>();
         this.player_actions = new Array<PlayerAction>();

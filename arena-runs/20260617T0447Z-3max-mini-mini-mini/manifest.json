@@ -1,0 +1,50 @@
+{
+  "createdAt": "2026-06-17T04:47:07.272Z",
+  "gitCommit": "8175c07",
+  "format": "3max",
+  "models": [
+    "gpt-5.4-mini",
+    "gpt-5.4-mini",
+    "gpt-5.4-mini"
+  ],
+  "rotation": "cyclic",
+  "deals": 100,
+  "replaysPerDeal": 3,
+  "tags": [
+    "experiment",
+    "3max",
+    "reasoning",
+    "controlled-playstyle"
+  ],
+  "notes": "Controlled style contrast: gpt-5.4-mini at aggressive/neutral/passive, identical medium effort, to test the margin/frequency split as a pure style effect (model+compute held constant). Playstyle encoded in agent id.",
+  "results": {
+    "analyzedAt": "2026-06-17T08:10:03.233Z",
+    "models": [
+      {
+        "model": "OpenAI:gpt-5.4-mini@aggressive",
+        "hands": 300,
+        "bbPer100": 119.16666666666667,
+        "ci95HalfWidthBBPer100": 167.97665800000388,
+        "reducedHalfWidthBBPer100": 113.3713231535217,
+        "malformedRate": 0
+      },
+      {
+        "model": "OpenAI:gpt-5.4-mini",
+        "hands": 300,
+        "bbPer100": -11,
+        "ci95HalfWidthBBPer100": 146.5888081799288,
+        "reducedHalfWidthBBPer100": 111.03387870163147,
+        "malformedRate": 0
+      },
+      {
+        "model": "OpenAI:gpt-5.4-mini@passive",
+        "hands": 300,
+        "bbPer100": -108.16666666666667,
+        "ci95HalfWidthBBPer100": 84.5519802775734,
+        "reducedHalfWidthBBPer100": 67.7270984530633,
+        "malformedRate": 0
+      }
+    ]
+  },
+  "runId": "20260617T0447Z-3max-mini-mini-mini"
+}

@@ -1,8 +1,9 @@
 import { DBService } from './db.service.ts';
 import { emptyOrSingleRow } from './db-query.helper.ts'
+import { PlayerStatsRepository } from '../../core/player/playerstats-repository.interface.ts';
 
 // handles player related queries
-export class PlayerStatsAPIService {
+export class PlayerStatsAPIService implements PlayerStatsRepository {
     private db_service: DBService;
 
     constructor(db_service: DBService) {

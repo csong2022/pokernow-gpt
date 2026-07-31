@@ -1,0 +1,51 @@
+{
+  "createdAt": "2026-06-16T19:56:54.524Z",
+  "gitCommit": "6cd1a66",
+  "format": "3max",
+  "models": [
+    "gpt-5.4-mini",
+    "claude-haiku-4-5",
+    "gemini-3.5-flash"
+  ],
+  "rotation": "cyclic",
+  "deals": 100,
+  "replaysPerDeal": 3,
+  "tags": [
+    "experiment",
+    "3max",
+    "reasoning",
+    "cheap-tier",
+    "replication"
+  ],
+  "notes": "Replication of original mini/haiku/flash flip under reasoning regime; tests whether aggression-overruns-station survives. Cheap-tier, pre-marquee.",
+  "results": {
+    "analyzedAt": "2026-06-17T00:56:13.523Z",
+    "models": [
+      {
+        "model": "Google:gemini-3.5-flash",
+        "hands": 300,
+        "bbPer100": 77.66666666666666,
+        "ci95HalfWidthBBPer100": 106.09364201546458,
+        "reducedHalfWidthBBPer100": 94.83081667262417,
+        "malformedRate": 0
+      },
+      {
+        "model": "OpenAI:gpt-5.4-mini",
+        "hands": 300,
+        "bbPer100": -5.166666666666667,
+        "ci95HalfWidthBBPer100": 154.6970464431165,
+        "reducedHalfWidthBBPer100": 123.45129046468561,
+        "malformedRate": 0
+      },
+      {
+        "model": "Anthropic:claude-haiku-4-5",
+        "hands": 300,
+        "bbPer100": -72.5,
+        "ci95HalfWidthBBPer100": 118.14149071480607,
+        "reducedHalfWidthBBPer100": 110.91261598140399,
+        "malformedRate": 0
+      }
+    ]
+  },
+  "runId": "20260616T1956Z-3max-mini-haiku-flash"
+}

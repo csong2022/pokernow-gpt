@@ -10,10 +10,41 @@ export class DBService {
 
     init(): void {
         this.db = new Database(this.file_name);
+        // WAL: readers don't block writers (matters when N workers share the file).
+        // busy_timeout: wait up to 5s for a held lock instead of failing immediately.
+        // Both are no-ops on :memory: databases.
+        this.db.pragma('journal_mode = WAL');
+        this.db.pragma('busy_timeout = 5000');
     }
 
     createTables(): void {
         this.createPlayerTable();
+        this.createHandOutcomesTable();
+    }
+
+    createHandOutcomesTable(): void {
+        try {
+            this.db.exec(`
+                CREATE TABLE IF NOT EXISTS HandOutcomes (
+                    hand_id TEXT NOT NULL,
+                    bot_uuid TEXT NOT NULL,
+                    bot_name TEXT NOT NULL,
+                    model_provider TEXT NOT NULL,
+                    model_name TEXT NOT NULL,
+                    starting_stack_BB REAL NOT NULL,
+                    ending_stack_BB REAL NOT NULL,
+                    stack_delta_BB REAL NOT NULL,
+                    position TEXT,
+                    saw_showdown INT NOT NULL DEFAULT 0,
+                    created_at INT NOT NULL,
+                    PRIMARY KEY (hand_id, bot_uuid)
+                );
+            `);
+            this.db.exec(`CREATE INDEX IF NOT EXISTS idx_hand_outcomes_model ON HandOutcomes (model_provider, model_name);`);
+            this.db.exec(`CREATE INDEX IF NOT EXISTS idx_hand_outcomes_hand ON HandOutcomes (hand_id);`);
+        } catch (err) {
+            console.log("Failed to create hand outcomes table", err.message);
+        }
     }
 
     createPlayerTable(): void {

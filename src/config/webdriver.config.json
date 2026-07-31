@@ -1,4 +1,5 @@
 {
     "default_timeout": 1000,
-    "headless_flag": false
+    "headless_flag": false,
+    "action_timer_secs": 20
 }

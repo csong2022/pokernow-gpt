@@ -1,7 +1,7 @@
 import express from 'express';
 
-import bot_router from './http/routes/bot.route.ts';
-import playerstats_router from './http/routes/playerstats.route.ts';
+import bot_router from './live/http/routes/bot.route.ts';
+import playerstats_router from './live/http/routes/playerstats.route.ts';
 
 import db_service from './services/db/db.service.ts';
 
