@@ -2,6 +2,17 @@
   "_managedBy": "scripts/update-models.ts",
   "models": [
     {
+      "id": "claude-fable-5",
+      "provider": "Anthropic",
+      "apiModelString": "claude-fable-5",
+      "displayName": "Claude Fable 5",
+      "reasoning": "medium",
+      "inputCostPer1M": 10,
+      "outputCostPer1M": 50,
+      "addedAt": "2026-07-31",
+      "deprecated": false
+    },
+    {
       "id": "claude-haiku-4-5",
       "provider": "Anthropic",
       "apiModelString": "claude-haiku-4-5",
@@ -57,6 +68,17 @@
       "deprecated": false
     },
     {
+      "id": "claude-opus-5",
+      "provider": "Anthropic",
+      "apiModelString": "claude-opus-5",
+      "displayName": "Claude Opus 5",
+      "reasoning": "medium",
+      "inputCostPer1M": 5,
+      "outputCostPer1M": 25,
+      "addedAt": "2026-07-31",
+      "deprecated": false
+    },
+    {
       "id": "claude-sonnet-4-5",
       "provider": "Anthropic",
       "apiModelString": "claude-sonnet-4-5-20250929",
@@ -76,6 +98,17 @@
       "inputCostPer1M": 3,
       "outputCostPer1M": 15,
       "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "claude-sonnet-5",
+      "provider": "Anthropic",
+      "apiModelString": "claude-sonnet-5",
+      "displayName": "Claude Sonnet 5",
+      "reasoning": "medium",
+      "inputCostPer1M": 3,
+      "outputCostPer1M": 15,
+      "addedAt": "2026-07-31",
       "deprecated": false
     },
     {
@@ -142,6 +175,28 @@
       "inputCostPer1M": 0,
       "outputCostPer1M": 0,
       "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "gemini-3.5-flash-lite",
+      "provider": "Google",
+      "apiModelString": "gemini-3.5-flash-lite",
+      "displayName": "Gemini 3.5 Flash Lite",
+      "reasoning": "none",
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-07-31",
+      "deprecated": false
+    },
+    {
+      "id": "gemini-3.6-flash",
+      "provider": "Google",
+      "apiModelString": "gemini-3.6-flash",
+      "displayName": "Gemini 3.6 Flash",
+      "reasoning": "none",
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-07-31",
       "deprecated": false
     },
     {
@@ -274,6 +329,39 @@
       "inputCostPer1M": 0,
       "outputCostPer1M": 0,
       "addedAt": "2026-06-15",
+      "deprecated": false
+    },
+    {
+      "id": "gpt-5.6-luna",
+      "provider": "OpenAI",
+      "apiModelString": "gpt-5.6-luna",
+      "displayName": "gpt-5.6-luna",
+      "reasoning": "none",
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-07-31",
+      "deprecated": false
+    },
+    {
+      "id": "gpt-5.6-sol",
+      "provider": "OpenAI",
+      "apiModelString": "gpt-5.6-sol",
+      "displayName": "gpt-5.6-sol",
+      "reasoning": "none",
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-07-31",
+      "deprecated": false
+    },
+    {
+      "id": "gpt-5.6-terra",
+      "provider": "OpenAI",
+      "apiModelString": "gpt-5.6-terra",
+      "displayName": "gpt-5.6-terra",
+      "reasoning": "none",
+      "inputCostPer1M": 0,
+      "outputCostPer1M": 0,
+      "addedAt": "2026-07-31",
       "deprecated": false
     },
     {
