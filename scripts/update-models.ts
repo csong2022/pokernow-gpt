@@ -4,7 +4,7 @@
  *   npm run update-models
  *
  * For each provider it fetches the live "list models" endpoint, keeps only an
- * allowlisted family (gpt-5.4*, gemini-3*, claude-*-4*), and MERGES into the
+ * allowlisted family (gpt-5.x/o3, gemini-3*, claude-<tier>-<version>), and MERGES into the
  * registry without clobbering: existing ids, addedAt, deprecated, costs, and
  * reasoning are preserved; the (often alias) apiModelString on a matched entry is
  * kept as-is so it stays consistent with the provider SDK / factory.
@@ -95,7 +95,10 @@ async function fetchAnthropic(): Promise<RawModel[]> {
 const PROVIDERS: ProviderSpec[] = [
     { provider: 'OpenAI', keep: (id) => (/^gpt-5\.\d/.test(id) || /^o3(-\d{4}-\d{2}-\d{2})?$/.test(id)) && !/codex/.test(id), fetch: fetchOpenAI },
     { provider: 'Google', keep: (id) => /^gemini-3/.test(id) && !/(image|tts|live|translate|customtools)/.test(id), fetch: fetchGoogle },
-    { provider: 'Anthropic', keep: (id) => /^claude-(opus|sonnet|haiku)-4/.test(id), fetch: fetchAnthropic },
+    // Tier-keyed, version-agnostic: matches the modern `claude-<tier>-<version>`
+    // naming (4.x, 5, and whatever comes next) without a yearly regex bump. The
+    // legacy `claude-3-opus-*` / `claude-2.x` naming doesn't match, by design.
+    { provider: 'Anthropic', keep: (id) => /^claude-(opus|sonnet|haiku|fable)-\d/.test(id), fetch: fetchAnthropic },
 ];
 
 // Fixed key order so JSON.stringify is deterministic regardless of input order.

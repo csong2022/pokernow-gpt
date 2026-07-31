@@ -252,7 +252,9 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   resolves `id → AIConfig` (`toAIConfig`) and throws `unknown model id: X` on an
   unregistered id. **`scripts/update-models.ts` is the sole writer** (`npm run
   update-models`): fetches each provider's live model list, keeps an allowlisted
-  family (`gpt-5.x*`, `gemini-3*` text-gen, `claude-*-4*`), and merges
+  family (`gpt-5.x*`/`o3`, `gemini-3*` text-gen, and `claude-<tier>-<version>` —
+  tier-keyed and version-agnostic, so a new Claude generation is picked up
+  without a regex bump; the legacy `claude-3-opus-*` naming stays excluded), and merges
   non-clobbering — preserving ids/addedAt/deprecated/costs/reasoning, collapsing
   dated snapshots to a family id, deprecating (never deleting) vanished models,
   and writing deterministically (sorted, fixed key order) so reruns are zero-diff.
@@ -265,10 +267,14 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   `reasoning_effort` (low/medium/high); **Claude** sets adaptive thinking
   (`thinking:{type:"adaptive"}` + `output_config.effort`) with a bigger token
   budget and a defensive retry-without-thinking on the 400 you get from a model
-  that doesn't support it (so only adaptive-capable Claudes — Opus 4.6+/Sonnet
-  4.6 — are non-`none` in the registry; Haiku 4.5 / Sonnet 4.5 / Opus 4.5 are
-  `none`); **Gemini** is a no-op (pinned SDK 0.14.1 has no `thinkingConfig`; the
-  models reason automatically).
+  that doesn't support it (so only adaptive-capable Claudes — the Claude 5 family
+  (Opus 5 / Sonnet 5 / Fable 5) and Opus 4.6+/Sonnet 4.6 — are non-`none` in the
+  registry; Haiku 4.5 / Sonnet 4.5 / Opus 4.5 are `none`); **Gemini** is a no-op
+  (pinned SDK 0.14.1 has no `thinkingConfig`; the models reason automatically).
+  **Don't register a Claude 5 model as `none`**: on that path the service omits
+  `thinking` entirely, but Opus 5 and Fable 5 think by default, and the smaller
+  non-reasoning `max_tokens` (4096) then caps thinking + text together and can
+  truncate the response before the `Final Answer:` line.
 - **Python venv setup** (one-time):
   ```sh
   py -m venv engine-py/.venv
