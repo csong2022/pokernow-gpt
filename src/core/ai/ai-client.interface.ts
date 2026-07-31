@@ -1,4 +1,5 @@
 import { ReasoningLevel } from "./ai-config.interface.ts";
+import { BotAction } from "../poker/bot-action.ts";
 
 export abstract class AIService {
     private api_key: string;
@@ -73,17 +74,3 @@ export abstract class AIService {
     }
 }
 
-export interface BotAction {
-    action_str: string,
-    bet_size_in_BBs: number
-}
-
-export const defaultCheckAction = {
-    action_str: "check",
-    bet_size_in_BBs: 0
-}
-
-export const defaultFoldAction = {
-    action_str: "fold",
-    bet_size_in_BBs: 0
-}

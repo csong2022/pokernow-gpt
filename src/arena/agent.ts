@@ -1,6 +1,7 @@
 import { Game } from '../core/game/game.model.ts';
 import { AIConfig } from '../core/ai/ai-config.interface.ts';
-import { AIService, BotAction } from '../core/ai/ai-client.interface.ts';
+import { AIService } from '../core/ai/ai-client.interface.ts';
+import { BotAction } from '../core/poker/bot-action.ts';
 import { AIServiceFactory } from '../core/ai/ai-service-factory.helper.ts';
 import { ActionAvailability } from '../core/poker/action-availability.interface.ts';
 import { DecisionEngine, DecisionEvent, DecisionTrace } from '../core/poker/decision-engine.ts';
