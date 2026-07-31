@@ -1,5 +1,6 @@
 import { ChatSession, GenerativeModel, GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
-import { AIService, BotAction } from "./ai-client.interface.ts";
+import { AIService } from "./ai-client.interface.ts";
+import { BotAction } from "../poker/bot-action.ts";
 import { getPromptFromPlaystyle, parseResponse } from "./ai-query.helper.ts";
 import { withTimeout } from "../../utils/bot-timeout.helper.ts";
 

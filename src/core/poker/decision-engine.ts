@@ -16,7 +16,8 @@ export interface DecisionTrace {
     events: DecisionEvent[];
 }
 
-import { AIService, BotAction, defaultCheckAction, defaultFoldAction } from '../ai/ai-client.interface.ts';
+import { AIService } from '../ai/ai-client.interface.ts';
+import { BotAction } from './bot-action.ts';
 import { ActionAvailability } from './action-availability.interface.ts';
 import type { HandContextBuilder } from './hand-context-builder.interface.ts';
 
@@ -24,6 +25,18 @@ import { sleep, TimeoutError } from '../../utils/bot-timeout.helper.ts';
 import { Logger } from '../../utils/logger.util.ts';
 
 import { HandState } from '../game/hand-state.ts';
+
+// Safety net for when the model can't produce a legal action: check if that's
+// legal here, otherwise fold. This is poker policy, not an AI-client concern, so
+// it lives with the engine that applies it (its only consumer) rather than on the
+// provider port.
+//
+// Typed so a typo in action_str is a compile error rather than a silent fold at
+// the table, and frozen because fallback() hands these objects themselves to
+// callers in live/arena — one stray mutation would corrupt every later fallback
+// in the process.
+const defaultCheckAction: BotAction = Object.freeze({ action_str: "check", bet_size_in_BBs: 0 });
+const defaultFoldAction: BotAction = Object.freeze({ action_str: "fold", bet_size_in_BBs: 0 });
 
 export class DecisionEngine {
     constructor(

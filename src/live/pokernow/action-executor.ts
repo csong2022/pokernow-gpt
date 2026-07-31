@@ -1,6 +1,6 @@
 import { convertToBBs, convertToValue } from '../../core/poker/value-conversion.util.ts';
 
-import { BotAction } from '../../core/ai/ai-client.interface.ts';
+import { BotAction } from '../../core/poker/bot-action.ts';
 import { PuppeteerService } from './puppeteer.service.ts';
 
 import { DebugMode, logResponse } from '../../utils/error-handling.util.ts';
