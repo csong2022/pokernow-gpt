@@ -22,7 +22,7 @@ export class HandOutcomesAPIService {
     }
 
     async insert(outcome: HandOutcome): Promise<void> {
-        await this.db_service.query(
+        this.db_service.query(
             `INSERT OR REPLACE INTO HandOutcomes
              (hand_id, bot_uuid, bot_name, model_provider, model_name,
               starting_stack_BB, ending_stack_BB, stack_delta_BB,
@@ -45,7 +45,7 @@ export class HandOutcomesAPIService {
     }
 
     async getByModel(model_provider: string, model_name: string): Promise<HandOutcome[]> {
-        const rows = await this.db_service.query(
+        const rows = this.db_service.query(
             `SELECT * FROM HandOutcomes WHERE model_provider = ? AND model_name = ?`,
             [model_provider, model_name],
         );
@@ -53,7 +53,7 @@ export class HandOutcomesAPIService {
     }
 
     async getAll(): Promise<HandOutcome[]> {
-        const rows = await this.db_service.query(`SELECT * FROM HandOutcomes`, []);
+        const rows = this.db_service.query(`SELECT * FROM HandOutcomes`, []);
         return rows as HandOutcome[];
     }
 }
