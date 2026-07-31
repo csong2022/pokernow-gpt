@@ -18,7 +18,7 @@
   "description": "",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
-    "@google/generative-ai": "^0.24.1",
+    "@google/genai": "^2.15.0",
     "better-sqlite3": "^13.0.2",
     "chai": "^6.2.2",
     "dotenv": "^17.4.2",

@@ -269,8 +269,14 @@ The arena benchmarks LLMs against each other on a real rules engine, **PokerKit*
   budget and a defensive retry-without-thinking on the 400 you get from a model
   that doesn't support it (so only adaptive-capable Claudes — the Claude 5 family
   (Opus 5 / Sonnet 5 / Fable 5) and Opus 4.6+/Sonnet 4.6 — are non-`none` in the
-  registry; Haiku 4.5 / Sonnet 4.5 / Opus 4.5 are `none`); **Gemini** is a no-op
-  (pinned SDK 0.14.1 has no `thinkingConfig`; the models reason automatically).
+  registry; Haiku 4.5 / Sonnet 4.5 / Opus 4.5 are `none`); **Gemini** sets
+  `thinkingConfig.thinkingLevel` on the chat-level config (via `@google/genai` —
+  the legacy `@google/generative-ai` SDK had no such knob and was EOL'd Aug 2025).
+  Gemini 3 models always think, so there is no "off": `none` maps to `MINIMAL`
+  (the floor), low/medium/high map 1:1. Levels are model-dependent, so the
+  service carries the same defensive retry as Claude — a 400 mentioning thinking
+  drops `thinkingConfig` (keeping the hand's history) and latches for the rest of
+  the run.
   **Don't register a Claude 5 model as `none`**: on that path the service omits
   `thinking` entirely, but Opus 5 and Fable 5 think by default, and the smaller
   non-reasoning `max_tokens` (4096) then caps thinking + text together and can
