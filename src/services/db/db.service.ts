@@ -1,5 +1,10 @@
 import Database from 'better-sqlite3';
 
+// NOTE: better-sqlite3 has no asynchronous API — every method on this class runs
+// to completion synchronously and returns a plain value, not a Promise. Do not
+// `await` them: it reads as I/O that can interleave, when in fact nothing here
+// yields. (Callers that must return a Promise — e.g. implementations of the
+// core PlayerStatsRepository port — can stay `async` without awaiting these.)
 export class DBService {
     private file_name: string;
     private db!: Database.Database;

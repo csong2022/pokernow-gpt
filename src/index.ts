@@ -19,8 +19,8 @@ app.use('/playerstats', playerstats_router);
 app.use('/bot', bot_router);
 
 async function startServer(port: number) {
-    await db_service.init();
-    await db_service.createTables();
+    db_service.init();
+    db_service.createTables();
     return new Promise<void>((resolve) => {
         app.listen(port, () => {
             console.log(`App listening on http://localhost:${port}`);

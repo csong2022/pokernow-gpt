@@ -28,7 +28,7 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
     await puppeteer_service.init();
 
     const db_service = new DBService("./pokernow-gpt.db");
-    await db_service.init();
+    db_service.init();
     db_service.createTables();
 
     const playerstats_api_service = new PlayerStatsAPIService(db_service);

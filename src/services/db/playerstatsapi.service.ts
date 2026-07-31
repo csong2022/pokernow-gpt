@@ -11,7 +11,7 @@ export class PlayerStatsAPIService implements PlayerStatsRepository {
     }
 
     async get(player_name: string): Promise<string> {
-        const rows = await this.db_service.query(
+        const rows = this.db_service.query(
             `SELECT *
              FROM PlayerStats
              WHERE name = ?`,
@@ -21,7 +21,7 @@ export class PlayerStatsAPIService implements PlayerStatsRepository {
     }
     
     async create(player_stats_JSON: any): Promise<void> {
-        await this.db_service.query(
+        this.db_service.query(
             `INSERT INTO PlayerStats
              (name, total_hands, walks, vpip_hands, pfr_hands, three_bet_hands, three_bet_opportunities, faced_three_bet, folded_to_three_bet, total_bets, total_raises, total_calls, total_folds)
              VALUES
@@ -45,7 +45,7 @@ export class PlayerStatsAPIService implements PlayerStatsRepository {
     }
 
     async update(player_name: string, player_stats_JSON: any): Promise<void> {
-        await this.db_service.query(
+        this.db_service.query(
             `UPDATE PlayerStats
              SET
                 total_hands = ?,
@@ -119,7 +119,7 @@ export class PlayerStatsAPIService implements PlayerStatsRepository {
     }
     
     async remove(player_name: string): Promise<void>{
-        await this.db_service.query(
+        this.db_service.query(
             `DELETE FROM PlayerStats
              WHERE name = ?`,
              [player_name]
