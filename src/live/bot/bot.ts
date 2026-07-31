@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import { Game } from '../../core/game/game.model.ts';
 import { Table } from '../../core/game/table.model.ts';
 
-import { AIService } from '../../core/ai/ai-client.interface.ts';
+import { AIService, BotAction } from '../../core/ai/ai-client.interface.ts';
 import { LogService } from '../pokernow/log.service.ts';
 import { HandOutcomesAPIService } from '../../services/db/handoutcomes.service.ts';
 import { PlayerStatsAPIService } from '../../services/db/playerstatsapi.service.ts';
@@ -15,11 +15,42 @@ import { DebugMode, logResponse } from '../../utils/error-handling.util.ts';
 import { Logger } from '../../utils/logger.util.ts';
 
 import { ActionExecutor } from '../pokernow/action-executor.ts';
-import { DecisionEngine } from '../../core/poker/decision-engine.ts';
+import { DecisionEngine, DecisionTrace } from '../../core/poker/decision-engine.ts';
 import { StatsContextBuilder } from './stats-context-builder.ts';
 import { PuppeteerActionAvailability } from '../pokernow/puppeteer-action-availability.ts';
 import { HandState } from '../../core/game/hand-state.ts';
 import { GameStateBuilder, ProcessPlayersGuard } from '../pokernow/state-builder.ts';
+
+// A completed live decision, streamed worker -> main after each decide(). Plain
+// serializable object (structured-clone safe — no class instances). Superset of the
+// arena DecisionLog (street/prompt/raw_response/parsed_action/events) plus the live
+// game context a standalone display needs, so one dashboard component renders both.
+export interface LiveDecisionEvent {
+    bot_uuid: string;
+    hand_number: number;
+    street: string;            // "" preflop | "flop" | "turn" | "river"
+    holeCards: string[];
+    board: string[];           // community cards visible this street (empty preflop)
+    pot: number;               // BB
+    heroStack: number;         // BB
+    toCall: number | null;     // null until live betting-context is wired
+    action: string;            // parsed action, e.g. "raise"
+    amount: number;            // BB total
+    prompt: string;            // mirrors arena DecisionLog.prompt
+    reasoning: string;         // raw model text: reasoning + Final Answer (record-only)
+    events: { kind: string }[]; // rethink/fallback, mirrors arena DecisionLog.events
+    timestamp: number;         // Date.now()
+}
+
+// Fire-and-forget sink the worker wires to port.postMessage. Kept generic so Bot
+// stays decoupled from worker_threads.
+export type BotEventEmit = (message: { event_name: string; payload: unknown }) => void;
+
+const RUNOUT_CARD_RE = /(10|[2-9TJQKA])([shdc])/gi;
+function parseRunout(runout: string): string[] {
+    if (!runout) return [];
+    return Array.from(runout.matchAll(RUNOUT_CARD_RE), (m) => m[1] + m[2]);
+}
 
 export class Bot {
     private bot_uuid: crypto.UUID;
@@ -42,6 +73,12 @@ export class Bot {
     private decisionEngine!: DecisionEngine;
     private executor!: ActionExecutor;
 
+    // Optional worker->main event sink (SSE streaming); undefined = no streaming.
+    private emit?: BotEventEmit;
+    // Latest decision trace, stashed by the DecisionEngine onDecision sink so tick()
+    // can fold prompt/raw_response/events into the streamed decision event.
+    private lastTrace?: DecisionTrace;
+
     constructor(
         bot_uuid: crypto.UUID,
         ai_service: AIService,
@@ -56,6 +93,7 @@ export class Bot {
         query_retries: number,
         query_delay_ms: number,
         fetch_sleep_ms: number,
+        emit?: BotEventEmit,
     ) {
         this.bot_uuid = bot_uuid;
         this.ai_service = ai_service;
@@ -69,6 +107,7 @@ export class Bot {
         this.query_retries = query_retries;
         this.query_delay_ms = query_delay_ms;
         this.fetch_sleep_ms = fetch_sleep_ms;
+        this.emit = emit;
 
         this.state = new HandState(bot_uuid, ai_config.provider, ai_config.model_name, game_id);
     }
@@ -88,7 +127,39 @@ export class Bot {
         const game = await this.stateBuilder.build();
         if (!game) return;
         const decision = await this.decisionEngine.decide(game);
+        this.emitDecision(game, decision);
         await this.executor.execute(decision);
+    }
+
+    // Stream the completed decision worker->main, fire-and-forget. Runs AFTER
+    // decide() returns (off the action-clock critical path) and never throws into
+    // the tick loop — streaming must not affect play.
+    private emitDecision(game: Game, decision: BotAction): void {
+        if (!this.emit) return;
+        try {
+            const table = game.getTable();
+            const hero = game.getHero();
+            const trace = this.lastTrace;
+            const payload: LiveDecisionEvent = {
+                bot_uuid: this.bot_uuid,
+                hand_number: this.state.hand_number,
+                street: table.getStreet() ?? "",
+                holeCards: hero ? hero.getHand() : [],
+                board: parseRunout(table.getRunout()),
+                pot: table.getPot(),
+                heroStack: hero ? hero.getStackSize() : 0,
+                toCall: table.getAmountToCall(),
+                action: decision.action_str,
+                amount: decision.bet_size_in_BBs,
+                prompt: trace?.prompt ?? "",
+                reasoning: trace?.raw_response ?? this.ai_service.getLastRawResponse(),
+                events: (trace?.events ?? []).map((kind) => ({ kind })),
+                timestamp: Date.now(),
+            };
+            this.emit({ event_name: `${this.bot_uuid}-decision`, payload });
+        } catch (err) {
+            this.logger.error("Failed to emit decision event (non-fatal):", err);
+        }
     }
 
     public async openGame(): Promise<void> {
@@ -167,6 +238,8 @@ export class Bot {
             this.logger,
             this.query_retries,
             this.query_delay_ms,
+            undefined, // onEvent (rethink/fallback) — folded into the trace below
+            (trace) => { this.lastTrace = trace; }, // onDecision: stash for streaming
         );
         this.executor = new ActionExecutor(
             this.puppeteer_service,

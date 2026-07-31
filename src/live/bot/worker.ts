@@ -56,7 +56,10 @@ async function startBot({ bot_uuid, game_id, name, stack_size, ai_config, bot_co
     logger.info(`Created AI service: ${ai_config.provider} ${ai_config.model_name} with playstyle: ${ai_config.playstyle}`);
     ai_service.init();
 
-    const bot = new Bot(bot_uuid, ai_service, ai_config, log_service, playerstats_api_service, hand_outcomes_api_service, puppeteer_service, logger, game_id, bot_config.debug_mode, bot_config.query_retries, query_delay_ms, fetch_sleep_ms);
+    // Fire-and-forget worker->main sink for streamed events (decisions, lifecycle).
+    // Same channel as entrySuccess/entryFailure; the manager re-emits on the main thread.
+    const emit = (message: { event_name: string; payload: unknown }) => port.postMessage(message);
+    const bot = new Bot(bot_uuid, ai_service, ai_config, log_service, playerstats_api_service, hand_outcomes_api_service, puppeteer_service, logger, game_id, bot_config.debug_mode, bot_config.query_retries, query_delay_ms, fetch_sleep_ms, emit);
 
     await bot.openGame();
 

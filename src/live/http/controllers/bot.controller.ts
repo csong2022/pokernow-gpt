@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 
-import { startWorker } from '../../bot/bot-manager.ts';
+import { startWorker, getRecentDecisions } from '../../bot/bot-manager.ts';
 
 import manager_controller_ee from '../../bot/eventemitters/manager-controller.eventemitter.ts';
 
@@ -28,6 +28,42 @@ export async function create(req: any, res: any, next: any): Promise<void> {
         console.error(`Error while creating player.`, err.message);
         next(err);
     }
+}
+
+// GET /bot/:bot_uuid/stream — Server-Sent Events stream of the bot's decisions as
+// they happen. One-directional (control stays on the REST create/stop/retry routes).
+// Replays the recent decisions on connect (catch-up), then streams live; cleans up
+// its event listener on client disconnect so listeners don't leak per bot.
+export function stream(req: any, res: any): void {
+    const bot_uuid = req.params.bot_uuid;
+
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+    });
+    res.flushHeaders?.();
+
+    const send = (event: string, data: unknown) => {
+        res.write(`event: ${event}\n`);
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+    };
+
+    // Catch-up: replay recent decisions so a mid-game client isn't blank until the
+    // next decision arrives.
+    for (const decision of getRecentDecisions(bot_uuid)) send('decision', decision);
+
+    const decision_listener = (payload: unknown) => send('decision', payload);
+    manager_controller_ee.on(`${bot_uuid}-decision`, decision_listener);
+
+    // Comment ping so intermediaries don't time the idle connection out.
+    const keepalive = setInterval(() => res.write(': ping\n\n'), 15000);
+
+    req.on('close', () => {
+        clearInterval(keepalive);
+        manager_controller_ee.off(`${bot_uuid}-decision`, decision_listener);
+        res.end();
+    });
 }
 
 export async function stop(req: any, res: any, next: any): Promise<void> {

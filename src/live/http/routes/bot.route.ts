@@ -9,4 +9,6 @@ router.post('/create/retry', bot_controller.retry);
 
 router.post('/stop', bot_controller.stop);
 
+router.get('/:bot_uuid/stream', bot_controller.stream);
+
 export default router;
