@@ -47,6 +47,24 @@ export function getIdToInitialStackFromMsg(msg: string, stakes: number): Map<str
     return res;
 }
 
+// Parse the chip count out of a table stack element's text.
+//
+// PokerNow doesn't render a bare number here. While a pot is being awarded the
+// element also carries the pending win/loss animation ("400 +1200"), and large
+// stacks are grouped ("1,000"). `Number("400 +1200")` is NaN, and NaN has no
+// SQLite representation — it binds as NULL, which is what made the hand-outcome
+// insert fail its NOT NULL constraint on a hand the bot won.
+//
+// Take the FIRST numeric token so the animation suffix is ignored, and strip
+// separators. Returns NaN only when there is genuinely no number to read; callers
+// decide what to do with that rather than silently recording a wrong stack.
+export function parseStackText(text: string | null | undefined): number {
+    if (text === null || text === undefined) return NaN;
+    const match = /-?\d[\d,]*(?:\.\d+)?/.exec(String(text));
+    if (!match) return NaN;
+    return Number(match[0].replace(/,/g, ""));
+}
+
 export function getTableSeatToIdFromMsg(msg: string): Map<number, string>{
     const re = RegExp('\\#(\\d+)\\s\\"[^@]+\\@\\s([^"]*)', 'g');
     const res = new Map<number, string>;
