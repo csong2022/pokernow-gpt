@@ -27,8 +27,7 @@
     "phe": "^0.6.0",
     "piscina": "^5.3.0",
     "prompt-sync": "^4.2.0",
-    "puppeteer": "^25.4.0",
-    "ts-node": "^10.9.2"
+    "puppeteer": "^25.4.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
@@ -39,15 +38,12 @@
     "@types/prompt-sync": "^4.2.3",
     "mocha": "^11.0.0",
     "tsx": "^4.11.0",
-    "typescript": "^5.9.3"
+    "typescript": "^7.0.2"
   },
-  "//overrides": "Transitive advisories in the test chain. mocha is already on its latest release and its ranges still resolve to vulnerable versions, so pinning the leaves is the only route. `diff` is scoped to mocha on purpose: ts-node also depends on diff@4, which is NOT in the affected range (>=6.0.0 <8.0.3), and a global override would drag it across four majors for no security gain. The `zod` pin resolves a peer conflict, not an advisory: puppeteer's chromium-bidi asks for exactly 3.23.8 while @anthropic-ai/sdk needs >=3.25 as an optional peer, which makes a fresh `npm ci` unresolvable. 3.23->3.25 is a minor bump that chromium-bidi accepts in practice (verified: puppeteer still launches). Revisit all of these when the upstream ranges widen.",
+  "//overrides": "Advisories that mocha's dependency ranges still resolve to. Drop each once mocha widens them upstream.",
   "overrides": {
     "brace-expansion": "^5.0.8",
     "serialize-javascript": "^7.0.5",
-    "zod": "^3.25.0",
-    "mocha": {
-      "diff": "^8.0.3"
-    }
+    "diff": "^8.0.3"
   }
 }
